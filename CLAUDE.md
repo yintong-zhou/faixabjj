@@ -17,12 +17,29 @@ Note: the README also references a full project document at `bjj-progress-tracke
 ```
 faixabjj/
 ├── frontend/       # Next.js app (App Router) + Tailwind — npm workspace, run commands from here
+├── supabase/
+│   └── migrations/  # SQL migrations (schema, RLS policies) — see "Database" below
 ├── directives/     # SOPs in Markdown (Level 1 — see AGENT.md). Empty until real workflows are defined.
 ├── execution/       # Deterministic Python scripts (Level 3 — see AGENT.md). Empty until needed.
 ├── .tmp/            # Intermediate/scratch files only — gitignored, never committed, safe to delete
 ├── AGENT.md         # Operating instructions for the agent (3-tier architecture, web app conventions)
 └── README.md        # Product spec / project overview
 ```
+
+## Database
+
+Schema lives as plain SQL migrations in `supabase/migrations/` (standard Supabase CLI layout, applied via `supabase db push` or the SQL editor once a project is linked — no project is linked yet, so migrations have not been run anywhere).
+
+`20260910000000_init_schema.sql` creates the five tables from the planned data model (`person`, `assigned_role`, `role_threshold`, `attendance`, `promotion_criteria`), two enums (`belt_rank`, `person_role`), a `person_hours` view for the automatic hour count, and enables RLS on every table. RLS **policies** (who can read/write what, based on active role) are intentionally not in that migration yet — write them as a separate migration once the frontend's auth/role-checking needs are concrete.
+
+### Connecting the frontend to Supabase
+
+The frontend talks to Supabase directly via the client library (`@supabase/supabase-js` + `@supabase/ssr`) rather than through a custom API layer — this is what makes the RLS-based permission model above actually work, since the user's JWT has to reach Postgres. Setup:
+
+- `frontend/lib/supabase/client.ts` — browser client, for Client Components
+- `frontend/lib/supabase/server.ts` — server client (cookie-based), for Server Components/Actions/Route Handlers
+- `frontend/lib/supabase/middleware.ts` + `frontend/middleware.ts` — refreshes the auth session cookie on every request
+- `frontend/.env.example` — copy to `frontend/.env.local` and fill in `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from the Supabase project's API settings (no project is linked yet, so these are currently empty). Note: this project uses Supabase's newer **publishable** key, not the legacy `anon` key — don't rename it back.
 
 ## Commands
 
