@@ -1,69 +1,109 @@
 import Image from "next/image";
+import Link from "next/link";
+import {
+  CalendarCheckIcon,
+  DashboardIcon,
+  UsersIcon,
+} from "@/components/icons";
+
+const FEATURES = [
+  {
+    title: "Registro unico",
+    description:
+      "Un solo profilo \"Persona\" per studenti e istruttori: nel BJJ la stessa persona spesso è entrambe le cose insieme.",
+    icon: UsersIcon,
+  },
+  {
+    title: "Presenze e ore",
+    description:
+      "Presente/assente per data, con chi ha condotto la lezione. Il conteggio ore è automatico.",
+    icon: CalendarCheckIcon,
+  },
+  {
+    title: "Criteri di promozione",
+    description:
+      "Soglie di ore e tempo al grado configurabili per cintura e grado — mai automatiche.",
+    icon: DashboardIcon,
+  },
+] as const;
+
+const NOT_DOING = [
+  "Pagamenti, abbonamenti, fatturazione",
+  "Iscrizioni online / gestione lead",
+  "Gestione competizioni/tornei",
+  "Tracciamento tecnico per categoria posizionale",
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex flex-col gap-16">
+      <section className="flex flex-col gap-5 pt-4 sm:pt-10">
+        <div className="w-fit rounded-lg bg-secondary p-4">
+          <Image
+            src="/faixabjj_logo-removebg-preview.png"
+            alt="FAIXA BJJ"
+            width={618}
+            height={404}
+            priority
+            className="h-16 w-auto sm:h-20"
+          />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <span className="w-fit rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+          In design / MVP in sviluppo
+        </span>
+        <h1 className="max-w-xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+          La progressione tecnica, tracciata — non decisa a sensazione.
+        </h1>
+        <p className="max-w-lg text-base leading-relaxed text-foreground/70">
+          FAIXABJJ affianca il gestionale che usi già in palestra e copre
+          quello che gli strumenti generici fanno male: seguire il percorso
+          di ogni studente verso gradi e cinture, con un modello dati che
+          aggiunge il minimo indispensabile di lavoro per gli istruttori.
+        </p>
+        <div className="flex flex-wrap gap-3 pt-2">
+          <Link
+            href="/registro"
+            className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Apri il registro
+          </Link>
+          <Link
+            href="/dashboard"
+            className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-neutral-light/50"
           >
-            Documentation
-          </a>
+            Vedi la dashboard
+          </Link>
         </div>
-      </main>
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-3">
+        {FEATURES.map(({ title, description, icon: Icon }) => (
+          <div
+            key={title}
+            className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-5"
+          >
+            <Icon className="h-6 w-6 text-accent" />
+            <h2 className="text-base font-semibold">{title}</h2>
+            <p className="text-sm leading-relaxed text-foreground/65">
+              {description}
+            </p>
+          </div>
+        ))}
+      </section>
+
+      <section className="flex flex-col gap-3 border-t border-border pt-8">
+        <h2 className="text-sm font-semibold text-foreground/60">
+          Cosa non fa, deliberatamente
+        </h2>
+        <ul className="grid gap-2 text-sm text-foreground/65 sm:grid-cols-2">
+          {NOT_DOING.map((item) => (
+            <li key={item} className="flex items-start gap-2">
+              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-foreground/40" />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

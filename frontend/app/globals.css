@@ -1,26 +1,70 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #16181d;
+  --color-secondary: #f4f5f7;
+  --color-accent: #3457d5;
+  --color-neutral-dark: #3a3f4b;
+  --color-neutral-light: #e3e6eb;
+
+  --background: var(--color-secondary);
+  --foreground: var(--color-primary);
+  --surface: #ffffff;
+  --border: var(--color-neutral-light);
 }
 
 @theme inline {
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+  --color-neutral-dark: var(--color-neutral-dark);
+  --color-neutral-light: var(--color-neutral-light);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+
+  --font-heading: var(--font-sora);
+  --font-body: var(--font-work-sans);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --background: var(--color-primary);
+    --foreground: var(--color-secondary);
+    --surface: var(--color-neutral-dark);
+    --border: var(--color-neutral-dark);
   }
+}
+
+/* Explicit choice from the theme toggle wins over the system preference,
+   in both directions. */
+:root[data-theme="dark"] {
+  --background: var(--color-primary);
+  --foreground: var(--color-secondary);
+  --surface: var(--color-neutral-dark);
+  --border: var(--color-neutral-dark);
+}
+
+:root[data-theme="light"] {
+  --background: var(--color-secondary);
+  --foreground: var(--color-primary);
+  --surface: #ffffff;
+  --border: var(--color-neutral-light);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), sans-serif;
 }
