@@ -1,0 +1,15 @@
+# Intermediate files (never committed, always regenerated — see AGENT.md)
+.tmp/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+
+# Python (execution/)
+__pycache__/
+*.pyc
+.venv/
+venv/
