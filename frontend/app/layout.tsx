@@ -3,6 +3,7 @@ import { Sora, Work_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import { NavShell } from "@/components/nav-shell";
 import { createClient } from "@/utils/supabase/server";
+import { getAccess } from "@/utils/supabase/require-admin";
 import "./globals.css";
 
 const sora = Sora({
@@ -35,6 +36,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const supabase = createClient(await cookies());
   const { data: claimsData } = await supabase.auth.getClaims();
   const isLoggedIn = !!claimsData?.claims;
+  // Drives which nav items the shell renders. Students and assistants never
+  // see Registro/Presenze; the pages enforce it too, this only hides the links.
+  const canViewRegistry = isLoggedIn
+    ? (await getAccess(supabase)).canViewRegistry
+    : false;
 
   return (
     <html
@@ -52,7 +58,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <NavShell isLoggedIn={isLoggedIn}>{children}</NavShell>
+        <NavShell isLoggedIn={isLoggedIn} canViewRegistry={canViewRegistry}>
+          {children}
+        </NavShell>
       </body>
     </html>
   );

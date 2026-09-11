@@ -6,7 +6,15 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 // Sections gated behind admin login. The home page stays public as the
 // landing page.
-const PROTECTED_PREFIXES = ["/registro", "/presenze", "/dashboard"];
+const PROTECTED_PREFIXES = [
+  "/registro",
+  "/presenze",
+  "/dashboard",
+  "/account",
+  "/cambia-password",
+];
+
+const PASSWORD_CHANGE_PATH = "/cambia-password";
 
 export const updateSession = async (request: NextRequest) => {
   let supabaseResponse = NextResponse.next({ request });
@@ -35,6 +43,26 @@ export const updateSession = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
+  // An account created from the Registro starts on a shared default password,
+  // so nothing else in the app opens until it has been replaced. Checked before
+  // the redirects below so there is only ever one hop. Signing out stays
+  // reachable — otherwise the only way out would be clearing cookies.
+  const appMetadata = claimsData?.claims?.app_metadata as
+    | { must_change_password?: boolean }
+    | undefined;
+
+  if (
+    isLoggedIn &&
+    appMetadata?.must_change_password === true &&
+    pathname !== PASSWORD_CHANGE_PATH &&
+    !pathname.startsWith("/auth/")
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = PASSWORD_CHANGE_PATH;
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   if (isProtected && !isLoggedIn) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -43,7 +71,11 @@ export const updateSession = async (request: NextRequest) => {
     return NextResponse.redirect(url);
   }
 
-  if (pathname === "/login" && isLoggedIn) {
+  // The landing page and the login form are both for signed-out visitors
+  // only; once there is a session, neither has anything left to show.
+  const VISITOR_ONLY = ["/login", "/"];
+
+  if (isLoggedIn && VISITOR_ONLY.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.search = "";
