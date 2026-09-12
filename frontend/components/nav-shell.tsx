@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   CalendarCheckIcon,
+  CalendarPlusIcon,
   DashboardIcon,
   HomeIcon,
   UserIcon,
@@ -14,10 +15,13 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const HOME_ITEM = { href: "/", label: "Home", icon: HomeIcon } as const;
-const STAFF_ITEMS = [
-  { href: "/registro", label: "Registro", icon: UsersIcon },
-  { href: "/presenze", label: "Presenze", icon: CalendarCheckIcon },
-] as const;
+const PRESENZE_ITEM = {
+  href: "/presenze",
+  label: "Presenze",
+  icon: CalendarCheckIcon,
+} as const;
+const CORSI_ITEM = { href: "/corsi", label: "Corsi", icon: CalendarPlusIcon } as const;
+const REGISTRO_ITEM = { href: "/registro", label: "Registro", icon: UsersIcon } as const;
 const DASHBOARD_ITEM = {
   href: "/dashboard",
   label: "Dashboard",
@@ -25,10 +29,24 @@ const DASHBOARD_ITEM = {
 } as const;
 const ACCOUNT_ITEM = { href: "/account", label: "Account", icon: UserIcon } as const;
 
-// Hiding a link is a convenience, never the access control: /registro,
-// /presenze and /account/utenti each verify the privilege themselves, and the
-// RLS policies verify it again in the database.
-function navItemsFor(isLoggedIn: boolean, canViewRegistry: boolean) {
+// Only so the list below has a type wide enough to hold every item: an array
+// literal of two entries infers those two `href` strings and rejects the third.
+type NavItem =
+  | typeof HOME_ITEM
+  | typeof DASHBOARD_ITEM
+  | typeof PRESENZE_ITEM
+  | typeof CORSI_ITEM
+  | typeof REGISTRO_ITEM
+  | typeof ACCOUNT_ITEM;
+
+// Hiding a link is a convenience, never the access control: /registro, /corsi
+// and /presenze each verify the privilege themselves, and the RLS policies
+// verify it again in the database.
+function navItemsFor(
+  isLoggedIn: boolean,
+  canViewRegistry: boolean,
+  canManageClasses: boolean,
+) {
   if (!isLoggedIn) {
     // Home is the whole menu for a visitor: every other section requires a
     // session, so offering them only produces a bounce through /login.
@@ -38,9 +56,19 @@ function navItemsFor(isLoggedIn: boolean, canViewRegistry: boolean) {
   // Home is deliberately absent for *every* signed-in user, staff included —
   // it is the landing page for people who arrive without logging in, and the
   // proxy redirects an authenticated visitor away from it.
-  return canViewRegistry
-    ? [...STAFF_ITEMS, DASHBOARD_ITEM, ACCOUNT_ITEM]
-    : [DASHBOARD_ITEM, ACCOUNT_ITEM];
+  // Dashboard leads for everyone: it is where login lands, so the first tab and
+  // the landing page are the same place. Presenze follows it for everyone too,
+  // students included — check-in has to live where the lessons are listed, and
+  // there is only one such list.
+  const items: NavItem[] = [DASHBOARD_ITEM, PRESENZE_ITEM];
+  if (canManageClasses) {
+    items.push(CORSI_ITEM);
+  }
+  if (canViewRegistry) {
+    items.push(REGISTRO_ITEM);
+  }
+  items.push(ACCOUNT_ITEM);
+  return items;
 }
 
 function isActive(pathname: string, href: string) {
@@ -51,23 +79,25 @@ export function NavShell({
   children,
   isLoggedIn,
   canViewRegistry,
+  canManageClasses,
 }: {
   children: ReactNode;
   isLoggedIn: boolean;
   canViewRegistry: boolean;
+  canManageClasses: boolean;
 }) {
   const pathname = usePathname();
-  const navItems = navItemsFor(isLoggedIn, canViewRegistry);
+  const navItems = navItemsFor(isLoggedIn, canViewRegistry, canManageClasses);
 
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 sm:px-8">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5 sm:px-8 sm:py-4">
           {/* Signed in, the logo goes to the dashboard rather than to "/",
               which would only bounce through the proxy's redirect. */}
           <Link
             href={isLoggedIn ? "/dashboard" : "/"}
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary p-1.5">
               <Image
@@ -89,7 +119,7 @@ export function NavShell({
                 <Link
                   key={href}
                   href={href}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
                     isActive(pathname, href)
                       ? "bg-foreground text-background"
                       : "text-foreground/70 hover:bg-neutral-light/60"
@@ -103,7 +133,7 @@ export function NavShell({
               <form action="/auth/signout" method="post">
                 <button
                   type="submit"
-                  className="rounded-full px-4 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-neutral-light/60"
+                  className="rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-neutral-light/60"
                 >
                   Esci
                 </button>
@@ -111,7 +141,7 @@ export function NavShell({
             ) : (
               <Link
                 href="/login"
-                className="rounded-full px-4 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-neutral-light/60"
+                className="rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-neutral-light/60"
               >
                 Accedi
               </Link>
@@ -121,7 +151,7 @@ export function NavShell({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-24 pt-6 sm:px-8 sm:pb-10">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-20 pt-4 sm:px-8 sm:pb-10 sm:pt-8">
         {children}
       </main>
 
@@ -133,7 +163,7 @@ export function NavShell({
               <Link
                 key={href}
                 href={href}
-                className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium ${
+                className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
                   active ? "text-accent" : "text-foreground/55"
                 }`}
               >

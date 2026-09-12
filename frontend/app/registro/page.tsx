@@ -4,6 +4,18 @@ import { RowMenu } from "@/components/row-menu";
 import { isAdminClientConfigured } from "@/utils/supabase/admin";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { BELT_LABELS, ROLE_LABELS } from "@/utils/supabase/profile";
+import {
+  AlertCircleIcon,
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  FileTextIcon,
+  FilterIcon,
+  KeyIcon,
+  MailIcon,
+  UserMinusIcon,
+  UserPlusIcon,
+} from "@/components/icons";
 import { daysSince, formatDays } from "@/utils/dates";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import {
@@ -16,7 +28,9 @@ import {
 const PAGE_SIZE = 20;
 
 const menuItemClass =
-  "w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-neutral-light/60";
+  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-neutral-light/60";
+
+const menuIconClass = "h-4 w-4 shrink-0";
 
 const fieldClass =
   "rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-accent";
@@ -104,8 +118,17 @@ export default async function RegistroPage({
   const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentQuery = queryString(search);
 
+  // `p` is paging, not filtering — it must not make the panel look active or
+  // open itself on page 2 of an unfiltered list.
+  const activeFilters = [
+    search.q ? `"${search.q}"` : null,
+    search.ruolo ? ROLE_LABELS[search.ruolo] ?? search.ruolo : null,
+    search.cintura ? BELT_LABELS[search.cintura] ?? search.cintura : null,
+    search.attivi ? "solo attivi" : null,
+  ].filter(Boolean) as string[];
+
   return (
-    <div className="flex w-full flex-col gap-6 pt-6 sm:pt-10">
+    <div className="flex w-full flex-col gap-4 sm:gap-6">
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Registro</h1>
         <p className="text-sm leading-relaxed text-foreground/65">
@@ -116,27 +139,35 @@ export default async function RegistroPage({
       </header>
 
       {search.ok ? (
-        <p className="rounded-lg bg-secondary/30 px-3.5 py-2.5 text-sm">{search.ok}</p>
+        <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
+          <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {search.ok}
+        </p>
       ) : null}
       {search.error ? (
-        <p className="rounded-lg bg-accent/10 px-3.5 py-2.5 text-sm text-accent">
+        <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
           {search.error}
         </p>
       ) : null}
       {queryError ? (
-        <p className="rounded-lg bg-accent/10 px-3.5 py-2.5 text-sm text-accent">
-          Non è stato possibile caricare il registro. Controlla che le migration
-          del database siano state applicate.
+        <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Non è stato possibile caricare il registro. Controlla che le
+            migration del database siano state applicate.
+          </span>
         </p>
       ) : null}
 
       {access.canEditRegistry ? (
         <details className="rounded-xl border border-border">
-          <summary className="cursor-pointer px-5 py-4 font-heading text-base font-semibold">
+          <summary className="cursor-pointer px-4 py-3 font-heading text-base font-semibold sm:px-5 sm:py-4">
+            <UserPlusIcon className="mr-2 inline-block h-4.5 w-4.5 align-[-0.2em] text-accent" />
             Aggiungi persona
           </summary>
 
-          <form action={addPerson} className="flex flex-col gap-4 px-5 pb-5">
+          <form action={addPerson} className="flex flex-col gap-3 px-4 pb-4 sm:gap-4 sm:px-5 sm:pb-5">
             <input type="hidden" name="_query" value={currentQuery} />
 
             <p className="text-xs text-foreground/55">
@@ -149,7 +180,7 @@ export default async function RegistroPage({
               sostituirla prima di poter usare il resto dell&apos;app.
             </p>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="full_name" className="text-sm font-medium">
                   Nome e cognome
@@ -312,91 +343,106 @@ export default async function RegistroPage({
         </details>
       ) : null}
 
-      <form
-        method="get"
-        action="/registro"
-        className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:flex-row sm:flex-wrap sm:items-end"
-      >
-        <div className="flex min-w-52 flex-1 flex-col gap-1.5">
-          <label htmlFor="q" className="text-xs font-medium text-foreground/65">
-            Nome
-          </label>
-          <input
-            id="q"
-            name="q"
-            type="search"
-            defaultValue={search.q ?? ""}
-            placeholder="Cerca per nome"
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="ruolo" className="text-xs font-medium text-foreground/65">
-            Ruolo
-          </label>
-          <select
-            id="ruolo"
-            name="ruolo"
-            defaultValue={search.ruolo ?? ""}
-            className={fieldClass}
-          >
-            <option value="">Tutti</option>
-            {Object.entries(ROLE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="cintura" className="text-xs font-medium text-foreground/65">
-            Cintura
-          </label>
-          <select
-            id="cintura"
-            name="cintura"
-            defaultValue={search.cintura ?? ""}
-            className={fieldClass}
-          >
-            <option value="">Tutte</option>
-            {Object.entries(BELT_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <label className="flex items-center gap-2 py-2.5 text-sm">
-          <input
-            type="checkbox"
-            name="attivi"
-            value="1"
-            defaultChecked={Boolean(search.attivi)}
-            className="h-4 w-4 accent-[var(--color-accent)]"
-          />
-          Solo membri attivi
-        </label>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="submit"
-            className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
-          >
-            Filtra
-          </button>
-          {currentQuery ? (
-            <Link
-              href="/registro"
-              className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-neutral-light/60"
-            >
-              Azzera
-            </Link>
+      {/* Open only when something is filtering: an untouched list keeps the
+          panel out of the way, a filtered one shows why it is short. */}
+      <details open={activeFilters.length > 0} className="rounded-xl border border-border">
+        <summary className="cursor-pointer px-4 py-3 font-heading text-base font-semibold sm:px-5 sm:py-4">
+          <FilterIcon className="mr-2 inline-block h-4.5 w-4.5 align-[-0.2em] text-accent" />
+          Filtri
+          {activeFilters.length > 0 ? (
+            <span className="font-body text-xs font-normal text-foreground/60">
+              {" · "}
+              {activeFilters.join(" · ")}
+            </span>
           ) : null}
-        </div>
-      </form>
+        </summary>
+
+        <form
+          method="get"
+          action="/registro"
+          className="flex flex-col gap-2.5 px-4 pb-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3 sm:px-5 sm:pb-5"
+        >
+          <div className="flex min-w-52 flex-1 flex-col gap-1.5">
+            <label htmlFor="q" className="text-xs font-medium text-foreground/65">
+              Nome
+            </label>
+            <input
+              id="q"
+              name="q"
+              type="search"
+              defaultValue={search.q ?? ""}
+              placeholder="Cerca per nome"
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="ruolo" className="text-xs font-medium text-foreground/65">
+              Ruolo
+            </label>
+            <select
+              id="ruolo"
+              name="ruolo"
+              defaultValue={search.ruolo ?? ""}
+              className={fieldClass}
+            >
+              <option value="">Tutti</option>
+              {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="cintura" className="text-xs font-medium text-foreground/65">
+              Cintura
+            </label>
+            <select
+              id="cintura"
+              name="cintura"
+              defaultValue={search.cintura ?? ""}
+              className={fieldClass}
+            >
+              <option value="">Tutte</option>
+              {Object.entries(BELT_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <label className="flex items-center gap-2 py-2.5 text-sm">
+            <input
+              type="checkbox"
+              name="attivi"
+              value="1"
+              defaultChecked={Boolean(search.attivi)}
+              className="h-4 w-4 accent-[var(--color-accent)]"
+            />
+            Solo membri attivi
+          </label>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="submit"
+              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            >
+              Filtra
+            </button>
+            {activeFilters.length > 0 ? (
+              <Link
+                href="/registro"
+                className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+              >
+                Azzera
+              </Link>
+            ) : null}
+          </div>
+        </form>
+      </details>
 
       <p className="text-sm text-foreground/60">
         {total === 0
@@ -413,8 +459,8 @@ export default async function RegistroPage({
           // items-center keeps the kebab vertically centred against the row,
           // whose height is set by the details block on the left.
           return (
-            <li key={member.id} className="flex items-center justify-between gap-3 p-4">
-              <div className="flex min-w-0 flex-col gap-1">
+            <li key={member.id} className="flex items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:p-4">
+              <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
                   {member.full_name}
                   <span className="rounded-full bg-secondary/40 px-2 py-0.5 text-xs font-normal">
@@ -457,8 +503,9 @@ export default async function RegistroPage({
               <RowMenu label={`Azioni per ${member.full_name}`}>
                 <Link
                   href={`/registro/${member.id}?from=${encodeURIComponent(currentQuery)}`}
-                  className={`block ${menuItemClass}`}
+                  className={menuItemClass}
                 >
+                  <FileTextIcon className={menuIconClass} />
                   Dettagli
                 </Link>
 
@@ -468,6 +515,7 @@ export default async function RegistroPage({
                       <input type="hidden" name="email" value={member.email ?? ""} />
                       <input type="hidden" name="full_name" value={member.full_name} />
                       <button type="submit" className={menuItemClass}>
+                        <MailIcon className={menuIconClass} />
                         Invita al portale
                       </button>
                     </form>
@@ -475,41 +523,23 @@ export default async function RegistroPage({
 
                 {access.canEditRegistry && canManageAccount ? (
                     <>
-                      {/* An inline field rather than a plain button: the
-                          maestro chooses the provisional password and has to be
-                          able to read it back to pass it on. */}
-                      <form
-                        action={setTemporaryPassword}
-                        className="flex flex-col gap-1.5 px-3 py-2"
-                      >
+                      {/* The provisional password is the shared default, not
+                          a chosen one, so the menu shows no field: nothing here
+                          has to be read back off the screen. */}
+                      <form action={setTemporaryPassword}>
                         <input type="hidden" name="_query" value={currentQuery} />
                         <input
                           type="hidden"
                           name="user_id"
                           value={member.auth_user_id ?? ""}
                         />
-                        <label
-                          htmlFor={`password-${member.id}`}
-                          className="text-xs font-medium text-foreground/60"
+                        <ConfirmSubmitButton
+                          message={`Reimpostare la password di ${member.full_name} su quella provvisoria? La password attuale smetterà di funzionare.`}
+                          className={menuItemClass}
                         >
-                          Password provvisoria
-                        </label>
-                        <input
-                          id={`password-${member.id}`}
-                          name="password"
-                          type="text"
-                          required
-                          minLength={8}
-                          defaultValue={DEFAULT_PASSWORD}
-                          autoComplete="off"
-                          className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm outline-none focus:border-accent"
-                        />
-                        <button
-                          type="submit"
-                          className="rounded-lg border border-border px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-neutral-light/60"
-                        >
+                          <KeyIcon className={menuIconClass} />
                           Reimposta password
-                        </button>
+                        </ConfirmSubmitButton>
                       </form>
 
                       <form action={revokeAccess}>
@@ -523,6 +553,7 @@ export default async function RegistroPage({
                           message={`Revocare l'accesso a ${member.full_name}? La scheda resta nel registro, ma la persona non potrà più entrare nel portale.`}
                           className={`${menuItemClass} text-accent hover:bg-accent/10`}
                         >
+                          <UserMinusIcon className={menuIconClass} />
                           Revoca accesso
                         </ConfirmSubmitButton>
                       </form>
@@ -534,7 +565,7 @@ export default async function RegistroPage({
         })}
 
         {members.length === 0 ? (
-          <li className="p-4 text-sm text-foreground/60">
+          <li className="px-3 py-3 text-sm text-foreground/60 sm:p-4">
             Nessun membro corrisponde ai filtri scelti.
           </li>
         ) : null}
@@ -545,9 +576,10 @@ export default async function RegistroPage({
           {page > 1 ? (
             <Link
               href={`/registro?${queryString(search, { p: String(page - 1) })}`}
-              className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-light/60"
             >
-              ← Precedente
+              <ChevronLeftIcon className="h-4 w-4" />
+              Precedente
             </Link>
           ) : (
             <span />
@@ -556,9 +588,10 @@ export default async function RegistroPage({
           {page < lastPage ? (
             <Link
               href={`/registro?${queryString(search, { p: String(page + 1) })}`}
-              className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-light/60"
             >
-              Successiva →
+              Successiva
+              <ChevronRightIcon className="h-4 w-4" />
             </Link>
           ) : (
             <span />

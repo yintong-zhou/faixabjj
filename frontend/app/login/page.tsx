@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertCircleIcon } from "@/components/icons";
 import { PasswordInput } from "@/components/password-input";
 import { login } from "./actions";
 
@@ -10,7 +11,7 @@ export default async function LoginPage({
   const { error, next } = await searchParams;
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col gap-8 pt-6 sm:pt-16">
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-6 sm:gap-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Accedi
@@ -58,7 +59,8 @@ export default async function LoginPage({
         </div>
 
         {error ? (
-          <p className="rounded-lg bg-accent/10 px-3.5 py-2.5 text-sm text-accent">
+          <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+            <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
             {error}
           </p>
         ) : null}

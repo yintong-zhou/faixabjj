@@ -36,22 +36,22 @@ const NOT_DOING = [
 
 export default function Home() {
   return (
-    <div className="flex flex-col gap-16">
-      <section className="flex flex-col gap-5 pt-4 sm:pt-10">
-        <div className="w-fit rounded-lg bg-secondary p-4">
+    <div className="flex flex-col gap-10 sm:gap-16">
+      <section className="flex flex-col gap-4 sm:gap-5">
+        <div className="w-fit rounded-lg bg-secondary p-3 sm:p-4">
           <Image
             src="/faixabjj_logo-removebg-preview.png"
             alt="FAIXA BJJ"
             width={618}
             height={404}
             priority
-            className="h-16 w-auto sm:h-20"
+            className="h-12 w-auto sm:h-20"
           />
         </div>
         <span className="w-fit rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
           In design / MVP in sviluppo
         </span>
-        <h1 className="max-w-xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+        <h1 className="max-w-xl text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
           La progressione tecnica, tracciata — non decisa a sensazione.
         </h1>
         <p className="max-w-lg text-base leading-relaxed text-foreground/70">
@@ -76,11 +76,11 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-3 sm:gap-4">
         {FEATURES.map(({ title, description, icon: Icon }) => (
           <div
             key={title}
-            className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-5"
+            className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4 sm:gap-3 sm:p-5"
           >
             <Icon className="h-6 w-6 text-accent" />
             <h2 className="text-base font-semibold">{title}</h2>
@@ -91,7 +91,7 @@ export default function Home() {
         ))}
       </section>
 
-      <section className="flex flex-col gap-3 border-t border-border pt-8">
+      <section className="flex flex-col gap-3 border-t border-border pt-6 sm:pt-8">
         <h2 className="text-sm font-semibold text-foreground/60">
           Cosa non fa, deliberatamente
         </h2>

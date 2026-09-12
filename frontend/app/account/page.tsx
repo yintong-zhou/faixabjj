@@ -6,6 +6,13 @@ import {
   ROLE_LABELS,
   getOrCreateProfile,
 } from "@/utils/supabase/profile";
+import {
+  AlertCircleIcon,
+  CheckCircleIcon,
+  KeyIcon,
+  TrendingUpIcon,
+  UserIcon,
+} from "@/components/icons";
 import { updatePassword, updateProfile } from "./actions";
 
 const fieldClass =
@@ -23,10 +30,13 @@ export default async function AccountPage({
 
   if (!profile) {
     return (
-      <div className="mx-auto w-full max-w-xl pt-6">
-        <p className="rounded-lg bg-accent/10 px-3.5 py-2.5 text-sm text-accent">
-          Il tuo profilo non è disponibile. Se il problema persiste, controlla
-          che le migration del database siano state applicate.
+      <div className="mx-auto w-full max-w-xl">
+        <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Il tuo profilo non è disponibile. Se il problema persiste, controlla
+            che le migration del database siano state applicate.
+          </span>
         </p>
       </div>
     );
@@ -40,7 +50,7 @@ export default async function AccountPage({
     .order("start_date");
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-8 pt-6 sm:pt-10">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-5 sm:gap-8">
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Il mio account
@@ -51,18 +61,25 @@ export default async function AccountPage({
       </header>
 
       {ok ? (
-        <p className="rounded-lg bg-secondary/30 px-3.5 py-2.5 text-sm">{ok}</p>
+        <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
+          <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {ok}
+        </p>
       ) : null}
       {error ? (
-        <p className="rounded-lg bg-accent/10 px-3.5 py-2.5 text-sm text-accent">
+        <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
           {error}
         </p>
       ) : null}
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border p-5">
-        <h2 className="font-heading text-lg font-semibold">Dati personali</h2>
+      <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
+        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+          <UserIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          Dati personali
+        </h2>
 
-        <form action={updateProfile} className="flex flex-col gap-4">
+        <form action={updateProfile} className="flex flex-col gap-3 sm:gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="full_name" className="text-sm font-medium">
               Nome e cognome
@@ -95,7 +112,7 @@ export default async function AccountPage({
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="phone" className="text-sm font-medium">
                 Telefono
@@ -146,16 +163,19 @@ export default async function AccountPage({
         </form>
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border p-5">
+      <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
         <div className="flex flex-col gap-1">
-          <h2 className="font-heading text-lg font-semibold">Grado e ruoli</h2>
+          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+            <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+            Grado e ruoli
+          </h2>
           <p className="text-xs text-foreground/55">
             Cintura, tacche e ruoli non sono modificabili da qui: la promozione
             resta una decisione dell&apos;istruttore.
           </p>
         </div>
 
-        <dl className="grid gap-4 sm:grid-cols-2">
+        <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
               Cintura
@@ -209,10 +229,13 @@ export default async function AccountPage({
         ) : null}
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border p-5">
-        <h2 className="font-heading text-lg font-semibold">Password</h2>
+      <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
+        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+          <KeyIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          Password
+        </h2>
 
-        <form action={updatePassword} className="flex flex-col gap-4">
+        <form action={updatePassword} className="flex flex-col gap-3 sm:gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="password" className="text-sm font-medium">
               Nuova password
