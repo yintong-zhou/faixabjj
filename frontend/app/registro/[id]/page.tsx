@@ -3,6 +3,13 @@ import { notFound } from "next/navigation";
 import { BELT_LABELS, ROLE_LABELS } from "@/utils/supabase/profile";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { daysSince, formatDays } from "@/utils/dates";
+import {
+  ChevronLeftIcon,
+  FileTextIcon,
+  TrendingUpIcon,
+  UserIcon,
+  UsersIcon,
+} from "@/components/icons";
 
 type Member = {
   id: string;
@@ -85,13 +92,14 @@ export default async function MemberDetailPage({
   const backHref = from ? `/registro?${from}` : "/registro";
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 pt-6 sm:pt-10">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 sm:gap-6">
       <header className="flex flex-col gap-2">
         <Link
           href={backHref}
-          className="text-sm font-medium text-foreground/60 hover:text-foreground"
+          className="flex w-fit items-center gap-1.5 text-sm font-medium text-foreground/60 hover:text-foreground"
         >
-          ← Registro
+          <ChevronLeftIcon className="h-4 w-4" />
+          Registro
         </Link>
 
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -120,9 +128,12 @@ export default async function MemberDetailPage({
         )}
       </header>
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border p-5">
-        <h2 className="font-heading text-lg font-semibold">Anagrafica</h2>
-        <dl className="grid gap-4 sm:grid-cols-2">
+      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+          <UserIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          Anagrafica
+        </h2>
+        <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
           <Field label="Email" value={member.email ?? "—"} />
           <Field label="Telefono" value={member.phone ?? "—"} />
           <Field label="Data di nascita" value={member.birth_date ?? "—"} />
@@ -130,9 +141,12 @@ export default async function MemberDetailPage({
         </dl>
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border p-5">
-        <h2 className="font-heading text-lg font-semibold">Percorso</h2>
-        <dl className="grid gap-4 sm:grid-cols-2">
+      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+          <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          Percorso
+        </h2>
+        <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
           <Field
             label="Cintura"
             value={BELT_LABELS[member.current_belt] ?? member.current_belt}
@@ -159,15 +173,21 @@ export default async function MemberDetailPage({
         </dl>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border p-5">
-        <h2 className="font-heading text-lg font-semibold">Note</h2>
+      <section className="flex flex-col gap-2 rounded-xl border border-border p-4 sm:gap-3 sm:p-5">
+        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+          <FileTextIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          Note
+        </h2>
         <p className="text-sm whitespace-pre-wrap text-foreground/80">
           {member.notes ?? "—"}
         </p>
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border p-5">
-        <h2 className="font-heading text-lg font-semibold">Ruoli</h2>
+      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+          <UsersIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          Ruoli
+        </h2>
 
         {roles.length === 0 ? (
           <p className="text-sm text-foreground/60">Nessun ruolo assegnato.</p>

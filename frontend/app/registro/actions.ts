@@ -241,25 +241,20 @@ export async function inviteToPortal(formData: FormData) {
   back({ ok: `Invito inviato a ${email}.` }, query);
 }
 
-// Resets a member's password to one the maestro types, rather than emailing a
-// recovery link. The new password is provisional by construction: setting it
-// re-arms must_change_password, so the member has to replace it at their next
-// login exactly like a freshly created account. Without that flag this would
-// leave an account on a password somebody else knows.
+// Resets a member's password to the shared default, rather than emailing a
+// recovery link — the same password addPerson starts every account on, so the
+// maestro has nothing to read off the screen and pass on. It is provisional by
+// construction: setting it re-arms must_change_password, so the member has to
+// replace it at their next login exactly like a freshly created account.
+// Without that flag this would leave an account on a password everyone knows.
 export async function setTemporaryPassword(formData: FormData) {
   await requireUserManager(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
   const targetId = formData.get("user_id") as string;
-  const password = (formData.get("password") as string) ?? "";
 
   if (!targetId) {
     back({ error: "Utente non specificato." }, query);
-    return;
-  }
-
-  if (password.length < 8) {
-    back({ error: "La password provvisoria deve avere almeno 8 caratteri." }, query);
     return;
   }
 
@@ -275,7 +270,7 @@ export async function setTemporaryPassword(formData: FormData) {
   }
 
   const { data, error } = await admin.auth.admin.updateUserById(targetId, {
-    password,
+    password: DEFAULT_PASSWORD,
     app_metadata: { must_change_password: true },
   });
 
@@ -286,7 +281,7 @@ export async function setTemporaryPassword(formData: FormData) {
 
   back(
     {
-      ok: `Password provvisoria impostata per ${data.user.email ?? "l'utente"}: ${password} — le verrà chiesto di cambiarla al primo accesso.`,
+      ok: `Password di ${data.user.email ?? "l'utente"} riportata a quella provvisoria (${DEFAULT_PASSWORD}): le verrà chiesto di cambiarla al primo accesso.`,
     },
     query,
   );

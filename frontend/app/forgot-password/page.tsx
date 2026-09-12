@@ -10,7 +10,7 @@ export default async function ForgotPasswordPage({
 
   if (sent) {
     return (
-      <div className="mx-auto flex w-full max-w-sm flex-col gap-2 pt-6 sm:pt-16">
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Controlla la tua email
         </h1>
@@ -29,7 +29,7 @@ export default async function ForgotPasswordPage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col gap-8 pt-6 sm:pt-16">
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-6 sm:gap-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Password dimenticata
