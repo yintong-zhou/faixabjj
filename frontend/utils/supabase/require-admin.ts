@@ -13,19 +13,25 @@ export type AdminSession = {
 };
 
 // Mirrors the SQL predicates of the same names. Roles map onto them like this:
-//   student / assistant — none of the three
-//   instructor         — canViewRegistry only (read-only, by explicit decision)
-//   head_coach / admin — all three
+//   student / assistant — none of the four
+//   instructor         — canViewRegistry (read-only on the registry) and
+//                        canManageClasses (full write on courses and attendance)
+//   head_coach / admin — all four
+//
+// canManageClasses is deliberately not canEditRegistry: an instructor runs the
+// classes but must never change anybody's belt.
 export type Access = {
   canViewRegistry: boolean;
   canEditRegistry: boolean;
   canManageUsers: boolean;
+  canManageClasses: boolean;
 };
 
 const NO_ACCESS: Access = {
   canViewRegistry: false,
   canEditRegistry: false,
   canManageUsers: false,
+  canManageClasses: false,
 };
 
 export type AdminSessionWithAccess = AdminSession & { access: Access };
@@ -86,6 +92,7 @@ export async function getAccess(supabase: SupabaseClient): Promise<Access> {
     canViewRegistry: data.canViewRegistry === true,
     canEditRegistry: data.canEditRegistry === true,
     canManageUsers: data.canManageUsers === true,
+    canManageClasses: data.canManageClasses === true,
   };
 }
 
@@ -118,6 +125,21 @@ export async function requireRegistryEditor(
   const access = await getAccess(session.supabase);
 
   if (!access.canEditRegistry) {
+    notFound();
+  }
+
+  return { ...session, access };
+}
+
+// Courses, sessions and attendance. Instructors are included here but not in
+// requireRegistryEditor — they run the classes, they do not promote anyone.
+export async function requireClassManager(
+  path: string,
+): Promise<AdminSessionWithAccess> {
+  const session = await requireAdmin(path);
+  const access = await getAccess(session.supabase);
+
+  if (!access.canManageClasses) {
     notFound();
   }
 

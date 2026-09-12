@@ -38,9 +38,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const isLoggedIn = !!claimsData?.claims;
   // Drives which nav items the shell renders. Students and assistants never
   // see Registro/Presenze; the pages enforce it too, this only hides the links.
-  const canViewRegistry = isLoggedIn
-    ? (await getAccess(supabase)).canViewRegistry
-    : false;
+  // Presenze is shown to everyone — that is where check-in lives.
+  const access = isLoggedIn ? await getAccess(supabase) : null;
+  const canViewRegistry = access?.canViewRegistry ?? false;
+  const canManageClasses = access?.canManageClasses ?? false;
 
   return (
     <html
@@ -58,7 +59,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <NavShell isLoggedIn={isLoggedIn} canViewRegistry={canViewRegistry}>
+        <NavShell
+          isLoggedIn={isLoggedIn}
+          canViewRegistry={canViewRegistry}
+          canManageClasses={canManageClasses}
+        >
           {children}
         </NavShell>
       </body>

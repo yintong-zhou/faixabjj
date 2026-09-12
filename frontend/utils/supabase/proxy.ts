@@ -8,6 +8,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 // landing page.
 const PROTECTED_PREFIXES = [
   "/registro",
+  "/corsi",
   "/presenze",
   "/dashboard",
   "/account",

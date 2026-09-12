@@ -105,3 +105,115 @@ export function KebabIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function UserPlusIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <circle cx="10" cy="8" r="3.5" />
+      <path d="M3.5 19.5a6.5 6.5 0 0 1 13 0" />
+      <path d="M18.5 8v6M15.5 11h6" />
+    </svg>
+  );
+}
+
+export function UserMinusIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <circle cx="10" cy="8" r="3.5" />
+      <path d="M3.5 19.5a6.5 6.5 0 0 1 13 0" />
+      <path d="M15.5 11h6" />
+    </svg>
+  );
+}
+
+export function FilterIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <path d="M4 6h16l-6.2 7.3v5.2l-3.6 1.8v-7L4 6Z" />
+    </svg>
+  );
+}
+
+export function CheckCircleIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m8.5 12.2 2.4 2.4 4.6-4.9" />
+    </svg>
+  );
+}
+
+export function AlertCircleIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.75v4.75" />
+      <path d="M12 16h.01" />
+    </svg>
+  );
+}
+
+export function FileTextIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7l-4-4Z" />
+      <path d="M14 3v4h4" />
+      <path d="M9 12h6M9 16h4" />
+    </svg>
+  );
+}
+
+export function MailIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <rect x="3" y="5.5" width="18" height="13" rx="2" />
+      <path d="m3.5 7 8.5 6 8.5-6" />
+    </svg>
+  );
+}
+
+export function KeyIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <circle cx="8" cy="14" r="4" />
+      <path d="m11 11 8-8" />
+      <path d="m16.5 5.5 2.5 2.5M14.5 7.5l2.5 2.5" />
+    </svg>
+  );
+}
+
+export function TrendingUpIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <path d="m4 16 5-5 3.5 3.5L20 7" />
+      <path d="M15 7h5v5" />
+    </svg>
+  );
+}
+
+export function ChevronLeftIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <path d="m14.5 5.5-6 6.5 6 6.5" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <path d="m9.5 5.5 6 6.5-6 6.5" />
+    </svg>
+  );
+}
+
+export function CalendarPlusIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="M4 9.5h16" />
+      <path d="M8 3v3M16 3v3" />
+      <path d="M12 12v5M9.5 14.5h5" />
+    </svg>
+  );
+}
