@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Early scaffolding stage. The repository follows the 3-tier agent architecture defined in [`AGENT.md`](AGENT.md) (directives / orchestration / execution). The `frontend/` app has been bootstrapped with `create-next-app` (Next.js App Router + Tailwind CSS); it now has a branded, mobile-first shell and IA (see "Frontend UI" below) and a working admin login gate (see "Authentication" below), `/registro` is the first section wired to real data (member overview with filters and pagination — see "Registro" below). `/presenze` and `/dashboard` are still `ComingSoon` placeholders past the login check.
+Early scaffolding stage. The repository follows the 3-tier agent architecture defined in [`AGENT.md`](AGENT.md) (directives / orchestration / execution). The `frontend/` app has been bootstrapped with `create-next-app` (Next.js App Router + Tailwind CSS); it now has a branded, mobile-first shell and IA (see "Frontend UI" below) and a working admin login gate (see "Authentication" below), `/registro` (member overview with filters and pagination), `/corsi` (recurring course definitions) and `/presenze` (lesson calendar, roll call and student check-in) are wired to real data. `/dashboard` is still a `ComingSoon` placeholder past the login check.
 
 `backend/` (FastAPI) from the `AGENT.md` template has **not** been created. It's marked "se necessario" (if necessary) there, and per the README's architecture Supabase (Postgres + Auth + Row Level Security) is the backend — no separate API layer is needed unless/until logic emerges that can't live in Supabase (RLS policies, Postgres functions/triggers) or client-side. Add `backend/` only when a concrete need for a server-side API shows up.
 
@@ -83,24 +83,26 @@ that creates the row (plus a backfill), and `getOrCreateProfile()` in
 
 **Permission model.** This app is **not** flat — the early "every authenticated
 user is trusted staff" design is gone. Roles come from an *active*
-`assigned_role` (`end_date is null`) and map onto three SQL predicates:
+`assigned_role` (`end_date is null`) and map onto four SQL predicates:
 
-| Role | Registro / Presenze | Write | Manage accounts |
-|---|---|---|---|
-| `student` | not visible | no | no |
-| `assistant` | not visible | no | no |
-| `instructor` | read-only | no | no |
-| `head_coach` | full | yes | yes |
-| `admin` | full | yes | yes |
+| Role | Registro | Corsi / Presenze | Write registry | Manage accounts |
+|---|---|---|---|---|
+| `student` | not visible | Presenze only, check-in for self | no | no |
+| `assistant` | not visible | Presenze only, check-in for self | no | no |
+| `instructor` | read-only | full | no | no |
+| `head_coach` | full | full | yes | yes |
+| `admin` | full | full | yes | yes |
 
 `assistant` sitting with `student` rather than with the technical staff was an
 explicit decision, not an oversight. `admin` is a role for whoever runs the
 portal without teaching.
 
-The predicates are `can_view_registry()`, `can_edit_registry()` and
-`can_manage_users()`; `current_access()` returns all three as JSON in one RPC.
+The predicates are `can_view_registry()`, `can_edit_registry()`,
+`can_manage_users()` and `can_manage_classes()`; `current_access()` returns all
+four as JSON in one RPC.
 The frontend calls them (`getAccess()`, `requireRegistryViewer()`,
-`requireUserManager()` in `utils/supabase/require-admin.ts`) rather than
+`requireUserManager()`, `requireClassManager()` in
+`utils/supabase/require-admin.ts`) rather than
 re-implementing the rules — keep it that way, one definition per privilege.
 `getAccess()` **fails closed**: an RPC error yields no access, never full access.
 Note the consequence — before `20260911120000` is applied to a project the RPC
@@ -210,7 +212,7 @@ refuses the writes anyway.
   a person row with no account every time the address is already taken. Most people in a gym are records to
   track, not portal users. It runs on the *user's* Supabase client, not the
   service-role one, so RLS does the enforcing; it needs no secret key.
-- **"Reimposta password"** (`setTemporaryPassword`) does *not* email a recovery link. The maestro types a provisional password into a field inside the kebab menu — a field, not a button, because they have to read it back to pass it on — and the action sets it with the admin client **while re-arming `must_change_password`**. Without that flag the account would be left sitting on a password somebody else knows.
+- **"Reimposta password"** (`setTemporaryPassword`) does *not* email a recovery link, and shows no password on screen. It is a single confirmed button in the kebab that restores the account to the shared default from `frontend/utils/default-password.ts` — the one `addPerson` starts every account on, and the only one that needs no reading back off the screen because it is already printed in the "Aggiungi persona" panel. The action **re-arms `must_change_password`**; without that flag the account would be left sitting on a password everybody knows.
 - **"Invita al portale"** (`inviteToPortal`) covers the member who has *no*
   account — in practice someone whose access was revoked. It sends an email and
   lets them choose their own password, so no default password and no forced
@@ -238,13 +240,90 @@ even though the table policies forbid it. `person_hours` was created in
 `20260910000000` without the option and was readable by everyone; the Registro
 migration fixes it. Check this on any new view.
 
+## Presenze e corsi
+
+Two sections, one data model. `/corsi` is where staff describe the recurring
+classes; `/presenze` is the calendar those definitions generate, the roll call
+behind each lesson, and the place a member checks themselves in.
+
+**Three tables** (`20260912000000_class_schedule.sql`):
+
+- `course` — the recurring *rule*, not a lesson: `weekdays` (an ISO
+  `smallint[]`, 1 = Monday), one `start_time`/`end_time` pair, an optional
+  `starts_on`/`ends_on` range, and the two check-in margins. A course that runs
+  at different times on different days is modelled as **two courses** — that
+  trade buys one table instead of a `course_slot` join table.
+- `class_session` — the lesson that actually happens. Its times are **copied**
+  from the course at generation rather than joined through it, so editing a
+  course never silently rewrites lessons that already took place.
+- `attendance` — rewired onto `session_id`. `class_date`, `led_by`,
+  `duration_hours` and `unique (person_id, class_date)` are gone; the key is
+  now `unique (person_id, session_id)`.
+
+**One attendance is one hour**, and `duration_hours` was *removed* rather than
+defaulted to 1: with a default, a crafted write can still store 2 and the rule
+becomes a convention. The cost is that a four-hour seminar cannot be one row.
+`person_hours` is therefore `count(*) filter (where present)`, not a sum — and
+because `member_overview` reads it, that view has to be dropped and recreated
+in the same migration or the `drop view` is refused.
+
+**Permissions** (`20260912010000_class_schedule_access.sql`) add a fourth
+predicate, `can_manage_classes()` = instructor + head_coach + admin, exposed by
+`current_access()` as `canManageClasses` and guarded in the app by
+`requireClassManager()`. It is deliberately **not** `can_edit_registry()`: an
+instructor runs the classes but must never change anybody's belt. Two
+privileges, two predicates — do not collapse them.
+
+**`/presenze` is open to every signed-in member**, unlike `/registro`. This is
+the one previously staff-only section a student reaches, and it has to be:
+check-in must live where the lessons are listed, and there is only one such
+list. The page calls `requireAdmin()` and branches on `canManageClasses` —
+staff get the roll call link and the presence count, a member gets a check-in
+button for themselves.
+
+**Student check-in** is an RLS `insert` policy requiring four things together:
+the row is theirs, `present` is true, `checked_in_by = 'self'`, and
+`session_checkin_open(session_id)`. Undo is allowed only on their own `'self'`
+row and only while the window is open. `checked_in_by` is what makes a row the
+staff created un-undoable by the member it describes.
+
+**Two things that look like duplication but are not:**
+
+- The **weekday expansion** lives in TypeScript (`frontend/utils/schedule.ts`,
+  covered by `schedule.test.ts`) and Postgres only receives the resulting list
+  of dates, through `sync_course_sessions(course_id, dates[])`. SQL does the
+  part only SQL can do atomically: drop the future sessions the new schedule
+  supersedes **but only where no attendance exists**, then insert the rest.
+  Past sessions are never touched.
+- The **timezone maths** lives only in SQL. `session_date + start_time` is
+  wall-clock and `now()` is `timestamptz`; comparing them directly opens
+  check-in an hour early under DST. `gym_timezone()` (`Europe/Rome`) is applied
+  once, and `session_overview` exposes `checkin_opens_at`/`checkin_closes_at` as
+  instants so `checkinState()` in TypeScript only ever compares two timestamps.
+
+**A course with attendance can only be suspended, never deleted.** The rule is
+a `before delete` trigger (`guard_course_delete`), not a check in the server
+action, because the service-role key bypasses RLS — and because `class_session`
+cascades from `course` and `attendance` cascades from `class_session`, a plain
+delete would take the gym's hours with it. Same reasoning as "revoca accesso"
+in the Registro.
+
+**Cancelling a lesson** sets `status = 'cancelled'`: check-in closes, the row
+shows struck through, and attendance already recorded survives.
+
+Both views here — `session_overview` and `course_overview` — carry
+`security_invoker = on`, like every view in this project. Note the consequence
+on `session_overview.present_count`: it respects the caller's own attendance
+policy, so a student would see only their own row counted. The UI shows that
+count to staff only.
+
 ## Frontend UI
 
 - Design tokens (colors, fonts) come from `brand-guidelines.md` at the repo root — implemented as CSS variables in `frontend/app/globals.css` (Tailwind v4 `@theme inline`, not a `tailwind.config.js`). Headings use Sora (`font-heading`), body text uses Work Sans (`font-body`), both loaded via `next/font/google` in `frontend/app/layout.tsx`.
 - `frontend/components/nav-shell.tsx` is the app shell: a sticky header with horizontal nav on `sm:` and up, a fixed bottom tab bar below `sm:`. It wraps `{children}` in the root layout — don't duplicate navigation inside individual pages.
 - The nav is **role-aware**: `navItemsFor()` in that file renders only Home for a visitor, Dashboard + Account for an allievo, and the full set for staff. `canViewRegistry` is computed server-side in `frontend/app/layout.tsx` (via `getAccess()`) and passed down as a prop, like `isLoggedIn`. This only hides links — see the permission model above for the real enforcement.
 - `frontend/components/icons.tsx` — small hand-rolled inline SVG icons (no icon library dependency). Add new icons here rather than pulling in a package.
-- `frontend/components/coming-soon.tsx` — shared placeholder, now used only by `/presenze` and `/dashboard` until each is wired to real Supabase data. Replace a route's `ComingSoon` usage with real content rather than adding a parallel page.
+- `frontend/components/coming-soon.tsx` — shared placeholder, now used only by `/dashboard` until it is wired to real Supabase data. Replace a route's `ComingSoon` usage with real content rather than adding a parallel page.
 - All copy in the UI is in Italian.
 - **Theme (light/dark):** manual toggle in the header (`frontend/components/theme-toggle.tsx`), not just OS `prefers-color-scheme`. State is `localStorage["theme"]` (`"light"` \| `"dark"`, absent = follow system) applied as `data-theme` on `<html>`. Three pieces make this work together — keep them in sync if you touch theming:
   - `frontend/app/globals.css` defines light tokens on `:root`, a `prefers-color-scheme: dark` override guarded by `:not([data-theme="light"])`, and unconditional `:root[data-theme="dark"]` / `:root[data-theme="light"]` blocks so an explicit choice always wins over system preference in both directions.
@@ -263,7 +342,14 @@ npm run start    # serve the production build
 npm run lint     # ESLint (eslint-config-next)
 ```
 
-There is no test runner configured yet — add one (and this section) when tests are introduced. There are no Python dependencies yet in `execution/` — add a `requirements.txt` there when the first script is written.
+Vitest covers the pure functions in `frontend/utils/` and nothing else — no jsdom, no component tests, no end-to-end. Anything needing a browser or a database is verified by running the app.
+
+```bash
+npm test         # Vitest, single run
+npm run test:watch
+```
+
+There are no Python dependencies yet in `execution/` — add a `requirements.txt` there when the first script is written.
 
 To preview the app in this environment, use the `frontend` launch configuration in `.claude/launch.json` (drives the Browser pane) rather than running `npm run dev` manually in a shell.
 
