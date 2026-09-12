@@ -112,6 +112,13 @@ alter table attendance alter column session_id set not null;
 alter table attendance drop constraint attendance_person_id_class_date_key;
 alter table attendance add constraint attendance_person_session_key unique (person_id, session_id);
 
+-- Both views read columns that are about to disappear, so they come down
+-- first: person_hours sums duration_hours, and member_overview reads
+-- person_hours. Postgres refuses the column drops while they exist. Both are
+-- recreated at the bottom of this file.
+drop view if exists public.member_overview;
+drop view if exists public.person_hours;
+
 -- The session carries the date and the instructor now.
 drop index if exists attendance_class_date_idx;
 drop index if exists attendance_led_by_idx;
@@ -127,13 +134,8 @@ create index attendance_session_id_idx on attendance (session_id);
 -- ---------------------------------------------------------------------------
 -- person_hours — now a count, not a sum
 -- ---------------------------------------------------------------------------
--- member_overview reads person_hours, so it has to come down first and go back
--- up unchanged afterwards; dropping person_hours on its own would be refused.
-drop view if exists public.member_overview;
-
 -- security_invoker is mandatory: without it the view runs with its owner's
 -- privileges and hands every student the whole gym's hours.
-drop view if exists public.person_hours;
 create view public.person_hours with (security_invoker = on) as
 select
   person_id,
