@@ -37,10 +37,25 @@ type CourseValues = {
   end_time: string;
   starts_on: string;
   ends_on: string | null;
-  instructor_id: string | null;
   checkin_opens_minutes_before: number;
   checkin_closes_minutes_after: number;
 };
+
+// The form posts hour and minute separately rather than using an
+// <input type="time">, whose widget follows the operating system's locale and
+// shows AM/PM on a machine that is not set to Italian. Two selects read the
+// same on every locale, and this is where they become "HH:MM".
+function readTime(formData: FormData, prefix: string): string | null {
+  const hour = (formData.get(`${prefix}_hour`) as string | null)?.trim();
+  const minute = (formData.get(`${prefix}_minute`) as string | null)?.trim();
+
+  const h = Number.parseInt(hour ?? "", 10);
+  const m = Number.parseInt(minute ?? "", 10);
+  if (!Number.isInteger(h) || h < 0 || h > 23) return null;
+  if (!Number.isInteger(m) || m < 0 || m > 59) return null;
+
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
 
 // Validated here and not only through the form's `required` attributes, which
 // a crafted POST skips.
@@ -50,8 +65,8 @@ function readCourseForm(
   const name = text(formData, "name");
   if (!name) return { error: "Il nome del corso è obbligatorio." };
 
-  const startTime = text(formData, "start_time");
-  const endTime = text(formData, "end_time");
+  const startTime = readTime(formData, "start");
+  const endTime = readTime(formData, "end");
   if (!startTime || !endTime) {
     return { error: "Orario di inizio e di fine sono obbligatori." };
   }
@@ -94,7 +109,6 @@ function readCourseForm(
       end_time: endTime,
       starts_on: startsOn ?? today(),
       ends_on: endsOn,
-      instructor_id: text(formData, "instructor_id"),
       checkin_opens_minutes_before: opensBefore,
       checkin_closes_minutes_after: closesAfter,
     },

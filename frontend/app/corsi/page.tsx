@@ -32,9 +32,6 @@ const menuIconClass = "h-4 w-4 shrink-0";
 const fieldClass =
   "rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-accent";
 
-// Only people who could plausibly lead a class are offered as instructors.
-const TECHNICAL_ROLES = ["instructor", "head_coach", "admin"];
-
 type Course = {
   id: string;
   name: string;
@@ -44,25 +41,87 @@ type Course = {
   end_time: string;
   starts_on: string;
   ends_on: string | null;
-  instructor_id: string | null;
-  instructor_name: string | null;
   is_active: boolean;
   checkin_opens_minutes_before: number;
   checkin_closes_minutes_after: number;
   upcoming_sessions: number;
 };
 
-type Instructor = { id: string; full_name: string };
+const HOURS = Array.from({ length: 24 }, (_, hour) =>
+  String(hour).padStart(2, "0"),
+);
+const MINUTES = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
+
+// Hour and minute as two selects rather than <input type="time">: the native
+// time widget follows the operating system's locale and shows AM/PM on a
+// machine that is not set to Italian. Two selects read as 24-hour everywhere,
+// still need no client JS, and are a reasonable picker on a phone.
+function TimeField({
+  label,
+  prefix,
+  value,
+  idPrefix,
+}: {
+  label: string;
+  prefix: "start" | "end";
+  value?: string;
+  idPrefix: string;
+}) {
+  const [hour, minute] = (value ? formatTime(value) : ":").split(":");
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-sm font-medium">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <select
+          id={`${idPrefix}-${prefix}-hour`}
+          name={`${prefix}_hour`}
+          required
+          defaultValue={hour}
+          aria-label={`${label}: ore`}
+          className={fieldClass}
+        >
+          <option value="" disabled>
+            hh
+          </option>
+          {HOURS.map((h) => (
+            <option key={h} value={h}>
+              {h}
+            </option>
+          ))}
+        </select>
+        <span aria-hidden="true" className="text-sm font-medium text-foreground/60">
+          :
+        </span>
+        <select
+          id={`${idPrefix}-${prefix}-minute`}
+          name={`${prefix}_minute`}
+          required
+          defaultValue={minute}
+          aria-label={`${label}: minuti`}
+          className={fieldClass}
+        >
+          <option value="" disabled>
+            mm
+          </option>
+          {MINUTES.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
 
 // The add and edit forms are the same fields; only the defaults differ, so
 // they are one component rather than two that drift apart.
 function CourseFields({
   course,
-  instructors,
   idPrefix,
 }: {
   course?: Course;
-  instructors: Instructor[];
   idPrefix: string;
 }) {
   return (
@@ -102,33 +161,19 @@ function CourseFields({
       </fieldset>
 
       <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${idPrefix}-start_time`} className="text-sm font-medium">
-            Inizio
-          </label>
-          <input
-            id={`${idPrefix}-start_time`}
-            name="start_time"
-            type="time"
-            required
-            defaultValue={course ? formatTime(course.start_time) : ""}
-            className={fieldClass}
-          />
-        </div>
+        <TimeField
+          label="Inizio"
+          prefix="start"
+          value={course?.start_time}
+          idPrefix={idPrefix}
+        />
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${idPrefix}-end_time`} className="text-sm font-medium">
-            Fine
-          </label>
-          <input
-            id={`${idPrefix}-end_time`}
-            name="end_time"
-            type="time"
-            required
-            defaultValue={course ? formatTime(course.end_time) : ""}
-            className={fieldClass}
-          />
-        </div>
+        <TimeField
+          label="Fine"
+          prefix="end"
+          value={course?.end_time}
+          idPrefix={idPrefix}
+        />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${idPrefix}-starts_on`} className="text-sm font-medium">
@@ -154,25 +199,6 @@ function CourseFields({
             defaultValue={course?.ends_on ?? ""}
             className={fieldClass}
           />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${idPrefix}-instructor_id`} className="text-sm font-medium">
-            Istruttore
-          </label>
-          <select
-            id={`${idPrefix}-instructor_id`}
-            name="instructor_id"
-            defaultValue={course?.instructor_id ?? ""}
-            className={fieldClass}
-          >
-            <option value="">Nessuno</option>
-            {instructors.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.full_name}
-              </option>
-            ))}
-          </select>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -237,14 +263,7 @@ export default async function CorsiPage({
     .order("is_active", { ascending: false })
     .order("name");
 
-  const { data: instructorRows } = await supabase
-    .from("member_overview")
-    .select("id, full_name")
-    .overlaps("active_roles", TECHNICAL_ROLES)
-    .order("full_name");
-
   const courses = (courseRows ?? []) as Course[];
-  const instructors = (instructorRows ?? []) as Instructor[];
 
   return (
     <div className="flex w-full flex-col gap-4 sm:gap-6">
@@ -293,9 +312,11 @@ export default async function CorsiPage({
           <p className="text-xs text-foreground/55">
             Salvando il corso vengono generate le lezioni delle prossime otto
             settimane. Le lezioni già passate non vengono mai toccate.
+            L&apos;istruttore si assegna sulla singola lezione, dalla pagina
+            dell&apos;appello in Presenze.
           </p>
 
-          <CourseFields instructors={instructors} idPrefix="new" />
+          <CourseFields idPrefix="new" />
 
           <button
             type="submit"
@@ -324,8 +345,6 @@ export default async function CorsiPage({
                 {formatWeekdays(course.weekdays)}
                 {" · "}
                 {formatTime(course.start_time)}–{formatTime(course.end_time)}
-                {" · "}
-                {course.instructor_name ?? "nessun istruttore"}
               </span>
 
               <span className="text-xs text-foreground/55">
@@ -389,11 +408,7 @@ export default async function CorsiPage({
                 className="flex flex-col gap-3 pt-3 sm:gap-4"
               >
                 <input type="hidden" name="course_id" value={course.id} />
-                <CourseFields
-                  course={course}
-                  instructors={instructors}
-                  idPrefix={`edit-${course.id}`}
-                />
+                <CourseFields course={course} idPrefix={`edit-${course.id}`} />
                 <button
                   type="submit"
                   className="self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
