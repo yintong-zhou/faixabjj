@@ -37,6 +37,7 @@ type CourseValues = {
   end_time: string;
   starts_on: string;
   ends_on: string | null;
+  instructor_id: string | null;
   checkin_opens_minutes_before: number;
   checkin_closes_minutes_after: number;
 };
@@ -109,6 +110,10 @@ function readCourseForm(
       end_time: endTime,
       starts_on: startsOn ?? today(),
       ends_on: endsOn,
+      // The course's default instructor. sync_course_sessions() copies it onto
+      // the sessions it creates, and leaves an existing session's instructor
+      // alone — a substitution recorded on one lesson survives a course edit.
+      instructor_id: text(formData, "instructor_id"),
       checkin_opens_minutes_before: opensBefore,
       checkin_closes_minutes_after: closesAfter,
     },

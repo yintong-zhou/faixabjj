@@ -35,7 +35,7 @@ Schema lives as plain SQL migrations in `supabase/migrations/` (standard Supabas
 - `20260911000000_account_management.sql` — profile provisioning (`on auth.users insert` trigger + backfill), the first `can_manage_users()`, and the anti-self-promotion guards.
 - `20260911120000_role_based_access.sql` — **the current permission model.** Adds the `admin` role to the `person_role` enum and replaces the flat policies with per-role ones. Read this one first when reasoning about who can see or change what.
 
-**⚠️ Neither migration has been confirmed applied to the live project yet, and this needs a human to resolve:** the Supabase MCP connection available in this environment authenticates to a *different* Supabase account/project (`ICPN_Main`, ref `szxiviyiavzdkaxasvic`) than the one this app actually points to (`frontend/.env.local`'s `NEXT_PUBLIC_SUPABASE_URL`, ref `poksgledkecwviypspmi`). Do not run schema/RLS changes against whatever project the connected MCP happens to show — verify the project ref matches `poksgledkecwviypspmi` first. Until that's sorted out, apply migrations by pasting them into the SQL Editor of the **correct** project's dashboard, or by connecting the right MCP/CLI and re-checking `list_migrations`.
+**⚠️ Migrations are applied by hand, from the dashboard, and the MCP in this environment cannot do it:** the Supabase MCP connection available in this environment authenticates to a *different* Supabase account/project (`ICPN_Main`, ref `szxiviyiavzdkaxasvic`) than the one this app actually points to (`frontend/.env.local`'s `NEXT_PUBLIC_SUPABASE_URL`, ref `poksgledkecwviypspmi`). Do not run schema/RLS changes against whatever project the connected MCP happens to show — verify the project ref matches `poksgledkecwviypspmi` first. Until that's sorted out, apply migrations by pasting them into the SQL Editor of the **correct** project's dashboard, or by connecting the right MCP/CLI and re-checking `list_migrations`.
 
 ### Connecting the frontend to Supabase
 
@@ -252,7 +252,14 @@ behind each lesson, and the place a member checks themselves in.
   `smallint[]`, 1 = Monday), one `start_time`/`end_time` pair, an optional
   `starts_on`/`ends_on` range, and the two check-in margins. A course that runs
   at different times on different days is modelled as **two courses** — that
-  trade buys one table instead of a `course_slot` join table.
+  trade buys one table instead of a `course_slot` join table. It also carries
+  `instructor_id`, the course's **default** instructor: `sync_course_sessions()`
+  copies it onto the sessions it creates and deliberately leaves an existing
+  session's instructor alone, so a substitution recorded on one lesson survives
+  a course edit. The consequence to know: changing the course default does
+  **not** rewrite lessons already in the calendar. (Commit `2da3e44` dropped
+  this field from the form and moved the instructor to the lesson only; that was
+  reversed — the default belongs on the course. Do not remove it again.)
 - `class_session` — the lesson that actually happens. Its times are **copied**
   from the course at generation rather than joined through it, so editing a
   course never silently rewrites lessons that already took place.
