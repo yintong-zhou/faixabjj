@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Belt } from "@/components/belt";
+import { formatDate } from "@/utils/dates";
 import { PasswordInput } from "@/components/password-input";
 import { requireAdmin, canManageUsers } from "@/utils/supabase/require-admin";
 import {
@@ -193,19 +194,19 @@ export default async function AccountPage({
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
               Cambio cintura da
             </dt>
-            <dd className="text-sm font-medium">{profile.rank_since}</dd>
+            <dd className="text-sm font-medium">{formatDate(profile.rank_since)}</dd>
           </div>
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
               Ultima tacca
             </dt>
-            <dd className="text-sm font-medium">{profile.stripe_since ?? "—"}</dd>
+            <dd className="text-sm font-medium">{formatDate(profile.stripe_since)}</dd>
           </div>
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
               Iscritto dal
             </dt>
-            <dd className="text-sm font-medium">{profile.joined_at}</dd>
+            <dd className="text-sm font-medium">{formatDate(profile.joined_at)}</dd>
           </div>
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">

@@ -17,8 +17,9 @@ import {
   UserMinusIcon,
   UserPlusIcon,
 } from "@/components/icons";
-import { daysSince, formatDays } from "@/utils/dates";
+import { daysSince, formatDate, formatDays } from "@/utils/dates";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
+import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
 import {
   addPerson,
   inviteToPortal,
@@ -27,9 +28,6 @@ import {
 } from "./actions";
 
 const PAGE_SIZE = 20;
-
-// The role that means "runs the portal", not "trains here".
-const PORTAL_ONLY_ROLE = "admin";
 
 const menuItemClass =
   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-neutral-light/60";
@@ -94,13 +92,8 @@ export default async function RegistroPage({
   let query = supabase
     .from("member_overview")
     .select("*", { count: "exact" })
-    // Whoever runs the portal without teaching is not a member of the gym, so
-    // they do not belong in the member overview. The test is array *equality*,
-    // not "contains admin": somebody who is both maestro and admin still trains
-    // here and must stay on the list. `active_roles` is coalesced to an empty
-    // array in the view and sorted, so `{admin}` matches exactly the admin-only
-    // case and never a row with no roles at all.
-    .not("active_roles", "eq", `{${PORTAL_ONLY_ROLE}}`)
+    // Whoever runs the portal without teaching is not a member of the gym.
+    .not("active_roles", "eq", PORTAL_ONLY_ROLES)
     .order("full_name");
 
   // Name only — searching by email was explicitly excluded. The strip keeps a
@@ -510,7 +503,7 @@ export default async function RegistroPage({
                   {" · "}
                   {Number(member.total_hours).toFixed(1)} ore
                   {" · dal "}
-                  {member.joined_at}
+                  {formatDate(member.joined_at)}
                 </span>
               </div>
 

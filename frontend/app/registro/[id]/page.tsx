@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Belt } from "@/components/belt";
 import { ROLE_LABELS } from "@/utils/supabase/profile";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
-import { daysSince, formatDays } from "@/utils/dates";
+import { daysSince, formatDate, formatDays } from "@/utils/dates";
 import {
   ChevronLeftIcon,
   FileTextIcon,
@@ -145,8 +145,8 @@ export default async function MemberDetailPage({
         <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
           <Field label="Email" value={member.email ?? "—"} />
           <Field label="Telefono" value={member.phone ?? "—"} />
-          <Field label="Data di nascita" value={member.birth_date ?? "—"} />
-          <Field label="Iscritto dal" value={member.joined_at} />
+          <Field label="Data di nascita" value={formatDate(member.birth_date)} />
+          <Field label="Iscritto dal" value={formatDate(member.joined_at)} />
         </dl>
       </section>
 
@@ -167,8 +167,8 @@ export default async function MemberDetailPage({
               className="mt-0.5"
             />
           </Field>
-          <Field label="Cambio cintura da" value={member.rank_since} />
-          <Field label="Ultima tacca" value={member.stripe_since ?? "—"} />
+          <Field label="Cambio cintura da" value={formatDate(member.rank_since)} />
+          <Field label="Ultima tacca" value={formatDate(member.stripe_since)} />
           <Field
             label="Da quanto fa BJJ"
             value={formatDays(daysSince(member.joined_at))}
@@ -218,8 +218,8 @@ export default async function MemberDetailPage({
                 </span>
                 <span className="text-xs text-foreground/55">
                   {role.end_date
-                    ? `dal ${role.start_date} al ${role.end_date}`
-                    : `dal ${role.start_date} · attivo`}
+                    ? `dal ${formatDate(role.start_date)} al ${formatDate(role.end_date)}`
+                    : `dal ${formatDate(role.start_date)} · attivo`}
                 </span>
               </li>
             ))}

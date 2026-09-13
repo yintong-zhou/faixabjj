@@ -9,6 +9,7 @@ import {
   PlayIcon,
 } from "@/components/icons";
 import { requireClassManager } from "@/utils/supabase/require-admin";
+import { PORTAL_ONLY_ROLES, TECHNICAL_ROLES } from "@/utils/members";
 import { formatDayHeading, formatTime } from "@/utils/schedule";
 import {
   cancelSession,
@@ -16,8 +17,6 @@ import {
   saveRollCall,
   setSessionInstructor,
 } from "../actions";
-
-const TECHNICAL_ROLES = ["instructor", "head_coach", "admin"];
 
 type Session = {
   id: string;
@@ -76,6 +75,8 @@ export default async function RollCallPage({
       supabase
         .from("member_overview")
         .select("id, full_name, current_belt, current_stripes, active_roles")
+        // Somebody who only runs the portal does not attend the class.
+        .not("active_roles", "eq", PORTAL_ONLY_ROLES)
         .order("full_name"),
       supabase
         .from("attendance")

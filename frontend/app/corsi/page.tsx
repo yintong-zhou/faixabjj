@@ -11,6 +11,7 @@ import {
 } from "@/components/icons";
 import { RowMenu } from "@/components/row-menu";
 import { requireClassManager } from "@/utils/supabase/require-admin";
+import { TECHNICAL_ROLES } from "@/utils/members";
 import {
   WEEKDAY_LABELS,
   formatTime,
@@ -31,9 +32,6 @@ const menuIconClass = "h-4 w-4 shrink-0";
 
 const fieldClass =
   "rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-accent";
-
-// Only people who could plausibly lead a class are offered as instructors.
-const TECHNICAL_ROLES = ["instructor", "head_coach", "admin"];
 
 type Course = {
   id: string;
@@ -75,6 +73,10 @@ function TimeField({
   idPrefix: string;
 }) {
   const [hour, minute] = (value ? formatTime(value) : ":").split(":");
+  // A new course starts on the hour by default: classes almost always do, and
+  // it leaves the hour as the only field that has to be chosen. The hour keeps
+  // its empty placeholder on purpose — there is no sensible default for it.
+  const minuteValue = minute || "00";
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -104,13 +106,10 @@ function TimeField({
           id={`${idPrefix}-${prefix}-minute`}
           name={`${prefix}_minute`}
           required
-          defaultValue={minute}
+          defaultValue={minuteValue}
           aria-label={`${label}: minuti`}
           className={fieldClass}
         >
-          <option value="" disabled>
-            mm
-          </option>
           {MINUTES.map((m) => (
             <option key={m} value={m}>
               {m}
@@ -133,6 +132,21 @@ function CourseFields({
   instructors: Instructor[];
   idPrefix: string;
 }) {
+  // A course saved earlier may point at somebody who no longer holds a
+  // technical role. Dropping them from the list would make the browser fall
+  // back to the first option and silently reassign the course on the next
+  // save, so the current holder stays selectable.
+  const options =
+    course?.instructor_id && !instructors.some((p) => p.id === course.instructor_id)
+      ? [
+          ...instructors,
+          {
+            id: course.instructor_id,
+            full_name: course.instructor_name ?? "Istruttore attuale",
+          },
+        ]
+      : instructors;
+
   return (
     <>
       <div className="flex flex-col gap-1.5">
@@ -252,7 +266,7 @@ function CourseFields({
             className={fieldClass}
           >
             <option value="">Nessuno</option>
-            {instructors.map((person) => (
+            {options.map((person) => (
               <option key={person.id} value={person.id}>
                 {person.full_name}
               </option>

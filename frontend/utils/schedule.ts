@@ -6,6 +6,8 @@
 // UTC midnight. Nothing in this file knows about the gym's timezone: the
 // check-in window is computed once in SQL and arrives here as two instants.
 
+import { formatDate } from "./dates";
+
 export const WEEKDAY_LABELS = [
   { value: 1, short: "lun", long: "lunedì" },
   { value: 2, short: "mar", long: "martedì" },
@@ -40,6 +42,32 @@ export function addDays(isoDate: string, days: number): string {
 export function weekStart(isoDate: string): string {
   const timestamp = toUtc(isoDate);
   return toIso(timestamp - (isoWeekday(timestamp) - 1) * DAY_MS);
+}
+
+// The first day of the month a date falls in.
+export function monthStart(isoDate: string): string {
+  return `${isoDate.slice(0, 7)}-01`;
+}
+
+// The first day of the month `months` away. Anchoring on the first day is
+// what keeps the month navigation honest: adding a month to 31 January and
+// keeping the day would land on 3 March.
+export function shiftMonth(isoDate: string, months: number): string {
+  const [year, month] = isoDate.split("-").map(Number);
+  const zeroBased = (year * 12 + (month - 1)) + months;
+  const shiftedYear = Math.floor(zeroBased / 12);
+  const shiftedMonth = zeroBased - shiftedYear * 12 + 1;
+  return `${String(shiftedYear).padStart(4, "0")}-${String(shiftedMonth).padStart(2, "0")}-01`;
+}
+
+// The range a month grid actually shows: whole Monday-to-Sunday weeks, so the
+// first and last row spill into the neighbouring months. The page queries this
+// range rather than the month itself, or a lesson on a spilled-in day would be
+// drawn as an empty cell.
+export function monthGridRange(isoDate: string): { from: string; until: string } {
+  const first = monthStart(isoDate);
+  const last = addDays(shiftMonth(first, 1), -1);
+  return { from: weekStart(first), until: addDays(weekStart(last), 6) };
 }
 
 export function parseWeekdays(values: string[]): number[] {
@@ -108,18 +136,38 @@ export function checkinState({
   return "open";
 }
 
-// Italian day heading for a "YYYY-MM-DD" column, e.g. "lunedì 14 settembre".
+// Italian day heading for a "YYYY-MM-DD" column, e.g. "lunedì 14/09/2026".
+// The weekday stays because a weekly calendar is read by it; the date itself
+// is dd/mm/yyyy like everywhere else in the app.
+//
 // Formatted in UTC for the same reason the arithmetic above is: the viewer's
 // timezone must not shift which day a date column names.
-const dayFormat = new Intl.DateTimeFormat("it-IT", {
+const weekdayFormat = new Intl.DateTimeFormat("it-IT", {
   weekday: "long",
-  day: "numeric",
-  month: "long",
   timeZone: "UTC",
 });
 
 export function formatDayHeading(isoDate: string): string {
-  return dayFormat.format(new Date(`${isoDate}T00:00:00Z`));
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  return `${weekdayFormat.format(date)} ${formatDate(isoDate)}`;
+}
+
+// "Settembre 2026", for the month grid's header. Capitalised because it is a
+// title: Intl gives "settembre 2026" in Italian.
+const monthFormat = new Intl.DateTimeFormat("it-IT", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+export function formatMonthHeading(isoDate: string): string {
+  const label = monthFormat.format(new Date(`${isoDate}T00:00:00Z`));
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+// The day number alone, for a grid cell.
+export function formatDayNumber(isoDate: string): string {
+  return String(Number(isoDate.slice(8, 10)));
 }
 
 // "19:00:00" and "19:00" both render as "19:00".

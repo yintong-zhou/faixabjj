@@ -3,6 +3,11 @@ import {
   addDays,
   checkinState,
   expandWeekdays,
+  formatDayHeading,
+  formatMonthHeading,
+  monthGridRange,
+  monthStart,
+  shiftMonth,
   parseWeekdays,
   weekStart,
 } from "./schedule";
@@ -117,5 +122,50 @@ describe("weekStart / addDays", () => {
   it("adds days across a month boundary", () => {
     expect(addDays("2026-09-30", 1)).toBe("2026-10-01");
     expect(addDays("2026-10-01", -1)).toBe("2026-09-30");
+  });
+});
+
+describe("formatDayHeading", () => {
+  it("keeps the weekday and renders the date as dd/mm/yyyy", () => {
+    expect(formatDayHeading("2026-09-14")).toBe("lunedì 14/09/2026");
+  });
+
+  // UTC, so the heading names the same day for every viewer.
+  it("does not shift the day across timezones", () => {
+    expect(formatDayHeading("2026-12-31")).toBe("giovedì 31/12/2026");
+  });
+});
+
+describe("month helpers", () => {
+  it("finds the first day of the month", () => {
+    expect(monthStart("2026-09-13")).toBe("2026-09-01");
+  });
+
+  it("shifts months without the 31-January trap", () => {
+    expect(shiftMonth("2026-01-31", 1)).toBe("2026-02-01");
+    expect(shiftMonth("2026-12-15", 1)).toBe("2027-01-01");
+    expect(shiftMonth("2026-01-15", -1)).toBe("2025-12-01");
+    expect(shiftMonth("2026-09-01", -9)).toBe("2025-12-01");
+  });
+
+  // September 2026 starts on a Tuesday and ends on a Wednesday, so the grid
+  // spills into both August and October.
+  it("covers whole Monday-to-Sunday weeks", () => {
+    expect(monthGridRange("2026-09-13")).toEqual({
+      from: "2026-08-31",
+      until: "2026-10-04",
+    });
+  });
+
+  // February 2027 starts on a Monday and ends on a Sunday: no spill at all.
+  it("adds no spill when the month already fills whole weeks", () => {
+    expect(monthGridRange("2027-02-10")).toEqual({
+      from: "2027-02-01",
+      until: "2027-02-28",
+    });
+  });
+
+  it("capitalises the month heading", () => {
+    expect(formatMonthHeading("2026-09-01")).toBe("Settembre 2026");
   });
 });

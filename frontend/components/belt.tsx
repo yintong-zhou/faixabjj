@@ -68,7 +68,9 @@ export function Belt({
   // Falling back to the words is better than a broken image.
   if (!color) {
     return (
-      <span className={`rounded-full bg-secondary/40 px-2 py-0.5 text-xs ${className}`}>
+      <span
+        className={`w-fit self-start rounded-full bg-secondary/40 px-2 py-0.5 text-xs ${className}`}
+      >
         {label}
       </span>
     );
@@ -77,17 +79,21 @@ export function Belt({
   const capped = Math.min(Math.max(0, Math.round(stripes)), MAX_STRIPES[color] ?? 4);
   const width = SIZES[size];
 
+  // `w-fit` and `self-start` are what keep every belt the same size. A flex
+  // *column* parent — the roll call row, the registry row's detail stack —
+  // stretches its children across the cross axis by default, which made the
+  // plate as wide as the row and the belt inside it grow to match. Pinning the
+  // width here means the size comes only from `size`, never from the parent.
   return (
     <span
       title={label}
-      className={`inline-flex shrink-0 items-center rounded-[4px] border border-border bg-neutral-light/50 p-[3px] ${className}`}
+      className={`inline-flex w-fit shrink-0 self-start items-center rounded-[4px] border border-border bg-neutral-light/50 p-[3px] ${className}`}
     >
       <Image
         src={`/belts/${color}-${capped}-stripe.png`}
         alt={label}
         width={width}
         height={Math.round(width * 0.3)}
-        className="h-auto w-full"
       />
     </span>
   );

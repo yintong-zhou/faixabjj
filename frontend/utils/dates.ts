@@ -24,6 +24,37 @@ export function daysSince(isoDate: string | null): number | null {
   return Math.max(0, Math.round((now - then) / 86_400_000));
 }
 
+// Every date shown in the app reads dd/mm/yyyy. The columns arrive from
+// Postgres as "YYYY-MM-DD", which is the right format to store and the wrong
+// one to read in Italy.
+//
+// Formatted in UTC for the same reason daysSince() normalises to UTC midnight:
+// parsing "2026-09-14" gives UTC midnight, so a viewer east of Greenwich would
+// otherwise see the previous day.
+//
+// This is for *display* only. The value of an <input type="date"> must stay
+// "YYYY-MM-DD" — that is what the element accepts and what it posts back.
+const dateFormat = new Intl.DateTimeFormat("it-IT", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+export function formatDate(isoDate: string | null | undefined): string {
+  if (!isoDate) {
+    return "—";
+  }
+
+  const parsed = new Date(`${isoDate}T00:00:00Z`);
+  // An unparseable value is shown as it came rather than as "Invalid Date".
+  if (Number.isNaN(parsed.getTime())) {
+    return isoDate;
+  }
+
+  return dateFormat.format(parsed);
+}
+
 const numberFormat = new Intl.NumberFormat("it-IT");
 
 export function formatDays(days: number | null): string {

@@ -195,13 +195,20 @@ refuses the writes anyway.
   carry the current query back in a `_query` hidden field so acting on a row
   does not reset the list you were looking at.
 - **A portal-only admin is excluded from the list.** `admin` means "runs the
-  portal without teaching", so such an account is not a member of the gym. The
-  filter is array *equality* (`not active_roles eq {admin}`), not "contains
-  admin": somebody who is both maestro and admin still trains here and stays on
-  the list. `active_roles` is coalesced to an empty array and sorted in the
-  view, so `{admin}` matches exactly the admin-only case. The role filter drops
-  its "Admin" option for the same reason — it would always return nothing —
-  while "Aggiungi persona" still offers the role.
+  portal without teaching", so such an account is not a member of the gym and
+  appears nowhere the app asks "which of our people is this" — not the Registro
+  list, not a roll call, not an instructor dropdown. The one place it stays
+  selectable is "Aggiungi persona", where an admin account is actually created.
+  **`frontend/utils/members.ts` is the single home for this rule**
+  (`PORTAL_ONLY_ROLE`, `PORTAL_ONLY_ROLES`, `TECHNICAL_ROLES`); import from
+  there rather than redeclaring the strings per page. The filter is array
+  *equality* (`not active_roles eq {admin}`), not "contains admin": somebody who
+  is both maestro and admin still trains here and stays visible. `active_roles`
+  is coalesced to an empty array and sorted in the view, so `{admin}` matches
+  exactly the admin-only case. The Registro role filter drops its "Admin" option
+  for the same reason — it would always return nothing. Note this is a
+  visibility rule enforced in the queries, not in RLS: the row still exists and
+  a manager can still act on the account.
 - **Search matches the name only**, never the email — an explicit decision.
   User input is stripped of `%`, `,`, `(`, `)` and backslashes before reaching
   `ilike`, since those characters break PostgREST's filter syntax.
@@ -262,12 +269,23 @@ behind each lesson, and the place a member checks themselves in.
   at different times on different days is modelled as **two courses** — that
   trade buys one table instead of a `course_slot` join table. It also carries
   `instructor_id`, the course's **default** instructor: `sync_course_sessions()`
-  copies it onto the sessions it creates and deliberately leaves an existing
-  session's instructor alone, so a substitution recorded on one lesson survives
-  a course edit. The consequence to know: changing the course default does
-  **not** rewrite lessons already in the calendar. (Commit `2da3e44` dropped
+  copies it onto the sessions it creates, and **fills it in on future sessions
+  that have none** (`20260913000000_session_instructor_backfill.sql`). A
+  non-null per-lesson instructor is a deliberate substitution and is never
+  overwritten. Before that migration the function only ever set the instructor
+  at insert time, so a course whose calendar had already been generated showed
+  "nessun istruttore" in Presenze no matter what the course said — which was
+  the usual case, since the calendar is generated the moment a course is
+  created. The consequence of the fix: null now means "not set", not
+  "explicitly nobody", so clearing one lesson's instructor from the roll call
+  is re-filled the next time the course is saved. (Commit `2da3e44` dropped
   this field from the form and moved the instructor to the lesson only; that was
-  reversed — the default belongs on the course. Do not remove it again.)
+  reversed — the default belongs on the course. Do not remove it again.) The
+  instructor dropdown offers `instructor` and `head_coach` only — **not**
+  `admin`, which means "runs the portal", not "teaches", exactly as in the
+  Registro list. A course already pointing at someone who has since lost their
+  technical role keeps them as a selectable option, or the browser would fall
+  back to the first entry and silently reassign the course on the next save.
 - `class_session` — the lesson that actually happens. Its times are **copied**
   from the course at generation rather than joined through it, so editing a
   course never silently rewrites lessons that already took place.
@@ -295,6 +313,38 @@ check-in must live where the lessons are listed, and there is only one such
 list. The page calls `requireAdmin()` and branches on `canManageClasses` —
 staff get the roll call link and the presence count, a member gets a check-in
 button for themselves.
+
+**Two views, one page.** `/presenze` renders either the weekly list (default)
+or a month grid, switched by a segmented control. Both are server-rendered and
+need no client JS, because the whole view state is in the URL — `v=griglia`
+selects the grid, `da` is the anchor date, `g` is the day opened under the
+grid. Three things worth knowing before changing it:
+
+- **`da` is one anchor read two ways**: the week it falls in, or the month.
+  That is what makes toggling keep your place instead of jumping back to today,
+  and it is why there is no second "month" parameter.
+- **The grid queries `monthGridRange()`, not the month.** The range covers
+  whole Monday-to-Sunday weeks, so lessons on the days spilling in from the
+  neighbouring months are drawn rather than left as empty cells. The month
+  helpers (`monthStart`, `shiftMonth`, `monthGridRange`, `formatMonthHeading`)
+  live in `frontend/utils/schedule.ts` with the rest of the calendar
+  arithmetic, and are unit-tested — including the 31-January trap that plain
+  date maths falls into.
+- **The check-in button is deliberately absent from the grid** (an explicit
+  decision): a grid cell has no room for it. The grid shows where you stand —
+  a tick, "presente" — and the action stays in the list view. Staff keep their
+  roll-call link in both, since that is navigation rather than check-in.
+- **Where a cell leads depends on what is behind it.** For staff, a day with a
+  single lesson links straight to that lesson's roll call; going through the
+  day panel to click the only thing in it is a step that does nothing. A day
+  with several lessons — and any day for a member — opens the panel, which
+  carries an `#giorno` anchor because on a phone it sits below the fold and
+  without the jump the tap looks like it did nothing. The whole cell is the
+  link, not the entries inside it: the entries are a few pixels tall on a
+  phone, and an anchor inside an anchor is invalid HTML.
+
+Seven columns cannot shrink below about 34rem and stay legible, so the grid
+scrolls inside its own container; the page itself must never scroll sideways.
 
 **Student check-in** is an RLS `insert` policy requiring four things together:
 the row is theirs, `present` is true, `checked_in_by = 'self'`, and
@@ -337,6 +387,7 @@ count to staff only.
 - Design tokens (colors, fonts) come from `brand-guidelines.md` at the repo root — implemented as CSS variables in `frontend/app/globals.css` (Tailwind v4 `@theme inline`, not a `tailwind.config.js`). Headings use Sora (`font-heading`), body text uses Work Sans (`font-body`), both loaded via `next/font/google` in `frontend/app/layout.tsx`.
 - `frontend/components/nav-shell.tsx` is the app shell: a sticky header with horizontal nav on `sm:` and up, a fixed bottom tab bar below `sm:`. It wraps `{children}` in the root layout — don't duplicate navigation inside individual pages.
 - The nav is **role-aware**: `navItemsFor()` in that file renders only Home for a visitor, Dashboard + Account for an allievo, and the full set for staff. `canViewRegistry` is computed server-side in `frontend/app/layout.tsx` (via `getAccess()`) and passed down as a prop, like `isLoggedIn`. This only hides links — see the permission model above for the real enforcement.
+- **Dates read dd/mm/yyyy everywhere.** `formatDate()` in `frontend/utils/dates.ts` is the single place that turns a Postgres `date` column ("YYYY-MM-DD") into what the app shows; `formatDayHeading()` in `utils/schedule.ts` builds on it, so the Presenze calendar reads "lunedì 14/09/2026". Both format in **UTC**, for the same reason `daysSince()` does — formatting a UTC-parsed date in local time shows the previous day to a viewer east of Greenwich. Never render a raw date column. The one thing that must stay ISO is the `value`/`defaultValue` of an `<input type="date">`: that is what the element accepts and posts back, and its on-screen format is the browser's business, not ours.
 - `frontend/components/icons.tsx` — small hand-rolled inline SVG icons (no icon library dependency). Add new icons here rather than pulling in a package.
 - **Belts are drawn, not spelled out.** `frontend/components/belt.tsx` renders the belt graphic wherever a person's rank is shown — the Registro list and detail page, `/account`, the roll call. Use it instead of printing the colour and a stripe count; the two are one thing on a belt. Three things about it are deliberate:
   - The artwork lives in `frontend/public/belts/<colour>-<n>-stripe.png` (1000×300, transparent). The `belt_rank` enum says `purple` but the files say `violet`, so `BELT_FILE_COLOR` maps between them — don't rename the enum to match the assets.
