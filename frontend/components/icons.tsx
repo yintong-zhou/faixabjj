@@ -143,6 +143,29 @@ export function CheckCircleIcon({ className }: IconProps) {
   );
 }
 
+// The counterpart to CheckCircleIcon: same circle, same stroke weight, so the
+// two read as one pair when they sit side by side in the roll call.
+export function XCircleIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m9.2 9.2 5.6 5.6" />
+      <path d="m14.8 9.2-5.6 5.6" />
+    </svg>
+  );
+}
+
+// "Not recorded" — an empty state, not an outcome, so it is a dash inside the
+// same circle rather than a third colour.
+export function MinusCircleIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M8.5 12h7" />
+    </svg>
+  );
+}
+
 export function AlertCircleIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...strokeProps}>

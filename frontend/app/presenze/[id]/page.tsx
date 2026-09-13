@@ -6,7 +6,9 @@ import {
   AlertCircleIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
+  MinusCircleIcon,
   PlayIcon,
+  XCircleIcon,
 } from "@/components/icons";
 import { requireClassManager } from "@/utils/supabase/require-admin";
 import { PORTAL_ONLY_ROLES, TECHNICAL_ROLES } from "@/utils/members";
@@ -17,6 +19,33 @@ import {
   saveRollCall,
   setSessionInstructor,
 } from "../actions";
+
+// Present is green, absent is red, not recorded is neutral. The tokens flip
+// per theme — a dark green that reads well on white is nearly black on the
+// dark theme.
+const ROLL_CALL_STATES = [
+  {
+    value: "",
+    title: "Non registrato",
+    icon: MinusCircleIcon,
+    checkedClass: "peer-checked:bg-muted peer-checked:text-foreground/70",
+    legendClass: "text-foreground/40",
+  },
+  {
+    value: "present",
+    title: "Presente",
+    icon: CheckCircleIcon,
+    checkedClass: "peer-checked:bg-success/10 peer-checked:text-success",
+    legendClass: "text-success",
+  },
+  {
+    value: "absent",
+    title: "Assente",
+    icon: XCircleIcon,
+    checkedClass: "peer-checked:bg-danger/10 peer-checked:text-danger",
+    legendClass: "text-danger",
+  },
+] as const;
 
 type Session = {
   id: string;
@@ -214,6 +243,17 @@ export default async function RollCallPage({
         <input type="hidden" name="session_id" value={session.id} />
         <input type="hidden" name="from" value={from ?? ""} />
 
+        {/* A legend, because the icons replaced letters and `title` never
+            appears on a phone, where this page is actually used. */}
+        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-foreground/55">
+          {ROLL_CALL_STATES.map((option) => (
+            <li key={option.value || "none"} className="flex items-center gap-1.5">
+              <option.icon className={`h-4 w-4 ${option.legendClass}`} />
+              {option.title}
+            </li>
+          ))}
+        </ul>
+
         <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
           {members.map((member) => {
             const row = recorded.get(member.id);
@@ -240,14 +280,12 @@ export default async function RollCallPage({
                   />
                 </div>
 
-                {/* Three states, not two: "—" means no row at all, which is
-                    different information from an explicit absence. */}
+                {/* Three states, not two: "not recorded" means no row at all,
+                    which is different information from an explicit absence.
+                    It stays neutral grey — an empty state is not an outcome,
+                    and a third colour would imply it were one. */}
                 <div className="flex shrink-0 items-center gap-1">
-                  {[
-                    { value: "", label: "—", title: "Non registrato" },
-                    { value: "present", label: "P", title: "Presente" },
-                    { value: "absent", label: "A", title: "Assente" },
-                  ].map((option) => (
+                  {ROLL_CALL_STATES.map((option) => (
                     <label
                       key={option.value || "none"}
                       title={option.title}
@@ -260,8 +298,15 @@ export default async function RollCallPage({
                         defaultChecked={current === option.value}
                         className="peer sr-only"
                       />
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-sm font-medium transition-colors peer-checked:bg-foreground peer-checked:text-background">
-                        {option.label}
+                      {/* The colour is carried by the icon and a tinted ring,
+                          not by a filled button: three saturated circles per
+                          row, on thirty rows, is a wall of colour. Only the
+                          chosen one is coloured in. */}
+                      <span
+                        className={`flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/35 transition-colors peer-checked:border-current peer-focus-visible:ring-2 peer-focus-visible:ring-accent ${option.checkedClass}`}
+                      >
+                        <option.icon className="h-5 w-5" />
+                        <span className="sr-only">{option.title}</span>
                       </span>
                     </label>
                   ))}

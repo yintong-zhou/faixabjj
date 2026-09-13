@@ -464,6 +464,16 @@ Three things worth knowing:
   grey, which flashes bright on the dark theme. The one deliberate exception is
   the logo plate: the logo is black artwork on transparency, so it sits on
   `bg-secondary` (fixed light) in both themes or it disappears.
+- **`--success` and `--danger` are the only colours in the app that mean
+  something** rather than belonging to the brand: present and absent in the
+  roll call. They flip per theme like every other semantic token — a green
+  dark enough to read on white is nearly black on the dark theme. The roll
+  call's three-state control uses them on the icon and a 10% tint, not as a
+  filled button: three saturated circles on each of thirty rows is a wall of
+  colour. "Non registrato" stays neutral grey on purpose — it is an empty
+  state, not an outcome, and a third colour would imply it were one. The
+  control also carries a visible legend, because the icons replaced letters
+  and a `title` tooltip never appears on the phone where this page is used.
 - **SEO lives in three places.** `frontend/utils/site.ts` holds `SITE_URL`
   (from `NEXT_PUBLIC_SITE_URL`) and the list of public paths;
   `frontend/app/layout.tsx` sets `metadataBase`, the title template, Open

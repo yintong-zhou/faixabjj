@@ -18,6 +18,11 @@
      a step away from --background, never a fixed grey: a fixed light grey
      reads as a bright flash on the dark theme. */
   --muted: #eceef2;
+  /* Present and absent. The only two places the app uses a colour to mean
+     something rather than to belong to the brand, so they get their own
+     tokens and their own per-theme values. */
+  --success: #15803d;
+  --danger: #b91c1c;
 }
 
 @theme inline {
@@ -32,6 +37,8 @@
   --color-surface: var(--surface);
   --color-border: var(--border);
   --color-muted: var(--muted);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
 
   --font-heading: var(--font-sora);
   --font-body: var(--font-work-sans);
@@ -57,6 +64,8 @@
     --border: #2e323b;
     --muted: #252932;
     --color-accent: #7d97ee;
+    --success: #4ade80;
+    --danger: #f87171;
   }
 }
 
@@ -69,6 +78,8 @@
   --border: #2e323b;
   --muted: #252932;
   --color-accent: #7d97ee;
+  --success: #4ade80;
+  --danger: #f87171;
 }
 
 :root[data-theme="light"] {
@@ -78,6 +89,8 @@
   --border: var(--color-neutral-light);
   --muted: #eceef2;
   --color-accent: #3457d5;
+  --success: #15803d;
+  --danger: #b91c1c;
 }
 
 body {
