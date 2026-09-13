@@ -176,7 +176,7 @@ export default async function RollCallPage({
           </div>
           <button
             type="submit"
-            className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+            className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
           >
             Salva
           </button>
@@ -188,7 +188,7 @@ export default async function RollCallPage({
             <input type="hidden" name="from" value={from ?? ""} />
             <button
               type="submit"
-              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
               <PlayIcon className="h-4 w-4" />
               Ripristina lezione

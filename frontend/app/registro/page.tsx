@@ -19,6 +19,7 @@ import {
 } from "@/components/icons";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
+import { estimateNote, formatHours, hoursFor } from "@/utils/hours";
 import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
 import {
   addPerson,
@@ -30,7 +31,7 @@ import {
 const PAGE_SIZE = 20;
 
 const menuItemClass =
-  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-neutral-light/60";
+  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-muted";
 
 const menuIconClass = "h-4 w-4 shrink-0";
 
@@ -177,7 +178,7 @@ export default async function RegistroPage({
             <p className="text-xs text-foreground/55">
               Viene creato anche l&apos;account, subito attivo e senza email di
               conferma. Password provvisoria:{" "}
-              <code className="rounded bg-neutral-light/60 px-1.5 py-0.5 font-medium">
+              <code className="rounded bg-muted px-1.5 py-0.5 font-medium">
                 {DEFAULT_PASSWORD}
               </code>{" "}
               — comunicala alla persona. Al primo accesso le verrà chiesto di
@@ -444,7 +445,7 @@ export default async function RegistroPage({
             {activeFilters.length > 0 ? (
               <Link
                 href="/registro"
-                className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+                className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
               >
                 Azzera
               </Link>
@@ -464,6 +465,7 @@ export default async function RegistroPage({
           const canInvite =
             !member.auth_user_id && member.email && isAdminClientConfigured();
           const canManageAccount = Boolean(member.auth_user_id);
+          const hours = hoursFor(member.joined_at, member.total_hours);
 
           // items-center keeps the kebab vertically centred against the row,
           // whose height is set by the details block on the left.
@@ -501,7 +503,13 @@ export default async function RegistroPage({
                     ? member.active_roles.map((r) => ROLE_LABELS[r] ?? r).join(", ")
                     : "Nessun ruolo attivo"}
                   {" · "}
-                  {Number(member.total_hours).toFixed(1)} ore
+                  {/* Mostly estimated until the gym has been recording for a
+                      while, so the row says so rather than presenting an
+                      assumption as a count. */}
+                  <span title={hours.isPartlyEstimated ? estimateNote(hours.estimated) : undefined}>
+                    {formatHours(hours.total)}
+                    {hours.isPartlyEstimated ? " (stima)" : ""}
+                  </span>
                   {" · dal "}
                   {formatDate(member.joined_at)}
                 </span>
@@ -586,7 +594,7 @@ export default async function RegistroPage({
           {page > 1 ? (
             <Link
               href={`/registro?${queryString(search, { p: String(page - 1) })}`}
-              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
               <ChevronLeftIcon className="h-4 w-4" />
               Precedente
@@ -598,7 +606,7 @@ export default async function RegistroPage({
           {page < lastPage ? (
             <Link
               href={`/registro?${queryString(search, { p: String(page + 1) })}`}
-              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
               Successiva
               <ChevronRightIcon className="h-4 w-4" />

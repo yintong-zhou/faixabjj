@@ -122,7 +122,7 @@ export function NavShell({
                   className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
                     isActive(pathname, href)
                       ? "bg-foreground text-background"
-                      : "text-foreground/70 hover:bg-neutral-light/60"
+                      : "text-foreground/70 hover:bg-muted"
                   }`}
                 >
                   {label}
@@ -133,7 +133,7 @@ export function NavShell({
               <form action="/auth/signout" method="post">
                 <button
                   type="submit"
-                  className="rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-neutral-light/60"
+                  className="rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-muted"
                 >
                   Esci
                 </button>
@@ -141,7 +141,7 @@ export function NavShell({
             ) : (
               <Link
                 href="/login"
-                className="rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-neutral-light/60"
+                className="rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-muted"
               >
                 Accedi
               </Link>

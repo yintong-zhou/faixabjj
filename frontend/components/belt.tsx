@@ -87,7 +87,7 @@ export function Belt({
   return (
     <span
       title={label}
-      className={`inline-flex w-fit shrink-0 self-start items-center rounded-[4px] border border-border bg-neutral-light/50 p-[3px] ${className}`}
+      className={`inline-flex w-fit shrink-0 self-start items-center rounded-[4px] border border-border bg-muted p-[3px] ${className}`}
     >
       <Image
         src={`/belts/${color}-${capped}-stripe.png`}

@@ -26,7 +26,7 @@ import {
 } from "./actions";
 
 const menuItemClass =
-  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-neutral-light/60";
+  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-muted";
 
 const menuIconClass = "h-4 w-4 shrink-0";
 

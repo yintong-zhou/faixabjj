@@ -51,7 +51,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={theme === "dark" ? "Passa al tema chiaro" : "Passa al tema scuro"}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-foreground/70 transition-colors hover:bg-neutral-light/60"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-foreground/70 transition-colors hover:bg-muted"
     >
       {theme === "dark" ? (
         <SunIcon className="h-4.5 w-4.5" />

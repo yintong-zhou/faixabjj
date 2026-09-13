@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Belt } from "@/components/belt";
 import { formatDate } from "@/utils/dates";
+import { LESSONS_PER_WEEK, formatHours, hoursFor } from "@/utils/hours";
 import { PasswordInput } from "@/components/password-input";
 import { requireAdmin, canManageUsers } from "@/utils/supabase/require-admin";
 import {
@@ -42,6 +43,14 @@ export default async function AccountPage({
       </div>
     );
   }
+
+  const { data: hours } = await supabase
+    .from("person_hours")
+    .select("total_hours")
+    .eq("person_id", profile.id)
+    .maybeSingle();
+
+  const training = hoursFor(profile.joined_at, hours?.total_hours);
 
   const { data: roles } = await supabase
     .from("assigned_role")
@@ -174,6 +183,14 @@ export default async function AccountPage({
             Cintura, tacche e ruoli non sono modificabili da qui: la promozione
             resta una decisione dell&apos;istruttore.
           </p>
+          {training.isPartlyEstimated ? (
+            <p className="text-xs leading-relaxed text-foreground/55">
+              Le ore includono un saldo di partenza, stimato a {LESSONS_PER_WEEK}{" "}
+              lezioni a settimana per il periodo prima del tracciamento. Da lì in
+              poi crescono solo con il tuo check-in o con l&apos;appello
+              dell&apos;istruttore.
+            </p>
+          ) : null}
         </div>
 
         <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
@@ -207,6 +224,17 @@ export default async function AccountPage({
               Iscritto dal
             </dt>
             <dd className="text-sm font-medium">{formatDate(profile.joined_at)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-foreground/55">
+              Ore di lezione
+            </dt>
+            <dd className="text-sm font-medium">
+              {formatHours(training.total)}
+              {training.isPartlyEstimated ? (
+                <span className="font-normal text-foreground/55"> (stima)</span>
+              ) : null}
+            </dd>
           </div>
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">

@@ -293,6 +293,40 @@ behind each lesson, and the place a member checks themselves in.
   `duration_hours` and `unique (person_id, class_date)` are gone; the key is
   now `unique (person_id, session_id)`.
 
+**Hours are an opening balance plus what was recorded.** The estimate is not
+an ongoing calculation: it exists only to give each member a starting figure on
+the day tracking was switched on, and it is **frozen** from that day (a unit
+test asserts exactly this). Every hour after go-live can arrive only through a
+member's own check-in or an instructor's roll call — which the `attendance` RLS
+policies already enforce, accepting an insert from a class manager or from the
+member themselves with `checked_in_by = 'self'` inside the check-in window.
+This module must never become a second way of adding an hour.
+
+**Hours before the app existed are estimated, not counted.** `person_hours`
+only knows about attendance recorded in FAIXABJJ, so a member who has trained
+for three years would read as zero — worse than useless for the one thing the
+figure exists to inform. `frontend/utils/hours.ts` is the single definition:
+hours before `TRACKING_STARTED_ON` are assumed at `LESSONS_PER_WEEK` (3) a
+week since `joined_at`, hours from that date on are counted, and the total is
+the sum.
+
+- **`TRACKING_STARTED_ON` is the whole point of the design and must be set to
+  the real go-live date.** Without a cutoff, estimating "three a week since
+  joining" while also counting real attendance counts every week from now on
+  twice. A date left in the future inflates every total; the code clamps the
+  estimate at today so it cannot run into weeks that have not happened, but
+  that is a guard, not a substitute for setting it.
+- The average is **one constant for everybody**, an explicit decision. It is a
+  declared estimate, not data — a per-person figure would dress an assumption
+  up as a measurement.
+- **Anywhere an estimated total is shown it must say so.** The Registro row
+  appends "(stima)" with the explanation in its `title`; the member detail
+  page breaks the total into *Ore totali / Ore registrate / Ore stimate* with
+  the method spelled out, because that record is what decides a promotion;
+  `/account` shows the member their own total with the same caveat.
+- Partial weeks count pro rata rather than rounding up, or somebody who joined
+  yesterday would be handed a free lesson.
+
 **One attendance is one hour**, and `duration_hours` was *removed* rather than
 defaulted to 1: with a default, a crafted write can still store 2 and the rule
 becomes a convention. The cost is that a four-hour seminar cannot be one row.
@@ -384,6 +418,32 @@ count to staff only.
 
 ## Frontend UI
 
+- **Brand colours are not semantic tokens.** The five values from
+  `brand-guidelines.md` stay fixed; what changes with the theme is
+  `--background`, `--foreground`, `--surface`, `--border` and `--muted`. Use
+  those, not the brand names, for anything that has to read in both themes.
+  Three dark-theme values are deliberately their own rather than reused brand
+  colours: `--surface` is lifted just off `--background` (it used to be
+  `--color-neutral-dark`, four steps away, so every card read as a pale block),
+  `--border` is distinct from `--surface` (they were identical, so a bordered
+  card had no visible edge against its own fill), and `--color-accent` is
+  lightened to `#7d97ee` because `#3457d5` on `#16181d` is about 2.3:1, far
+  under the 4.5:1 body text needs. `bg-muted` is the hover wash — never a fixed
+  grey, which flashes bright on the dark theme. The one deliberate exception is
+  the logo plate: the logo is black artwork on transparency, so it sits on
+  `bg-secondary` (fixed light) in both themes or it disappears.
+- **SEO lives in three places.** `frontend/utils/site.ts` holds `SITE_URL`
+  (from `NEXT_PUBLIC_SITE_URL`) and the list of public paths;
+  `frontend/app/layout.tsx` sets `metadataBase`, the title template, Open
+  Graph and per-theme `themeColor`; `app/robots.ts` and `app/sitemap.ts`
+  publish only the landing page, because every other route answers with a
+  redirect to the login and a search result pointing at a login form helps
+  nobody. `metadataBase` is required — without an absolute base, canonical and
+  Open Graph URLs resolve to nothing and crawlers drop them.
+- **The landing page links to `/login`, never into the app.** Its buttons used
+  to point at `/registro` and `/dashboard`, which sent every visitor straight
+  through the proxy to a login form. The page is only ever seen by somebody who
+  is not signed in, so signing in is the only action that makes sense on it.
 - Design tokens (colors, fonts) come from `brand-guidelines.md` at the repo root — implemented as CSS variables in `frontend/app/globals.css` (Tailwind v4 `@theme inline`, not a `tailwind.config.js`). Headings use Sora (`font-heading`), body text uses Work Sans (`font-body`), both loaded via `next/font/google` in `frontend/app/layout.tsx`.
 - `frontend/components/nav-shell.tsx` is the app shell: a sticky header with horizontal nav on `sm:` and up, a fixed bottom tab bar below `sm:`. It wraps `{children}` in the root layout — don't duplicate navigation inside individual pages.
 - The nav is **role-aware**: `navItemsFor()` in that file renders only Home for a visitor, Dashboard + Account for an allievo, and the full set for staff. `canViewRegistry` is computed server-side in `frontend/app/layout.tsx` (via `getAccess()`) and passed down as a prop, like `isLoggedIn`. This only hides links — see the permission model above for the real enforcement.

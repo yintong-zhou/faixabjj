@@ -5,6 +5,7 @@ import { Belt } from "@/components/belt";
 import { ROLE_LABELS } from "@/utils/supabase/profile";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
+import { LESSONS_PER_WEEK, TRACKING_STARTED_ON, formatHours, hoursFor } from "@/utils/hours";
 import {
   ChevronLeftIcon,
   FileTextIcon,
@@ -86,7 +87,10 @@ export default async function MemberDetailPage({
     .eq("person_id", member.id)
     .maybeSingle();
 
-  const totalHours = Number(hours?.total_hours ?? 0);
+  // The detail page breaks the total open: on a record that decides a
+  // promotion, "18 ore" is not enough — you need to know how much of it the
+  // gym actually saw.
+  const training = hoursFor(member.joined_at, hours?.total_hours);
 
   // The full history, closed assignments included — the registry is meant to
   // show that a person's role changed over time, not just what it is today.
@@ -181,11 +185,21 @@ export default async function MemberDetailPage({
             label="Dall'ultima tacca"
             value={formatDays(daysSince(member.stripe_since))}
           />
-          <Field
-            label="Ore totali"
-            value={`${totalHours.toFixed(1)} ore`}
-          />
+          <Field label="Ore totali" value={formatHours(training.total)} />
+          <Field label="Ore registrate" value={formatHours(training.recorded)} />
+          <Field label="Ore iniziali (stima)" value={formatHours(training.estimated)} />
         </dl>
+
+        {training.isPartlyEstimated ? (
+          <p className="text-xs leading-relaxed text-foreground/55">
+            Le ore iniziali coprono il solo periodo dall&apos;iscrizione al{" "}
+            {formatDate(TRACKING_STARTED_ON)}, calcolate a {LESSONS_PER_WEEK}{" "}
+            lezioni a settimana perché per quegli anni non esiste uno storico
+            delle presenze. Sono un saldo di partenza e non crescono più: dal{" "}
+            {formatDate(TRACKING_STARTED_ON)} ogni ora arriva soltanto dal
+            check-in dell&apos;allievo o dall&apos;appello dell&apos;istruttore.
+          </p>
+        ) : null}
       </section>
 
       <section className="flex flex-col gap-2 rounded-xl border border-border p-4 sm:gap-3 sm:p-5">

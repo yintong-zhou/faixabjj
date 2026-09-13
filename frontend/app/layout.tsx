@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { NavShell } from "@/components/nav-shell";
 import { createClient } from "@/utils/supabase/server";
 import { getAccess } from "@/utils/supabase/require-admin";
+import { SITE_NAME, SITE_URL } from "@/utils/site";
 import "./globals.css";
 
 const sora = Sora({
@@ -19,15 +20,64 @@ const workSans = Work_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "FAIXABJJ",
+  // Absolute base for every relative URL below. Without it Open Graph tags
+  // and canonical links resolve to nothing and crawlers drop them.
+  metadataBase: new URL(SITE_URL),
+  // Interior pages set only their own title; the template adds the brand.
+  title: {
+    default: "FAIXABJJ - ore, gradi e cinture per palestre di BJJ",
+    template: "%s · FAIXABJJ",
+  },
   description:
-    "Traccia ore di lezione, gradi e passaggi di cintura in una scuola di Brazilian Jiu-Jitsu, con un registro unico per studenti e istruttori.",
+    "Traccia ore di lezione, gradi e passaggi di cintura in una scuola di Brazilian Jiu-Jitsu, con un registro unico per allievi e istruttori.",
+  applicationName: SITE_NAME,
+  keywords: [
+    "Brazilian Jiu-Jitsu",
+    "BJJ",
+    "gestione palestra BJJ",
+    "registro presenze BJJ",
+    "conteggio ore allenamento",
+    "gradi e cinture",
+    "promozione cintura BJJ",
+  ],
+  category: "sports",
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "it_IT",
+    url: "/",
+    images: [
+      {
+        url: "/logo/faixabjj_logo.png",
+        width: 618,
+        height: 404,
+        alt: "FAIXA BJJ",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "FAIXABJJ",
+    description:
+      "Ore, gradi e cinture per una scuola di Brazilian Jiu-Jitsu, in un registro unico.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+  formatDetection: { telephone: false, email: false, address: false },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#16181d",
+  // One colour per theme: a single dark value painted the browser chrome dark
+  // even for somebody reading the light theme.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f5f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#16181d" },
+  ],
 };
 
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();`;

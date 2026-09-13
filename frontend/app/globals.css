@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* The brand palette from brand-guidelines.md. These five never change with the
+   theme — they are the brand. What changes is which *role* each one plays,
+   which is what the semantic tokens below express. */
 :root {
   --color-primary: #16181d;
   --color-secondary: #f4f5f7;
@@ -11,6 +14,10 @@
   --foreground: var(--color-primary);
   --surface: #ffffff;
   --border: var(--color-neutral-light);
+  /* The subtle wash behind a hover, a menu item, an inline code span. Always
+     a step away from --background, never a fixed grey: a fixed light grey
+     reads as a bright flash on the dark theme. */
+  --muted: #eceef2;
 }
 
 @theme inline {
@@ -24,17 +31,32 @@
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-border: var(--border);
+  --color-muted: var(--muted);
 
   --font-heading: var(--font-sora);
   --font-body: var(--font-work-sans);
 }
 
+/* The dark theme is not the light one with the roles swapped.
+   Three things are deliberately their own values rather than reused brand
+   colours:
+
+   - --surface is lifted slightly off --background instead of being
+     --color-neutral-dark, which sat four steps away and made every card read
+     as a pale block floating on the page.
+   - --border is distinct from --surface. They used to be the same colour, so
+     a bordered card had no visible edge against its own fill.
+   - --color-accent is lightened. #3457d5 on #16181d is about 2.3:1, well under
+     the 4.5:1 needed for body text; the lighter tint of the same hue reaches
+     roughly 6.2:1 and keeps the brand recognisable. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --background: var(--color-primary);
     --foreground: var(--color-secondary);
-    --surface: var(--color-neutral-dark);
-    --border: var(--color-neutral-dark);
+    --surface: #1d2026;
+    --border: #2e323b;
+    --muted: #252932;
+    --color-accent: #7d97ee;
   }
 }
 
@@ -43,8 +65,10 @@
 :root[data-theme="dark"] {
   --background: var(--color-primary);
   --foreground: var(--color-secondary);
-  --surface: var(--color-neutral-dark);
-  --border: var(--color-neutral-dark);
+  --surface: #1d2026;
+  --border: #2e323b;
+  --muted: #252932;
+  --color-accent: #7d97ee;
 }
 
 :root[data-theme="light"] {
@@ -52,6 +76,8 @@
   --foreground: var(--color-primary);
   --surface: #ffffff;
   --border: var(--color-neutral-light);
+  --muted: #eceef2;
+  --color-accent: #3457d5;
 }
 
 body {

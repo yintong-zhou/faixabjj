@@ -220,7 +220,7 @@ export default async function PresenzePage({
         <nav className="flex items-center justify-between gap-2">
           <Link
             href={href({ da: previous, g: null })}
-            className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+            className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
           >
             <ChevronLeftIcon className="h-4 w-4" />
             {isGrid ? "Mese prima" : "Prima"}
@@ -228,14 +228,14 @@ export default async function PresenzePage({
 
           <Link
             href={isGrid ? `/presenze?v=${GRID}` : "/presenze"}
-            className="rounded-full px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-neutral-light/60"
+            className="rounded-full px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-muted"
           >
             Oggi
           </Link>
 
           <Link
             href={href({ da: next, g: null })}
-            className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+            className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
           >
             {isGrid ? "Mese dopo" : "Dopo"}
             <ChevronRightIcon className="h-4 w-4" />
@@ -374,7 +374,7 @@ function ViewToggle({
 }) {
   const base = "rounded-full px-3 py-1.5 text-xs font-medium transition-colors";
   const on = "bg-foreground text-background";
-  const off = "text-foreground/60 hover:bg-neutral-light/60";
+  const off = "text-foreground/60 hover:bg-muted";
 
   return (
     <div className="flex shrink-0 items-center gap-1 rounded-full border border-border p-1">
@@ -554,7 +554,7 @@ function SessionRow({
       {isStaff ? (
         <Link
           href={`/presenze/${session.id}?from=${encodeURIComponent(query)}`}
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-neutral-light/60"
+          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
         >
           {session.present_count > 0 ? `${session.present_count} presenti` : "Appello"}
           <ChevronRightIcon className="h-4 w-4" />
@@ -633,7 +633,7 @@ function CheckinControl({
             <input type="hidden" name="session_id" value={sessionId} />
             <button
               type="submit"
-              className="rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-neutral-light/60"
+              className="rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted"
             >
               Annulla
             </button>
