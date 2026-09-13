@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Early scaffolding stage. The repository follows the 3-tier agent architecture defined in [`AGENT.md`](AGENT.md) (directives / orchestration / execution). The `frontend/` app has been bootstrapped with `create-next-app` (Next.js App Router + Tailwind CSS); it now has a branded, mobile-first shell and IA (see "Frontend UI" below) and a working admin login gate (see "Authentication" below), `/registro` (member overview with filters and pagination), `/corsi` (recurring course definitions) and `/presenze` (lesson calendar, roll call and student check-in) are wired to real data. `/dashboard` is still a `ComingSoon` placeholder past the login check.
+Early scaffolding stage. The repository follows the 3-tier agent architecture defined in [`AGENT.md`](AGENT.md) (directives / orchestration / execution). The `frontend/` app has been bootstrapped with `create-next-app` (Next.js App Router + Tailwind CSS); it now has a branded, mobile-first shell and IA (see "Frontend UI" below) and a working admin login gate (see "Authentication" below), `/registro` (member overview with filters and pagination), `/corsi` (recurring course definitions) and `/presenze` (lesson calendar, roll call and student check-in) are wired to real data. `/dashboard` is wired too, as two views behind one route (see "Dashboard" below).
 
 `backend/` (FastAPI) from the `AGENT.md` template has **not** been created. It's marked "se necessario" (if necessary) there, and per the README's architecture Supabase (Postgres + Auth + Row Level Security) is the backend — no separate API layer is needed unless/until logic emerges that can't live in Supabase (RLS policies, Postgres functions/triggers) or client-side. Add `backend/` only when a concrete need for a server-side API shows up.
 
@@ -416,6 +416,38 @@ on `session_overview.present_count`: it respects the caller's own attendance
 policy, so a student would see only their own row counted. The UI shows that
 count to staff only.
 
+## Dashboard
+
+`/dashboard` is two different pages behind one route, chosen by
+`canManageClasses` — the same predicate that opens Corsi and the roll call,
+so instructors, maestri and admin get the gym-wide view and everybody else
+gets their own figures.
+
+- **`app/dashboard/staff-dashboard.tsx`** — members (active, new in the last
+  30 days, without an account, total gym hours), the month's lessons (in the
+  calendar, held, cancelled, attendances, average turnout, plus today's
+  lessons with a link straight to each roll call) and the belt distribution,
+  drawn with the `Belt` component and a plain CSS bar rather than a chart
+  dependency.
+- **`app/dashboard/member-dashboard.tsx`** — the member's own belt, hours,
+  lessons in the last 28 days, weekly average and next lessons. Nothing about
+  anybody else.
+
+Three things worth knowing:
+
+- **The split is in which queries run, not in which cards render.** A student
+  never triggers the gym-wide queries at all, and RLS would refuse them
+  anyway — an allievo cannot read `member_overview` or another member's
+  attendance. Hiding cards would not have been access control.
+- **Staff counts exclude a portal-only admin** (`PORTAL_ONLY_ROLES`), who is
+  not a student and would skew every figure.
+- **The member view is bounded to 90 days.** A member who has trained for
+  years would otherwise pull their whole history into a page that only wants
+  to say how the last few weeks went; "last time" reads "—" beyond that
+  window rather than scanning further back.
+- Gym-wide hours go through `hoursFor()` like everywhere else, so the total
+  is not "zero" for a school that has trained for years.
+
 ## Frontend UI
 
 - **Brand colours are not semantic tokens.** The five values from
@@ -454,7 +486,7 @@ count to staff only.
   - The images are transparent, so a white belt would vanish on the light theme and a black one on the dark theme. The component puts them on a bordered, faintly tinted plate; that border is what makes them visible, not decoration.
   - The colour and stripe count survive as the `alt` text, which is what a screen reader reads and what the removed text node used to say. `BELT_LABELS` is still needed for the filter chips and `<select>` options, which cannot hold an image.
 - Logos live in `frontend/public/logo/`, belts in `frontend/public/belts/` — not at the root of `public/`.
-- `frontend/components/coming-soon.tsx` — shared placeholder, now used only by `/dashboard` until it is wired to real Supabase data. Replace a route's `ComingSoon` usage with real content rather than adding a parallel page.
+- `frontend/components/coming-soon.tsx` — shared placeholder. **Nothing uses it any more** now that `/dashboard` is wired to real data; it is kept for the next unfinished section. Replace a route's `ComingSoon` usage with real content rather than adding a parallel page.
 - All copy in the UI is in Italian.
 - **Theme (light/dark):** manual toggle in the header (`frontend/components/theme-toggle.tsx`), not just OS `prefers-color-scheme`. State is `localStorage["theme"]` (`"light"` \| `"dark"`, absent = follow system) applied as `data-theme` on `<html>`. Three pieces make this work together — keep them in sync if you touch theming:
   - `frontend/app/globals.css` defines light tokens on `:root`, a `prefers-color-scheme: dark` override guarded by `:not([data-theme="light"])`, and unconditional `:root[data-theme="dark"]` / `:root[data-theme="light"]` blocks so an explicit choice always wins over system preference in both directions.
