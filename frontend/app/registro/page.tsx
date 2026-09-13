@@ -4,7 +4,8 @@ import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { RowMenu } from "@/components/row-menu";
 import { isAdminClientConfigured } from "@/utils/supabase/admin";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
-import { BELT_LABELS, ROLE_LABELS } from "@/utils/supabase/profile";
+import { beltLabel, beltLabels, roleLabel, roleLabels } from "@/utils/supabase/profile";
+import { getDictionary } from "@/utils/i18n/server";
 import {
   AlertCircleIcon,
   CheckCircleIcon,
@@ -84,6 +85,7 @@ export default async function RegistroPage({
   searchParams: Promise<Search>;
 }) {
   const search = await searchParams;
+  const { t } = await getDictionary();
   // Staff only: an allievo or assistente gets a 404 here, not a redirect.
   const { supabase, access } = await requireRegistryViewer("/registro");
 
@@ -127,19 +129,19 @@ export default async function RegistroPage({
   // open itself on page 2 of an unfiltered list.
   const activeFilters = [
     search.q ? `"${search.q}"` : null,
-    search.ruolo ? ROLE_LABELS[search.ruolo] ?? search.ruolo : null,
-    search.cintura ? BELT_LABELS[search.cintura] ?? search.cintura : null,
-    search.attivi ? "solo attivi" : null,
+    search.ruolo ? roleLabel(search.ruolo, t) : null,
+    search.cintura ? beltLabel(search.cintura, t) : null,
+    search.attivi ? t.registro.onlyActiveChip : null,
   ].filter(Boolean) as string[];
 
   return (
     <div className="flex w-full flex-col gap-4 sm:gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Registro</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          {t.registro.title}
+        </h1>
         <p className="text-sm leading-relaxed text-foreground/65">
-          {access.canEditRegistry
-            ? "Panoramica di tutti i membri della palestra. Da qui aggiungi una persona e gestisci i suoi accessi."
-            : "Panoramica di tutti i membri della palestra. Con il tuo ruolo di istruttore la sezione è in sola lettura."}
+          {access.canEditRegistry ? t.registro.leadEditor : t.registro.leadReadOnly}
         </p>
       </header>
 
@@ -159,8 +161,7 @@ export default async function RegistroPage({
         <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
-            Non è stato possibile caricare il registro. Controlla che le
-            migration del database siano state applicate.
+            {t.registro.loadFailed}
           </span>
         </p>
       ) : null}
@@ -169,33 +170,31 @@ export default async function RegistroPage({
         <details className="rounded-xl border border-border">
           <summary className="cursor-pointer px-4 py-3 font-heading text-base font-semibold sm:px-5 sm:py-4">
             <UserPlusIcon className="mr-2 inline-block h-4.5 w-4.5 align-[-0.2em] text-accent" />
-            Aggiungi persona
+            {t.registro.addPerson}
           </summary>
 
           <form action={addPerson} className="flex flex-col gap-3 px-4 pb-4 sm:gap-4 sm:px-5 sm:pb-5">
             <input type="hidden" name="_query" value={currentQuery} />
 
             <p className="text-xs text-foreground/55">
-              Viene creato anche l&apos;account, subito attivo e senza email di
-              conferma. Password provvisoria:{" "}
+              {t.registro.defaultPasswordNoteBefore}{" "}
               <code className="rounded bg-muted px-1.5 py-0.5 font-medium">
                 {DEFAULT_PASSWORD}
               </code>{" "}
-              — comunicala alla persona. Al primo accesso le verrà chiesto di
-              sostituirla prima di poter usare il resto dell&apos;app.
+              {t.registro.defaultPasswordNoteAfter}
             </p>
 
             <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="full_name" className="text-sm font-medium">
-                  Nome e cognome
+                  {t.account.fullName}
                 </label>
                 <input id="full_name" name="full_name" required className={fieldClass} />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="email" className="text-sm font-medium">
-                  Email
+                  {t.auth.email}
                 </label>
                 <input
                   id="email"
@@ -208,14 +207,14 @@ export default async function RegistroPage({
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="phone" className="text-sm font-medium">
-                  Telefono
+                  {t.account.phone}
                 </label>
                 <input id="phone" name="phone" type="tel" className={fieldClass} />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="birth_date" className="text-sm font-medium">
-                  Data di nascita
+                  {t.account.birthDate}
                 </label>
                 <input
                   id="birth_date"
@@ -227,7 +226,7 @@ export default async function RegistroPage({
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="current_belt" className="text-sm font-medium">
-                  Cintura
+                  {t.account.belt}
                 </label>
                 <select
                   id="current_belt"
@@ -237,9 +236,9 @@ export default async function RegistroPage({
                   className={fieldClass}
                 >
                   <option value="" disabled>
-                    Seleziona…
+                    {t.registro.select}
                   </option>
-                  {Object.entries(BELT_LABELS).map(([value, label]) => (
+                  {Object.entries(beltLabels(t)).map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
                     </option>
@@ -249,7 +248,7 @@ export default async function RegistroPage({
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="current_stripes" className="text-sm font-medium">
-                  Tacche
+                  {t.registro.stripes}
                 </label>
                 <select
                   id="current_stripes"
@@ -267,8 +266,8 @@ export default async function RegistroPage({
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="rank_since" className="text-sm font-medium">
-                  Cambio cintura da{" "}
-                  <span className="text-foreground/50">(oggi se vuoto)</span>
+                  {t.account.beltSince}{" "}
+                  <span className="text-foreground/50">{t.registro.todayIfEmpty}</span>
                 </label>
                 <input
                   id="rank_since"
@@ -280,7 +279,8 @@ export default async function RegistroPage({
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="stripe_since" className="text-sm font-medium">
-                  Ultima tacca <span className="text-foreground/50">(oggi se vuoto)</span>
+                  {t.account.stripeSince}{" "}
+                  <span className="text-foreground/50">{t.registro.todayIfEmpty}</span>
                 </label>
                 <input
                   id="stripe_since"
@@ -292,7 +292,7 @@ export default async function RegistroPage({
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="joined_at" className="text-sm font-medium">
-                  Iscritto dal
+                  {t.account.joinedOn}
                 </label>
                 <input
                   id="joined_at"
@@ -306,7 +306,7 @@ export default async function RegistroPage({
 
             <div className="flex flex-col gap-1.5">
               <label htmlFor="role" className="text-sm font-medium">
-                Ruolo
+                {t.registro.role}
               </label>
               <select
                 id="role"
@@ -316,7 +316,7 @@ export default async function RegistroPage({
                 className={fieldClass}
               >
                 <option value="" disabled>
-                  Seleziona…
+                  {t.registro.select}
                 </option>
                 <option value="student">Allievo</option>
                 <option value="assistant">Assistente</option>
@@ -328,7 +328,7 @@ export default async function RegistroPage({
 
             <div className="flex flex-col gap-1.5">
               <label htmlFor="notes" className="text-sm font-medium">
-                Note
+                {t.account.notes}
               </label>
               <textarea
                 id="notes"
@@ -342,7 +342,7 @@ export default async function RegistroPage({
               type="submit"
               className="self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
-              Aggiungi al registro
+              {t.registro.addToRegistry}
             </button>
           </form>
         </details>
@@ -353,7 +353,7 @@ export default async function RegistroPage({
       <details open={activeFilters.length > 0} className="rounded-xl border border-border">
         <summary className="cursor-pointer px-4 py-3 font-heading text-base font-semibold sm:px-5 sm:py-4">
           <FilterIcon className="mr-2 inline-block h-4.5 w-4.5 align-[-0.2em] text-accent" />
-          Filtri
+          {t.registro.filters}
           {activeFilters.length > 0 ? (
             <span className="font-body text-xs font-normal text-foreground/60">
               {" · "}
@@ -369,21 +369,21 @@ export default async function RegistroPage({
         >
           <div className="flex min-w-52 flex-1 flex-col gap-1.5">
             <label htmlFor="q" className="text-xs font-medium text-foreground/65">
-              Nome
+              {t.registro.name}
             </label>
             <input
               id="q"
               name="q"
               type="search"
               defaultValue={search.q ?? ""}
-              placeholder="Cerca per nome"
+              placeholder={t.registro.searchByName}
               className={fieldClass}
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="ruolo" className="text-xs font-medium text-foreground/65">
-              Ruolo
+              {t.registro.role}
             </label>
             <select
               id="ruolo"
@@ -395,7 +395,7 @@ export default async function RegistroPage({
               {/* No "Admin" entry: a portal-only admin is filtered out of the
                   list below, so the option would always return nothing. Admin
                   is still assignable from "Aggiungi persona". */}
-              {Object.entries(ROLE_LABELS)
+              {Object.entries(roleLabels(t))
                 .filter(([value]) => value !== PORTAL_ONLY_ROLE)
                 .map(([value, label]) => (
                   <option key={value} value={value}>
@@ -407,7 +407,7 @@ export default async function RegistroPage({
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="cintura" className="text-xs font-medium text-foreground/65">
-              Cintura
+              {t.account.belt}
             </label>
             <select
               id="cintura"
@@ -416,7 +416,7 @@ export default async function RegistroPage({
               className={fieldClass}
             >
               <option value="">Tutte</option>
-              {Object.entries(BELT_LABELS).map(([value, label]) => (
+              {Object.entries(beltLabels(t)).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>
@@ -432,7 +432,7 @@ export default async function RegistroPage({
               defaultChecked={Boolean(search.attivi)}
               className="h-4 w-4 accent-[var(--color-accent)]"
             />
-            Solo membri attivi
+            {t.registro.onlyActive}
           </label>
 
           <div className="flex items-center gap-2">
@@ -440,14 +440,14 @@ export default async function RegistroPage({
               type="submit"
               className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
-              Filtra
+              {t.registro.filter}
             </button>
             {activeFilters.length > 0 ? (
               <Link
                 href="/registro"
                 className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
               >
-                Azzera
+                {t.registro.reset}
               </Link>
             ) : null}
           </div>
@@ -456,8 +456,8 @@ export default async function RegistroPage({
 
       <p className="text-sm text-foreground/60">
         {total === 0
-          ? "Nessun membro trovato."
-          : `${total} membr${total === 1 ? "o" : "i"} · pagina ${page} di ${lastPage}`}
+          ? t.registro.noneFound
+          : t.registro.countAndPage(total, page, lastPage)}
       </p>
 
       <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
@@ -480,7 +480,7 @@ export default async function RegistroPage({
                   />
                   {member.auth_user_id ? null : (
                     <span className="rounded-full border border-border px-2 py-0.5 text-xs font-normal text-foreground/55">
-                      senza account
+                      {t.registro.noAccount}
                     </span>
                   )}
                 </span>
@@ -491,26 +491,28 @@ export default async function RegistroPage({
                     (rank_since) — the second is what promotion eligibility
                     actually hangs on. */}
                 <span className="text-xs text-foreground/70">
-                  {formatDays(daysSince(member.joined_at))} di BJJ
+                  {t.registro.trainingFor(formatDays(daysSince(member.joined_at), t))}
                   {" · "}
                   {/* The colour is no longer spelled out here: the belt is
                       drawn next to the name, a few pixels above. */}
-                  {formatDays(daysSince(member.rank_since))} con la cintura attuale
+                  {t.registro.atCurrentBelt(
+                    formatDays(daysSince(member.rank_since), t),
+                  )}
                 </span>
 
                 <span className="text-xs text-foreground/55">
                   {member.active_roles.length > 0
-                    ? member.active_roles.map((r) => ROLE_LABELS[r] ?? r).join(", ")
-                    : "Nessun ruolo attivo"}
+                    ? member.active_roles.map((r) => roleLabel(r, t)).join(", ")
+                    : t.registro.noActiveRole}
                   {" · "}
                   {/* Mostly estimated until the gym has been recording for a
                       while, so the row says so rather than presenting an
                       assumption as a count. */}
-                  <span title={hours.isPartlyEstimated ? estimateNote(hours.estimated) : undefined}>
-                    {formatHours(hours.total)}
-                    {hours.isPartlyEstimated ? " (stima)" : ""}
+                  <span title={hours.isPartlyEstimated ? estimateNote(hours.estimated, t) : undefined}>
+                    {formatHours(hours.total, t)}
+                    {hours.isPartlyEstimated ? t.registro.estimateSuffix : ""}
                   </span>
-                  {" · dal "}
+                  {t.registro.memberSince}
                   {formatDate(member.joined_at)}
                 </span>
               </div>
@@ -518,13 +520,13 @@ export default async function RegistroPage({
               {/* Every action sits behind the kebab so none of them — least of
                   all revoking access — can be hit by a stray tap while
                   scrolling the list. */}
-              <RowMenu label={`Azioni per ${member.full_name}`}>
+              <RowMenu label={t.registro.rowActions(member.full_name)}>
                 <Link
                   href={`/registro/${member.id}?from=${encodeURIComponent(currentQuery)}`}
                   className={menuItemClass}
                 >
                   <FileTextIcon className={menuIconClass} />
-                  Dettagli
+                  {t.registro.details}
                 </Link>
 
                 {access.canEditRegistry && canInvite ? (
@@ -534,7 +536,7 @@ export default async function RegistroPage({
                       <input type="hidden" name="full_name" value={member.full_name} />
                       <button type="submit" className={menuItemClass}>
                         <MailIcon className={menuIconClass} />
-                        Invita al portale
+                        {t.registro.invite}
                       </button>
                     </form>
                   ) : null}
@@ -552,11 +554,11 @@ export default async function RegistroPage({
                           value={member.auth_user_id ?? ""}
                         />
                         <ConfirmSubmitButton
-                          message={`Reimpostare la password di ${member.full_name} su quella provvisoria? La password attuale smetterà di funzionare.`}
+                          message={t.registro.resetPasswordConfirm(member.full_name)}
                           className={menuItemClass}
                         >
                           <KeyIcon className={menuIconClass} />
-                          Reimposta password
+                          {t.registro.resetPassword}
                         </ConfirmSubmitButton>
                       </form>
 
@@ -568,11 +570,11 @@ export default async function RegistroPage({
                           value={member.auth_user_id ?? ""}
                         />
                         <ConfirmSubmitButton
-                          message={`Revocare l'accesso a ${member.full_name}? La scheda resta nel registro, ma la persona non potrà più entrare nel portale.`}
+                          message={t.registro.revokeConfirm(member.full_name)}
                           className={`${menuItemClass} text-accent hover:bg-accent/10`}
                         >
                           <UserMinusIcon className={menuIconClass} />
-                          Revoca accesso
+                          {t.registro.revoke}
                         </ConfirmSubmitButton>
                       </form>
                     </>
@@ -584,7 +586,7 @@ export default async function RegistroPage({
 
         {members.length === 0 ? (
           <li className="px-3 py-3 text-sm text-foreground/60 sm:p-4">
-            Nessun membro corrisponde ai filtri scelti.
+            {t.registro.noMatch}
           </li>
         ) : null}
       </ul>
@@ -597,7 +599,7 @@ export default async function RegistroPage({
               className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
               <ChevronLeftIcon className="h-4 w-4" />
-              Precedente
+              {t.registro.previous}
             </Link>
           ) : (
             <span />
@@ -608,7 +610,7 @@ export default async function RegistroPage({
               href={`/registro?${queryString(search, { p: String(page + 1) })}`}
               className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
-              Successiva
+              {t.registro.next}
               <ChevronRightIcon className="h-4 w-4" />
             </Link>
           ) : (

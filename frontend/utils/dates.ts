@@ -1,3 +1,5 @@
+import { it, type Dictionary } from "./i18n/dictionaries/it";
+
 // Whole days between a `date` column (always "YYYY-MM-DD") and today.
 //
 // Both ends are normalised to UTC midnight on purpose: comparing a UTC-parsed
@@ -55,12 +57,13 @@ export function formatDate(isoDate: string | null | undefined): string {
   return dateFormat.format(parsed);
 }
 
-const numberFormat = new Intl.NumberFormat("it-IT");
-
-export function formatDays(days: number | null): string {
+// The dictionary is a parameter with a default rather than something this
+// module reads for itself: these are pure functions covered by unit tests, and
+// a function that reaches for a cookie is neither pure nor testable.
+export function formatDays(days: number | null, t: Dictionary = it): string {
   if (days === null) {
     return "—";
   }
 
-  return `${numberFormat.format(days)} giorn${days === 1 ? "o" : "i"}`;
+  return t.dates.days(days);
 }

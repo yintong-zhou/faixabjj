@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+import { getDictionary } from "@/utils/i18n/server";
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
@@ -16,7 +17,11 @@ export async function login(formData: FormData) {
   if (error) {
     // Generic message on purpose — a specific "user not found" vs "wrong
     // password" distinction would let someone enumerate registered emails.
-    const params = new URLSearchParams({ error: "Email o password non corrette." });
+    // The message is looked up in the reader's language: an error that comes
+    // back through a redirect is still copy, and the one place it is written
+    // is the dictionary.
+    const { t } = await getDictionary();
+    const params = new URLSearchParams({ error: t.auth.wrongCredentials });
     if (next) params.set("next", next);
     redirect(`/login?${params.toString()}`);
   }

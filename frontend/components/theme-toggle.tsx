@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useLayoutEffect, useSyncExternalStore } from "react";
 import { MoonIcon, SunIcon } from "@/components/icons";
 
 type Theme = "light" | "dark";
@@ -32,8 +32,36 @@ function subscribe(onChange: () => void) {
   };
 }
 
-export function ThemeToggle() {
+// The two labels come from the server: this is a Client Component and cannot
+// read the locale cookie itself.
+export function ThemeToggle({
+  toLight,
+  toDark,
+}: {
+  toLight: string;
+  toDark: string;
+}) {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  // Re-apply the stored theme after React has hydrated.
+  //
+  // The blocking script in <head> sets data-theme during HTML parsing, which is
+  // all a production build needs. In development, though, Strict Mode remounts
+  // once and resets <html> to only the attributes it manages from JSX — wiping
+  // the one the script set, so the page renders in the wrong theme. This is a
+  // no-op in production, and useLayoutEffect rather than useEffect so it still
+  // runs before paint.
+  useLayoutEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch {
+      // Storage can be unavailable (private mode, blocked cookies). The system
+      // preference is then the right answer, and it already applies.
+    }
+  }, []);
 
   function toggle() {
     const next: Theme = getSnapshot() === "dark" ? "light" : "dark";
@@ -50,7 +78,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label={theme === "dark" ? "Passa al tema chiaro" : "Passa al tema scuro"}
+      aria-label={theme === "dark" ? toLight : toDark}
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-foreground/70 transition-colors hover:bg-muted"
     >
       {theme === "dark" ? (

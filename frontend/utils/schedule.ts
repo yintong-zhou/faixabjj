@@ -7,16 +7,20 @@
 // check-in window is computed once in SQL and arrives here as two instants.
 
 import { formatDate } from "./dates";
+import { it, type Dictionary } from "./i18n/dictionaries/it";
+import { DEFAULT_LOCALE, LOCALE_TAG, type Locale } from "./i18n/locales";
 
-export const WEEKDAY_LABELS = [
-  { value: 1, short: "lun", long: "lunedì" },
-  { value: 2, short: "mar", long: "martedì" },
-  { value: 3, short: "mer", long: "mercoledì" },
-  { value: 4, short: "gio", long: "giovedì" },
-  { value: 5, short: "ven", long: "venerdì" },
-  { value: 6, short: "sab", long: "sabato" },
-  { value: 7, short: "dom", long: "domenica" },
-] as const;
+export type WeekdayLabel = { value: number; short: string; long: string };
+
+// ISO weekday numbering, 1 = Monday, which is what the `weekdays` column
+// stores and what the month grid is laid out in.
+export function weekdayLabels(t: Dictionary = it): WeekdayLabel[] {
+  return t.dates.weekdayShort.map((short, index) => ({
+    value: index + 1,
+    short,
+    long: t.dates.weekdayLong[index],
+  }));
+}
 
 const DAY_MS = 86_400_000;
 
@@ -136,32 +140,41 @@ export function checkinState({
   return "open";
 }
 
-// Italian day heading for a "YYYY-MM-DD" column, e.g. "lunedì 14/09/2026".
-// The weekday stays because a weekly calendar is read by it; the date itself
-// is dd/mm/yyyy like everywhere else in the app.
+// Day heading for a "YYYY-MM-DD" column, e.g. "lunedì 14/09/2026". The weekday
+// stays because a weekly calendar is read by it; the date itself is dd/mm/yyyy
+// in every language, an explicit decision.
 //
 // Formatted in UTC for the same reason the arithmetic above is: the viewer's
 // timezone must not shift which day a date column names.
-const weekdayFormat = new Intl.DateTimeFormat("it-IT", {
-  weekday: "long",
-  timeZone: "UTC",
-});
+//
+// The weekday comes from the dictionary rather than from Intl: the same names
+// are already needed for the course form's checkboxes and the grid header, and
+// two sources for one list is how they drift apart.
+export function formatDayHeading(isoDate: string, t: Dictionary = it): string {
+  const timestamp = Date.parse(`${isoDate}T00:00:00Z`);
+  if (Number.isNaN(timestamp)) return isoDate;
 
-export function formatDayHeading(isoDate: string): string {
-  const date = new Date(`${isoDate}T00:00:00Z`);
-  return `${weekdayFormat.format(date)} ${formatDate(isoDate)}`;
+  const weekday = t.dates.weekdayLong[isoWeekday(timestamp) - 1];
+  return `${weekday} ${formatDate(isoDate)}`;
 }
 
-// "Settembre 2026", for the month grid's header. Capitalised because it is a
-// title: Intl gives "settembre 2026" in Italian.
-const monthFormat = new Intl.DateTimeFormat("it-IT", {
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
+// "Settembre 2026" / "September 2026", for the month grid's header.
+//
+// Month names stay with Intl, unlike weekdays: twelve names in three
+// languages is exactly the kind of list a platform already has, and nothing
+// else in the app needs them.
+export function formatMonthHeading(
+  isoDate: string,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  const label = new Intl.DateTimeFormat(LOCALE_TAG[locale] ?? LOCALE_TAG[DEFAULT_LOCALE], {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${isoDate}T00:00:00Z`));
 
-export function formatMonthHeading(isoDate: string): string {
-  const label = monthFormat.format(new Date(`${isoDate}T00:00:00Z`));
+  // Italian and Portuguese lower-case month names; as a heading it wants a
+  // capital, and English already has one.
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -175,12 +188,16 @@ export function formatTime(time: string): string {
   return time.slice(0, 5);
 }
 
-export function formatWeekdays(weekdays: number[] | null): string {
+export function formatWeekdays(
+  weekdays: number[] | null,
+  t: Dictionary = it,
+): string {
   if (!weekdays || weekdays.length === 0) {
-    return "nessun giorno";
+    return t.corsi.noDays;
   }
 
-  return WEEKDAY_LABELS.filter((day) => weekdays.includes(day.value))
+  return weekdayLabels(t)
+    .filter((day) => weekdays.includes(day.value))
     .map((day) => day.short)
     .join(" ");
 }

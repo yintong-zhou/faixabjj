@@ -380,6 +380,22 @@ grid. Three things worth knowing before changing it:
 Seven columns cannot shrink below about 34rem and stay legible, so the grid
 scrolls inside its own container; the page itself must never scroll sideways.
 
+**The roll call is ordered present-first, then by belt** from white to black,
+fewer stripes first, then by name — the order a class lines up in.
+`beltRank()` in `frontend/utils/supabase/profile.ts` is the single definition
+of that order (the dashboard's belt chart uses it too); an unrecognised belt
+sorts last, because it is a data problem and does not belong at the top of
+every roll call. The order is computed on load, so tapping a state never
+makes a row jump under the finger; the list settles into the new order after
+"Salva appello".
+
+**The lesson's instructor starts ticked present.** Whoever is teaching is on
+the mat. It is a *default*, not a forced value: the state can still be
+changed, and nothing is written until the roll call is submitted — so the
+rule that an hour is only ever recorded by a check-in or an instructor's
+confirmation still holds. The instructor here is the one on the session
+(`class_session.instructor_id`), not the course default, and the row carries
+an "istruttore" tag so the pre-selection does not look arbitrary.
 **Student check-in** is an RLS `insert` policy requiring four things together:
 the row is theirs, `present` is true, `checked_in_by = 'self'`, and
 `session_checkin_open(session_id)`. Undo is allowed only on their own `'self'`
@@ -448,6 +464,62 @@ Three things worth knowing:
 - Gym-wide hours go through `hoursFor()` like everywhere else, so the total
   is not "zero" for a school that has trained for years.
 
+## Languages
+
+The app speaks Italian, English and Brazilian Portuguese. Italian is the
+source of truth; the other two must match its shape.
+
+- **`frontend/utils/i18n/dictionaries/it.ts` defines the `Dictionary` type**
+  and `en.ts` / `pt-BR.ts` are *typed as* it, so a key that Italian has and a
+  translation lacks is a compile error rather than a blank string in the UI.
+  Note the deliberate absence of `as const` on the Italian object: it would
+  turn every value into a string *literal* type, and English would then have
+  to contain the Italian words to satisfy the type.
+- **Pages read the dictionary by property, not through a `t("a.b.c")` lookup.**
+  `const { t } = await getDictionary()` then `t.registro.title` — checked by
+  the compiler, autocompleted, and no runtime path resolution. Values that
+  interpolate or pluralise are **functions** (`t.dashboard.ofTotal(12)`), so
+  each language pluralises its own way instead of sharing one format string.
+- **The locale lives in a cookie, not in the URL** (an explicit decision).
+  Almost every page sits behind a login, where a per-language URL buys
+  nothing, and the alternative meant moving every route under
+  `app/[locale]/` and rewriting every link and the proxy for the benefit of
+  one public page. The trade-off to know: the landing page has a single URL
+  in three languages, so search engines index whichever language they are
+  served — if that ever matters, the landing page is the one route worth
+  giving real per-language URLs.
+- `getLocale()` prefers the saved choice, falls back to the closest match on
+  `Accept-Language`, then Italian. The header is consulted **only** when no
+  cookie exists: once somebody has chosen, the choice wins even if their
+  browser disagrees.
+- **Client Components receive their words as props.** They cannot read the
+  cookie, so `NavShell`, `ThemeToggle`, `PasswordInput` and the reset-password
+  form take strings from the server. `/reset-password` was split into a
+  Server page and a `reset-form.tsx` Client Component for exactly this — the
+  form itself must stay on the client because the recovery link carries its
+  tokens in the URL fragment.
+- **`Belt` is an async Server Component** and reads the dictionary itself,
+  rather than taking the belt name as a prop at a dozen call sites.
+- **The pure utils take the dictionary as a parameter with an Italian
+  default** (`formatDays`, `formatHours`, `formatWeekdays`,
+  `formatDayHeading`, `beltLabel`, `roleLabel`). They are covered by unit
+  tests, and a function that reaches for a cookie is neither pure nor
+  testable. `formatMonthHeading` takes a `Locale` instead, because month
+  names come from `Intl`.
+- **Weekday names come from the dictionary, month names from `Intl`.** The
+  weekdays are needed as a list anyway — the course form's checkboxes, the
+  month grid's header — and two sources for one list is how they drift apart.
+  Twelve month names in three languages is exactly what a platform already
+  has.
+- **Dates stay dd/mm/yyyy in every language**, per the explicit instruction;
+  the locale changes the words around them, not the number format.
+- **Server actions look their own messages up** (`t.msg.*`). An error that
+  travels back through a redirect is still copy.
+- The language names in the switcher are **never translated**: a Brazilian
+  scans the list for "Português", not for "Portuguese".
+- The `#come-funziona` anchor on the landing page stays Italian on purpose —
+  it is part of a URL somebody may already have shared.
+
 ## Frontend UI
 
 - **Brand colours are not semantic tokens.** The five values from
@@ -497,10 +569,12 @@ Three things worth knowing:
   - The colour and stripe count survive as the `alt` text, which is what a screen reader reads and what the removed text node used to say. `BELT_LABELS` is still needed for the filter chips and `<select>` options, which cannot hold an image.
 - Logos live in `frontend/public/logo/`, belts in `frontend/public/belts/` — not at the root of `public/`.
 - `frontend/components/coming-soon.tsx` — shared placeholder. **Nothing uses it any more** now that `/dashboard` is wired to real data; it is kept for the next unfinished section. Replace a route's `ComingSoon` usage with real content rather than adding a parallel page.
-- All copy in the UI is in Italian.
+- All copy in the UI is translated — see "Languages" above. Never hardcode a user-facing string in a component.
 - **Theme (light/dark):** manual toggle in the header (`frontend/components/theme-toggle.tsx`), not just OS `prefers-color-scheme`. State is `localStorage["theme"]` (`"light"` \| `"dark"`, absent = follow system) applied as `data-theme` on `<html>`. Three pieces make this work together — keep them in sync if you touch theming:
   - `frontend/app/globals.css` defines light tokens on `:root`, a `prefers-color-scheme: dark` override guarded by `:not([data-theme="light"])`, and unconditional `:root[data-theme="dark"]` / `:root[data-theme="light"]` blocks so an explicit choice always wins over system preference in both directions.
   - A blocking inline script in `frontend/app/layout.tsx`'s `<head>` applies any stored theme before first paint (prevents a flash of the wrong theme). Don't move theme-reading logic into a React effect — that runs after paint.
+  - **The script goes through `frontend/components/inline-script.tsx`, not a bare `<script>`.** React logs *"Encountered a script tag while rendering React component"* in development for any `<script>` a render produces. The helper is the fix Next's own "Preventing flash before hydration" guide prescribes: `type="text/javascript"` on the server pass, so the browser runs it during parsing, and `type="text/plain"` on the client pass, so React's render produces something inert. `suppressHydrationWarning` covers the resulting `type` mismatch, which is the point rather than a bug.
+  - **`theme-toggle.tsx` re-applies the stored theme in a `useLayoutEffect`.** This looks redundant next to the blocking script and is not: in development, Strict Mode remounts once and resets `<html>` to only the attributes React manages from JSX, wiping the `data-theme` the script set. It is a no-op in production. `useLayoutEffect` rather than `useEffect` so it still runs before paint.
   - `theme-toggle.tsx` reads state via `useSyncExternalStore` (not `useEffect` + `useState`) so it renders `null` on the server without triggering the `react-hooks/set-state-in-effect` lint rule; a custom `faixabjj-theme-change` event re-syncs other instances of the toggle after a click.
 
 ## Commands

@@ -1,0 +1,569 @@
+import type { Dictionary } from "./it";
+
+// Typed as Dictionary, so a key that Italian has and this file lacks is a
+// compile error rather than a blank string in the interface.
+export const en: Dictionary = {
+  common: {
+    save: "Save",
+    saveChanges: "Save changes",
+    cancel: "Cancel",
+    back: "Back",
+    none: "None",
+    all: "All",
+    today: "Today",
+    dash: "—",
+    open: "Open",
+    close: "Close",
+    details: "Details",
+    readOnly: "Read only",
+    notAvailable: "Not available",
+    loading: "Loading…",
+  },
+
+  nav: {
+    home: "Home",
+    dashboard: "Dashboard",
+    presenze: "Attendance",
+    corsi: "Classes",
+    registro: "Members",
+    account: "Account",
+    signIn: "Sign in",
+    signOut: "Sign out",
+    menu: "Menu",
+    theme: { toLight: "Switch to light theme", toDark: "Switch to dark theme" },
+    language: "Language",
+  },
+
+  belts: {
+    white: "White",
+    blue: "Blue",
+    purple: "Purple",
+    brown: "Brown",
+    black: "Black",
+    label: (belt: string, stripes: number) =>
+      stripes <= 0
+        ? `${belt} belt`
+        : `${belt} belt, ${stripes} stripe${stripes === 1 ? "" : "s"}`,
+  },
+
+  roles: {
+    student: "Student",
+    assistant: "Assistant",
+    instructor: "Instructor",
+    head_coach: "Head coach",
+    admin: "Admin",
+  },
+
+  dates: {
+    days: (n: number) =>
+      `${new Intl.NumberFormat("en-GB").format(n)} day${n === 1 ? "" : "s"}`,
+    weekdayShort: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    weekdayLong: [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ],
+  },
+
+  auth: {
+    signInTitle: "Sign in",
+    signInLead: "Reserved for members of the gym.",
+    email: "Email",
+    password: "Password",
+    forgotLink: "Forgotten your password?",
+    signInButton: "Sign in",
+    wrongCredentials: "Email or password is incorrect.",
+
+    forgotTitle: "Forgotten password",
+    forgotLead:
+      "Enter your email: if the account exists, we will send you a link to reset your password.",
+    forgotButton: "Send link",
+    backToLogin: "Back to sign in",
+    sentTitle: "Check your email",
+    sentLead:
+      "If the address is registered, a link to reset your password is on its way.",
+
+    changeTitleForced: "Choose your password",
+    changeTitle: "Change password",
+    changeLeadForced:
+      "Your account was created with a temporary password, the same one for everybody. Choose your own to carry on: until then the rest of the app stays closed.",
+    changeLead: "Set a new password for your account.",
+    newPassword: "New password",
+    confirmPassword: "Confirm password",
+    passwordHint: "At least 8 characters, and different from the temporary one.",
+    changeButton: "Save and continue",
+    tooShort: "The password must be at least 8 characters long.",
+    mismatch: "The two passwords do not match.",
+    sameAsDefault: "Choose a password different from the default one.",
+    updateFailed: "The password could not be updated.",
+    flagNotCleared:
+      "Password updated, but the change request was not cleared. Please try again.",
+
+    showPassword: "Show the password",
+    hidePassword: "Hide the password",
+  },
+
+  reset: {
+    checkingTitle: "Reset password",
+    checkingLead: "Checking the link…",
+    invalidTitle: "Invalid link",
+    invalidLead: "This password reset link is not valid, or it has expired.",
+    requestNewLink: "Request a new link",
+    doneTitle: "Password updated",
+    doneLead: "Redirecting you…",
+    title: "Choose a new password",
+    lead: "At least 6 characters.",
+    saveButton: "Save password",
+    updateFailed: "The password could not be updated. Request a new link.",
+  },
+
+  home: {
+    metaTitle: "FAIXABJJ - class hours, stripes and belts for BJJ gyms",
+    metaDescription:
+      "Software for Brazilian Jiu-Jitsu schools: one registry for students and instructors, attendance with an automatic hour count, and promotion criteria for stripes and belts. The decision stays with the instructor.",
+    ogDescription:
+      "One registry, attendance with an automatic hour count and configurable promotion criteria, for Brazilian Jiu-Jitsu schools.",
+    badge: "MVP in development",
+    title: "Technical progress, tracked.",
+    lead: "FAIXABJJ sits alongside the management software your gym already uses and covers the one thing generic tools do badly: following each student's path towards stripes and belts, while adding as little work as possible for instructors.",
+    ctaPrimary: "Sign in to the portal",
+    ctaSecondary: "How it works",
+    noSignup:
+      "Access is reserved for members of the gym: accounts are created by the office, there is no open sign-up.",
+
+    keywords: [
+      "Brazilian Jiu-Jitsu",
+      "BJJ",
+      "BJJ gym management",
+      "BJJ attendance tracker",
+      "training hours count",
+      "stripes and belts",
+      "BJJ belt promotion",
+    ],
+    audience: "Brazilian Jiu-Jitsu schools and gyms",
+    whatItDoes: "What it does",
+    features: [
+      {
+        title: "One registry",
+        description:
+          "A single profile for students and instructors: in BJJ the same person is often both at once, and the role changes over time without losing the history.",
+      },
+      {
+        title: "Attendance and hours",
+        description:
+          "The instructor's roll call, or the student's own check-in within a window around the class. One attendance is one hour, and the total keeps itself up to date.",
+      },
+      {
+        title: "Promotion criteria",
+        description:
+          "Hour and time-at-rank thresholds, configurable per belt. The system flags who is ready: promoting stays the instructor's decision.",
+      },
+    ],
+
+    howItWorks: "How it works",
+    steps: [
+      {
+        title: "Define the classes",
+        description:
+          "Days, times and period for each recurring class. The lesson calendar follows from that, with nothing to re-enter each week.",
+      },
+      {
+        title: "Record attendance",
+        description:
+          "The instructor takes the roll call in a few taps on a phone, or the student checks themselves in on arriving at the gym.",
+      },
+      {
+        title: "See who is ready",
+        description:
+          "Hours accumulated and time spent at the current rank, for every person, always next to their name.",
+      },
+    ],
+
+    notDoingTitle: "What it deliberately does not do",
+    notDoingLead:
+      "It is not a full management system and does not want to become one. It sits beside what the gym already uses, and covers one thing well.",
+    notDoing: [
+      "Payments, memberships and invoicing",
+      "Online sign-up and lead management",
+      "Competition and tournament management",
+      "Technical tracking by positional category",
+    ],
+
+    alreadyMember: "Already a member?",
+    alreadyMemberLead:
+      "Sign in with the email you gave the gym. If you do not remember your password you can reset it from the sign-in page.",
+  },
+
+  account: {
+    title: "My account",
+    lead: "Manage your personal details and sign-in credentials.",
+    profileUnavailable:
+      "Your profile is not available. If the problem persists, check that the database migrations have been applied.",
+
+    personalData: "Personal details",
+    fullName: "Full name",
+    phone: "Phone",
+    birthDate: "Date of birth",
+    notes: "Notes",
+    emailChangeNote:
+      "Changing your address sends a confirmation email: the new address only takes effect once you have opened it.",
+
+    rankAndRoles: "Rank and roles",
+    rankReadOnly:
+      "Belt, stripes and roles cannot be changed here: promotion stays the instructor's decision.",
+    openingBalanceNote: (perWeek: number) =>
+      `The total includes an opening balance, estimated at ${perWeek} classes a week for the period before tracking began. From then on it only grows through your check-in or the instructor's roll call.`,
+    belt: "Belt",
+    beltSince: "Belt awarded on",
+    stripeSince: "Last stripe",
+    joinedOn: "Member since",
+    classHours: "Class hours",
+    activeRoles: "Active roles",
+    manageMembers: "Manage members in the registry →",
+
+    passwordSection: "Password",
+    updatePassword: "Update password",
+    passwordMinimum: "At least 8 characters.",
+    estimateSuffix: "(estimate)",
+  },
+
+  dashboard: {
+    title: "Dashboard",
+    staffLead:
+      "The gym at a glance: students, this month's lessons and the belt spread.",
+    memberLead: "Your path: rank, class hours and upcoming training.",
+    profileUnavailable:
+      "Your profile is not available. If the problem persists, let the gym office know.",
+
+    students: "Students",
+    activeMembers: "Active members",
+    ofTotal: (n: number) => `${n} in total`,
+    newMembers: (days: number) => `New (${days} days)`,
+    recentlyJoined: "joined recently",
+    withoutAccount: "Without an account",
+    neverInvited: "never invited, or revoked",
+    gymHours: "Gym hours",
+    openingBalancesIncluded: "opening balances included",
+
+    monthLessons: "This month's lessons",
+    scheduled: "Scheduled",
+    activeCourses: (n: number) => `${n} active classes`,
+    held: "Already held",
+    cancelledCount: (n: number) => `${n} cancelled`,
+    attendances: "Attendances",
+    recordedThisMonth: "recorded this month",
+    averagePerLesson: "Average per lesson",
+    studentsPresent: "students present",
+    todayHeading: "Today",
+    noLessonsToday: "No lessons scheduled today.",
+    noInstructor: "no instructor",
+    presentCount: (n: number) => `${n} present`,
+    rollCall: "Roll call",
+
+    belts: "Belts",
+    beltSpread: (n: number) => `Spread across the ${n} active members.`,
+    unknownBelts: (n: number) =>
+      `${n} members have an unrecognised belt and do not appear in the chart.`,
+
+    yourRank: "Your rank",
+    atThisBelt: "At this belt",
+    sinceLastStripe: "Since the last stripe",
+    promotionNote:
+      "Your instructor awards belts and stripes: this only shows where you stand, promotion is never automatic.",
+
+    yourTraining: "Your training",
+    totalHours: "Total hours",
+    openingBalanceIncluded: "opening balance included",
+    recordedHours: "recorded hours",
+    lastDays: (days: number) => `Last ${days} days`,
+    lessonsDone: "classes attended",
+    average: "Average",
+    lessonsPerWeek: "classes a week",
+    lastTime: "Last time",
+    noneInWindow: (days: number) => `none in the last ${days} days`,
+    memberEstimateNote: (perWeek: number) =>
+      `The total includes an opening balance, estimated at ${perWeek} classes a week for the period before tracking began. From then on it only grows through your check-in or the instructor's roll call.`,
+
+    nextLessons: "Next lessons",
+    noUpcoming: "No lessons scheduled in the coming days.",
+    checkinHint:
+      "Check-in happens in Attendance, when you are at the gym and the window is open.",
+  },
+
+  presenze: {
+    title: "Attendance",
+    staffLead: "The lessons in the calendar. Open one to take the roll call.",
+    memberLead:
+      "The lessons in the calendar. Check in when you are at the gym: one attendance is one hour.",
+    loadFailed:
+      "The calendar could not be loaded. Check that the database migrations have been applied.",
+    profileMissing: "Your profile is not available, so check-in is disabled.",
+
+    viewList: "List",
+    viewGrid: "Grid",
+    weekOf: (date: string) => `Week of ${date}`,
+    previousWeek: "Previous",
+    nextWeek: "Next",
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
+    todaySuffix: " · today",
+
+    noLessonsThisWeek: "No lessons this week.",
+    noLessonsThisDay: "No lessons on this day.",
+    cellRollCall: (course: string) => `Roll call: ${course}`,
+    cellOpenDay: (n: number) => `${n} lessons — open the day`,
+
+    noInstructor: "no instructor",
+    cancelledSuffix: " · lesson cancelled",
+    presentCount: (n: number) => `${n} present`,
+    rollCall: "Roll call",
+
+    absent: "absent",
+    present: "Present",
+    undo: "Undo",
+    cancelledState: "cancelled",
+    tooEarly: "check-in not open yet",
+    closed: "check-in closed",
+    openState: "check-in open",
+    checkIn: "Check in",
+  },
+
+  rollCall: {
+    notRecorded: "Not recorded",
+    present: "Present",
+    absent: "Absent",
+    presentTotal: (n: number) => `${n} present`,
+    cancelledNotice:
+      "Lesson cancelled: check-in is closed. Attendance already recorded is kept.",
+    lessonSection: "Lesson",
+    instructor: "Instructor",
+    restoreLesson: "Restore lesson",
+    cancelLesson: "Cancel lesson",
+    cancelConfirm:
+      "Cancel this lesson? Check-in closes, but attendance already recorded is kept.",
+    selfCheckinTag: "check-in",
+    instructorTag: "instructor",
+    noMembers: "No members in the registry.",
+    saveRollCall: "Save roll call",
+  },
+
+  registro: {
+    title: "Members",
+    leadEditor:
+      "Everyone in the gym. Add a person here and manage their access.",
+    leadReadOnly:
+      "Everyone in the gym. With your instructor role this section is read only.",
+    loadFailed:
+      "The registry could not be loaded. Check that the database migrations have been applied.",
+
+    addPerson: "Add a person",
+    addToRegistry: "Add to the registry",
+    defaultPasswordNoteBefore:
+      "An account is created too, active immediately and with no confirmation email. Temporary password:",
+    defaultPasswordNoteAfter:
+      "— pass it on to the person. They will be asked to replace it on first sign-in, before anything else in the app opens.",
+    select: "Select…",
+    stripes: "Stripes",
+    todayIfEmpty: "(today if empty)",
+    role: "Role",
+
+    filters: "Filters",
+    name: "Name",
+    searchByName: "Search by name",
+    onlyActive: "Active members only",
+    onlyActiveChip: "active only",
+    filter: "Filter",
+    reset: "Clear",
+
+    noneFound: "No members found.",
+    countAndPage: (total: number, page: number, pages: number) =>
+      `${total} member${total === 1 ? "" : "s"} · page ${page} of ${pages}`,
+    noMatch: "No member matches the chosen filters.",
+    previous: "Previous",
+    next: "Next",
+
+    noAccount: "no account",
+    trainingFor: (days: string) => `${days} of BJJ`,
+    atCurrentBelt: (days: string) => `${days} at the current belt`,
+    noActiveRole: "No active role",
+    memberSince: " · since ",
+    estimateSuffix: " (estimate)",
+
+    rowActions: (name: string) => `Actions for ${name}`,
+    details: "Details",
+    invite: "Invite to the portal",
+    resetPassword: "Reset password",
+    resetPasswordConfirm: (name: string) =>
+      `Reset ${name}'s password to the temporary one? The current password will stop working.`,
+    revoke: "Revoke access",
+    revokeConfirm: (name: string) =>
+      `Revoke ${name}'s access? The record stays in the registry, but the person will no longer be able to sign in.`,
+
+    backToRegistry: "Members",
+    detailReadOnly:
+      "Read only: with your instructor role this record cannot be edited.",
+    personalSection: "Personal details",
+    pathSection: "Progress",
+    notesSection: "Notes",
+    rolesSection: "Roles",
+    noRoles: "No role assigned.",
+    roleRange: (from: string, to: string) => `from ${from} to ${to}`,
+    roleOpen: (from: string) => `from ${from} · active`,
+    totalHours: "Total hours",
+    recordedHours: "Recorded hours",
+    openingHours: "Opening hours (estimate)",
+    trainingTime: "Training for",
+    beltTime: "At this belt for",
+    stripeTime: "Since the last stripe",
+    openingBalanceExplained: (date: string, perWeek: number) =>
+      `The opening hours cover only the period from joining to ${date}, calculated at ${perWeek} classes a week because no attendance history exists for those years. They are a starting balance and do not grow any more: from ${date} every hour comes only from the student's check-in or the instructor's roll call.`,
+  },
+
+  msg: {
+    genericFailed: "The operation did not go through.",
+    alreadyPresent: "You are already recorded as present at this lesson.",
+    undoTooLate: "This check-in can no longer be undone.",
+    restoreFailed: "The restore did not go through.",
+    pickBelt: "Choose a belt.",
+    pickRole: "Choose a role.",
+    emailNeededToInvite:
+      "An email address on the record is needed to invite this person.",
+    resetFailed: "The reset did not go through.",
+    cannotRevokeSelf: "You cannot revoke your own access.",
+    revokeFailed: "The revocation did not go through.",
+    nameEmpty: "The name cannot be empty.",
+    profileNotFound: "Profile not found.",
+    profileSaveFailed: "The profile could not be saved.",
+    profileSaved: "Profile updated.",
+    profileSavedEmailPending:
+      "Profile saved. Confirm the new address from the link we have emailed you.",
+    profileSavedEmailFailed: "Profile saved, but the email change did not go through.",
+    passwordUpdated: "Password updated.",
+    profileUnavailable: "Your profile is not available.",
+
+    nameRequired: "The name is required.",
+    emailRequired: "The email is required.",
+    joinDateRequired: "The join date is required.",
+    stripesRange: "Stripes must be a number from 0 to 4.",
+    userNotSpecified: "No user specified.",
+    adminClientMissing: "The admin client is not available.",
+    secretMissingCreate:
+      "SUPABASE_SECRET_KEY is not configured: accounts cannot be created.",
+    secretMissingInvite: "SUPABASE_SECRET_KEY is not configured: invitations are disabled.",
+    secretMissingReset: "SUPABASE_SECRET_KEY is not configured: reset is disabled.",
+    secretMissingRevoke: "SUPABASE_SECRET_KEY is not configured: revoking is disabled.",
+    accountNotCreated:
+      "Account not created: the email address may already be registered.",
+    personAdded: (name: string, password: string) =>
+      `${name} added to the registry. The account is active: temporary password ${password}, to be changed on first sign-in.`,
+    personAddedNoRole: (name: string) =>
+      `${name} was added, but the role was not assigned.`,
+    accountCreatedNoProfile: (email: string) =>
+      `Account created for ${email}, but the record's details were not saved.`,
+    inviteFailed: "The invitation failed. The address may already be registered.",
+    inviteSent: (email: string) => `Invitation sent to ${email}.`,
+    passwordReset: (who: string, password: string) =>
+      `${who}'s password has been set back to the temporary one (${password}): they will be asked to change it on first sign-in.`,
+    someUser: "the user",
+    accessRevoked: "Access revoked. The record stays in the registry.",
+
+    courseNameRequired: "The class name is required.",
+    timesRequired: "Start and end times are required.",
+    endBeforeStart: "The end time must be after the start time.",
+    pickOneDay: "Choose at least one day of the week.",
+    opensRange: "The check-in opening minutes must be between 0 and 1440.",
+    closesRange: "The check-in closing minutes must be between 0 and 1440.",
+    endDateBeforeStart: "The end date must be after the start date.",
+    courseNotCreated: "Class not created.",
+    courseNotSpecified: "No class specified.",
+    courseNotFound: "Class not found.",
+    courseUpdateFailed: "The change did not go through.",
+    courseCreated: (name: string, lessons: number) =>
+      `${name} created, ${lessons} lessons in the calendar.`,
+    courseCreatedNoCalendar: (name: string) =>
+      `${name} created, but the calendar was not generated.`,
+    courseUpdated: (name: string) => `${name} updated and the calendar regenerated.`,
+    courseUpdatedNoCalendar: "Class updated, but the calendar was not regenerated.",
+    calendarExtended: (name: string, lessons: number) =>
+      `${name}'s calendar extended to ${lessons} lessons.`,
+    calendarNotExtended: "The calendar was not extended.",
+    courseSuspended: "Class suspended.",
+    courseReactivated: "Class reactivated.",
+    courseDeleted: "Class deleted.",
+    courseHasAttendance: "The class has recorded attendance: you can only suspend it.",
+    deleteFailed: "The deletion did not go through.",
+
+    sessionNotSpecified: "No lesson specified.",
+    checkinClosed: "Check-in for this lesson is not open.",
+    checkinRecorded: "Check-in recorded.",
+    checkinUndone: "Check-in undone.",
+    rollCallSaved: (present: number) => `Roll call saved: ${present} present.`,
+    rollCallPartial: "The roll call was only partly saved.",
+    rollCallFailed: "The roll call was not saved.",
+    instructorUpdated: "Instructor updated.",
+    instructorNotUpdated: "The instructor was not updated.",
+    lessonCancelled: "Lesson cancelled.",
+    lessonRestored: "Lesson restored.",
+    cancelFailed: "The cancellation did not go through.",
+  },
+
+  corsi: {
+    noDays: "no days",
+    title: "Classes",
+    lead:
+      "The gym's recurring classes. The lesson calendar you see under Attendance follows from these.",
+    loadFailed:
+      "The classes could not be loaded. Check that the database migrations have been applied.",
+
+    addCourse: "Add class",
+    createCourse: "Create class",
+    addHint:
+      "Saving the class generates the lessons for the next eight weeks. Lessons already held are never touched. The instructor set here is the default: generated lessons inherit it, and it can still be changed on a single lesson from the roll call under Attendance.",
+
+    courseName: "Class name",
+    days: "Days",
+    startTime: "Start",
+    endTime: "End",
+    hourAria: (label: string) => `${label}: hours`,
+    minuteAria: (label: string) => `${label}: minutes`,
+    activeFrom: "Active from",
+    todayIfEmpty: "(today if empty)",
+    activeUntil: "Until",
+    neverEndsIfEmpty: "(no end if empty)",
+    checkinBefore: "Check-in from (min before)",
+    checkinAfter: "Check-in until (min after)",
+    instructor: "Instructor",
+    instructorDefault: "(class default)",
+    currentInstructor: "Current instructor",
+    description: "Description",
+
+    suspended: "suspended",
+    noInstructor: "no instructor",
+    noUpcoming: "no upcoming lessons in the calendar",
+    upcomingCount: (n: number) => `${n} lessons in the calendar`,
+    checkinWindow: (before: number, after: number) =>
+      ` · check-in from ${before} min before to ${after} min after`,
+
+    rowActions: (name: string) => `Actions for ${name}`,
+    extendCalendar: "Extend calendar",
+    suspend: "Suspend",
+    reactivate: "Reactivate",
+    remove: "Delete",
+    edit: "Edit",
+    deleteConfirm: (name: string) =>
+      `Delete ${name}? Only possible if it has no recorded attendance; otherwise you can suspend it.`,
+    empty:
+      "No classes yet. Create one above: the lessons appear under Attendance straight away.",
+
+  },
+
+  hours: {
+    hours: (n: string) => `${n} hours`,
+    estimateNote: (estimated: string, perWeek: number) =>
+      `Includes ${estimated} opening hours, estimated at ${perWeek} classes a week since joining, for the period before attendance was tracked. From then on hours only grow through check-in or the roll call.`,
+  },
+};

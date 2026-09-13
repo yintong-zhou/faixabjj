@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertCircleIcon } from "@/components/icons";
 import { PasswordInput } from "@/components/password-input";
+import { getDictionary } from "@/utils/i18n/server";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -9,15 +10,16 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const { error, next } = await searchParams;
+  const { t } = await getDictionary();
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col gap-6 sm:gap-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Accedi
+          {t.auth.signInTitle}
         </h1>
         <p className="text-sm leading-relaxed text-foreground/65">
-          Area riservata a istruttori e staff della palestra.
+          {t.auth.signInLead}
         </p>
       </div>
 
@@ -26,7 +28,7 @@ export default async function LoginPage({
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className="text-sm font-medium">
-            Email
+            {t.auth.email}
           </label>
           <input
             id="email"
@@ -41,13 +43,13 @@ export default async function LoginPage({
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <label htmlFor="password" className="text-sm font-medium">
-              Password
+              {t.auth.password}
             </label>
             <Link
               href="/forgot-password"
               className="text-xs font-medium text-accent hover:opacity-80"
             >
-              Password dimenticata?
+              {t.auth.forgotLink}
             </Link>
           </div>
           <PasswordInput
@@ -55,6 +57,8 @@ export default async function LoginPage({
             name="password"
             required
             autoComplete="current-password"
+            showLabel={t.auth.showPassword}
+            hideLabel={t.auth.hidePassword}
           />
         </div>
 
@@ -69,7 +73,7 @@ export default async function LoginPage({
           type="submit"
           className="mt-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
         >
-          Accedi
+          {t.auth.signInButton}
         </button>
       </form>
     </div>

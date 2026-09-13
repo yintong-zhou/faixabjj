@@ -11,8 +11,11 @@ import {
   XCircleIcon,
 } from "@/components/icons";
 import { requireClassManager } from "@/utils/supabase/require-admin";
+import { beltRank } from "@/utils/supabase/profile";
 import { PORTAL_ONLY_ROLES, TECHNICAL_ROLES } from "@/utils/members";
 import { formatDayHeading, formatTime } from "@/utils/schedule";
+import { getDictionary } from "@/utils/i18n/server";
+import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import {
   cancelSession,
   restoreSession,
@@ -23,29 +26,35 @@ import {
 // Present is green, absent is red, not recorded is neutral. The tokens flip
 // per theme — a dark green that reads well on white is nearly black on the
 // dark theme.
-const ROLL_CALL_STATES = [
-  {
-    value: "",
-    title: "Non registrato",
-    icon: MinusCircleIcon,
-    checkedClass: "peer-checked:bg-muted peer-checked:text-foreground/70",
-    legendClass: "text-foreground/40",
-  },
-  {
-    value: "present",
-    title: "Presente",
-    icon: CheckCircleIcon,
-    checkedClass: "peer-checked:bg-success/10 peer-checked:text-success",
-    legendClass: "text-success",
-  },
-  {
-    value: "absent",
-    title: "Assente",
-    icon: XCircleIcon,
-    checkedClass: "peer-checked:bg-danger/10 peer-checked:text-danger",
-    legendClass: "text-danger",
-  },
-] as const;
+//
+// A function of the dictionary rather than a constant, because the three
+// titles are words: they are the legend, the tooltip and the screen-reader
+// label all at once.
+function rollCallStates(t: Dictionary) {
+  return [
+    {
+      value: "",
+      title: t.rollCall.notRecorded,
+      icon: MinusCircleIcon,
+      checkedClass: "peer-checked:bg-muted peer-checked:text-foreground/70",
+      legendClass: "text-foreground/40",
+    },
+    {
+      value: "present",
+      title: t.rollCall.present,
+      icon: CheckCircleIcon,
+      checkedClass: "peer-checked:bg-success/10 peer-checked:text-success",
+      legendClass: "text-success",
+    },
+    {
+      value: "absent",
+      title: t.rollCall.absent,
+      icon: XCircleIcon,
+      checkedClass: "peer-checked:bg-danger/10 peer-checked:text-danger",
+      legendClass: "text-danger",
+    },
+  ];
+}
 
 type Session = {
   id: string;
@@ -81,6 +90,8 @@ export default async function RollCallPage({
 }) {
   const { id } = await params;
   const { from, ok, error } = await searchParams;
+  const { t } = await getDictionary();
+  const states = rollCallStates(t);
   // Staff only. A student reaches the lesson list but never the roll call.
   const { supabase } = await requireClassManager(`/presenze/${id}`);
 
@@ -118,13 +129,42 @@ export default async function RollCallPage({
         .order("full_name"),
     ]);
 
-  const members = (memberRows ?? []) as Member[];
   const instructors = (instructorRows ?? []) as { id: string; full_name: string }[];
 
   const recorded = new Map<string, AttendanceRow>();
   for (const row of (attendanceRows ?? []) as AttendanceRow[]) {
     recorded.set(row.person_id, row);
   }
+
+  // Whoever is teaching this lesson is on the mat, so they start ticked
+  // present. It is only a default: the state can still be changed before
+  // saving, and nothing is written until the roll call is submitted — the
+  // instructor's own confirmation stays the thing that records the hour.
+  const stateFor = (personId: string): "" | "present" | "absent" => {
+    const row = recorded.get(personId);
+    if (row) return row.present ? "present" : "absent";
+    return personId === session.instructor_id ? "present" : "";
+  };
+
+  // Present first, then by belt from white to black, then by name. Calling the
+  // roll by belt is how the class lines up, and grouping the present at the top
+  // makes the list readable again once it has been saved.
+  //
+  // The order is computed on load, so tapping a state never makes a row jump
+  // under the finger; it settles into the new order after "Salva appello".
+  const members = ((memberRows ?? []) as Member[]).slice().sort((a, b) => {
+    const presence =
+      Number(stateFor(b.id) === "present") - Number(stateFor(a.id) === "present");
+    if (presence !== 0) return presence;
+
+    const belt = beltRank(a.current_belt) - beltRank(b.current_belt);
+    if (belt !== 0) return belt;
+
+    if (a.current_stripes !== b.current_stripes) {
+      return a.current_stripes - b.current_stripes;
+    }
+    return a.full_name.localeCompare(b.full_name, "it");
+  });
 
   const presentCount = [...recorded.values()].filter((row) => row.present).length;
   // Carries the week the list was on, so closing the roll call returns to it.
@@ -138,7 +178,7 @@ export default async function RollCallPage({
           className="flex w-fit items-center gap-1.5 text-sm font-medium text-foreground/60 hover:text-foreground"
         >
           <ChevronLeftIcon className="h-4 w-4" />
-          Presenze
+          {t.presenze.title}
         </Link>
 
         <h1
@@ -150,9 +190,9 @@ export default async function RollCallPage({
         </h1>
 
         <p className="text-sm text-foreground/65">
-          {formatDayHeading(session.session_date)} ·{" "}
+          {formatDayHeading(session.session_date, t)} ·{" "}
           {formatTime(session.start_time)}–{formatTime(session.end_time)} ·{" "}
-          {presentCount} present{presentCount === 1 ? "e" : "i"}
+          {t.rollCall.presentTotal(presentCount)}
         </p>
       </header>
 
@@ -171,13 +211,14 @@ export default async function RollCallPage({
       {cancelled ? (
         <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-          Lezione annullata: il check-in è chiuso. Le presenze già registrate
-          restano.
+          {t.rollCall.cancelledNotice}
         </p>
       ) : null}
 
       <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
-        <h2 className="font-heading text-lg font-semibold">Lezione</h2>
+        <h2 className="font-heading text-lg font-semibold">
+          {t.rollCall.lessonSection}
+        </h2>
 
         <form
           action={setSessionInstructor}
@@ -187,7 +228,7 @@ export default async function RollCallPage({
           <input type="hidden" name="from" value={from ?? ""} />
           <div className="flex min-w-48 flex-1 flex-col gap-1.5">
             <label htmlFor="instructor_id" className="text-sm font-medium">
-              Istruttore
+              {t.rollCall.instructor}
             </label>
             <select
               id="instructor_id"
@@ -195,7 +236,7 @@ export default async function RollCallPage({
               defaultValue={session.instructor_id ?? ""}
               className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-accent"
             >
-              <option value="">Nessuno</option>
+              <option value="">{t.common.none}</option>
               {instructors.map((person) => (
                 <option key={person.id} value={person.id}>
                   {person.full_name}
@@ -207,7 +248,7 @@ export default async function RollCallPage({
             type="submit"
             className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
           >
-            Salva
+            {t.common.save}
           </button>
         </form>
 
@@ -220,7 +261,7 @@ export default async function RollCallPage({
               className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
               <PlayIcon className="h-4 w-4" />
-              Ripristina lezione
+              {t.rollCall.restoreLesson}
             </button>
           </form>
         ) : (
@@ -228,10 +269,10 @@ export default async function RollCallPage({
             <input type="hidden" name="session_id" value={session.id} />
             <input type="hidden" name="from" value={from ?? ""} />
             <ConfirmSubmitButton
-              message="Annullare questa lezione? Il check-in si chiude, ma le presenze già registrate restano."
+              message={t.rollCall.cancelConfirm}
               className="rounded-full border border-border px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent/10"
             >
-              Annulla lezione
+              {t.rollCall.cancelLesson}
             </ConfirmSubmitButton>
           </form>
         )}
@@ -246,7 +287,7 @@ export default async function RollCallPage({
         {/* A legend, because the icons replaced letters and `title` never
             appears on a phone, where this page is actually used. */}
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-foreground/55">
-          {ROLL_CALL_STATES.map((option) => (
+          {states.map((option) => (
             <li key={option.value || "none"} className="flex items-center gap-1.5">
               <option.icon className={`h-4 w-4 ${option.legendClass}`} />
               {option.title}
@@ -257,7 +298,8 @@ export default async function RollCallPage({
         <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
           {members.map((member) => {
             const row = recorded.get(member.id);
-            const current = row ? (row.present ? "present" : "absent") : "";
+            const current = stateFor(member.id);
+            const isInstructor = member.id === session.instructor_id;
 
             return (
               <li
@@ -269,7 +311,12 @@ export default async function RollCallPage({
                     {member.full_name}
                     {row?.checked_in_by === "self" ? (
                       <span className="rounded-full bg-secondary/40 px-2 py-0.5 text-xs font-normal">
-                        check-in
+                        {t.rollCall.selfCheckinTag}
+                      </span>
+                    ) : null}
+                    {isInstructor ? (
+                      <span className="rounded-full border border-border px-2 py-0.5 text-xs font-normal text-foreground/55">
+                        {t.rollCall.instructorTag}
                       </span>
                     ) : null}
                   </span>
@@ -285,7 +332,7 @@ export default async function RollCallPage({
                     It stays neutral grey — an empty state is not an outcome,
                     and a third colour would imply it were one. */}
                 <div className="flex shrink-0 items-center gap-1">
-                  {ROLL_CALL_STATES.map((option) => (
+                  {states.map((option) => (
                     <label
                       key={option.value || "none"}
                       title={option.title}
@@ -317,7 +364,7 @@ export default async function RollCallPage({
 
           {members.length === 0 ? (
             <li className="px-3 py-3 text-sm text-foreground/60 sm:p-4">
-              Nessun membro nel registro.
+              {t.rollCall.noMembers}
             </li>
           ) : null}
         </ul>
@@ -327,7 +374,7 @@ export default async function RollCallPage({
             type="submit"
             className="sticky bottom-24 self-center rounded-full bg-foreground px-6 py-2.5 text-sm font-medium text-background shadow-lg transition-opacity hover:opacity-90 sm:bottom-6"
           >
-            Salva appello
+            {t.rollCall.saveRollCall}
           </button>
         ) : null}
       </form>

@@ -3,11 +3,15 @@
 import { useId, useState } from "react";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 
+// The two aria labels are props: this is a Client Component and cannot read
+// the locale cookie, so the server hands it its words.
 type PasswordInputProps = {
   id?: string;
   name: string;
   required?: boolean;
   autoComplete?: string;
+  showLabel: string;
+  hideLabel: string;
 };
 
 export function PasswordInput({
@@ -15,6 +19,8 @@ export function PasswordInput({
   name,
   required,
   autoComplete,
+  showLabel,
+  hideLabel,
 }: PasswordInputProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
@@ -33,7 +39,7 @@ export function PasswordInput({
       <button
         type="button"
         onClick={() => setVisible((current) => !current)}
-        aria-label={visible ? "Nascondi password" : "Mostra password"}
+        aria-label={visible ? hideLabel : showLabel}
         aria-pressed={visible}
         className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-foreground/50 transition-colors hover:text-foreground/80"
       >

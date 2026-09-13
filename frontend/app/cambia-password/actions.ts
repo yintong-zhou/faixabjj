@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireSession } from "@/utils/supabase/require-admin";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
+import { getDictionary } from "@/utils/i18n/server";
 
 const PATH = "/cambia-password";
 
@@ -12,16 +13,17 @@ export async function changePassword(formData: FormData) {
   // requireSession, not requireAdmin: this is the one page a user with a
   // pending password change is allowed to reach.
   const { supabase, userId } = await requireSession(PATH);
+  const { t } = await getDictionary();
 
   const password = (formData.get("password") as string) ?? "";
   const confirm = (formData.get("confirm_password") as string) ?? "";
 
   if (password.length < 8) {
-    redirect(`${PATH}?error=${encodeURIComponent("La password deve avere almeno 8 caratteri.")}`);
+    redirect(`${PATH}?error=${encodeURIComponent(t.auth.tooShort)}`);
   }
 
   if (password !== confirm) {
-    redirect(`${PATH}?error=${encodeURIComponent("Le due password non coincidono.")}`);
+    redirect(`${PATH}?error=${encodeURIComponent(t.auth.mismatch)}`);
   }
 
   // Without this the forced change would be theatre: confirming the default
@@ -29,7 +31,7 @@ export async function changePassword(formData: FormData) {
   // exposed as it was.
   if (password === DEFAULT_PASSWORD) {
     redirect(
-      `${PATH}?error=${encodeURIComponent("Scegli una password diversa da quella predefinita.")}`,
+      `${PATH}?error=${encodeURIComponent(t.auth.sameAsDefault)}`,
     );
   }
 
@@ -37,7 +39,7 @@ export async function changePassword(formData: FormData) {
 
   if (error) {
     redirect(
-      `${PATH}?error=${encodeURIComponent("Non è stato possibile aggiornare la password.")}`,
+      `${PATH}?error=${encodeURIComponent(t.auth.updateFailed)}`,
     );
   }
 
@@ -52,7 +54,7 @@ export async function changePassword(formData: FormData) {
     // The password did change; only the flag is stale. The user would be asked
     // once more on the next request rather than being locked out.
     redirect(
-      `${PATH}?error=${encodeURIComponent("Password aggiornata, ma la richiesta di cambio non è stata azzerata. Riprova.")}`,
+      `${PATH}?error=${encodeURIComponent(t.auth.flagNotCleared)}`,
     );
   }
 

@@ -12,13 +12,10 @@ import {
 import { daysSince } from "@/utils/dates";
 import { hoursFor } from "@/utils/hours";
 import { PORTAL_ONLY_ROLES } from "@/utils/members";
-import { BELT_LABELS } from "@/utils/supabase/profile";
+import { BELT_ORDER, beltLabel } from "@/utils/supabase/profile";
+import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { addDays, formatTime, monthStart, shiftMonth } from "@/utils/schedule";
 import { Section, Stat } from "./stat";
-
-// The order belts are awarded in. Reading BELT_LABELS' key order would work
-// today but ties the chart to an object literal's shape.
-const BELT_ORDER = ["white", "blue", "purple", "brown", "black"] as const;
 
 const NEW_MEMBER_DAYS = 30;
 
@@ -49,9 +46,11 @@ type Session = {
 export async function StaffDashboard({
   supabase,
   today,
+  t,
 }: {
   supabase: SupabaseClient;
   today: string;
+  t: Dictionary;
 }) {
   const from = monthStart(today);
   const until = addDays(shiftMonth(from, 1), -1);
@@ -99,10 +98,10 @@ export async function StaffDashboard({
 
   const todaySessions = sessions.filter((s) => s.session_date === today);
 
+  // Drawn with no stripes: the row stands for the belt, not for any one
+  // member's degree at it.
   const beltCounts = BELT_ORDER.map((belt) => ({
     belt,
-    // Stripes are shown as the most common count at that belt, purely so the
-    // drawn belt is representative; the number is what matters.
     members: active.filter((m) => m.current_belt === belt),
   }));
   const mostBelts = Math.max(1, ...beltCounts.map((b) => b.members.length));
@@ -120,73 +119,85 @@ export async function StaffDashboard({
   return (
     <>
       <Section
-        title="Allievi"
+        title={t.dashboard.students}
         icon={UsersIcon}
         action={
           <Link
             href="/registro"
             className="flex items-center gap-1 text-sm font-medium text-accent hover:opacity-80"
           >
-            Registro
+            {t.nav.registro}
             <ChevronRightIcon className="h-4 w-4" />
           </Link>
         }
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-          <Stat label="Membri attivi" value={active.length} hint={`${members.length} in totale`} />
           <Stat
-            label={`Nuovi (${NEW_MEMBER_DAYS} gg)`}
+            label={t.dashboard.activeMembers}
+            value={active.length}
+            hint={t.dashboard.ofTotal(members.length)}
+          />
+          <Stat
+            label={t.dashboard.newMembers(NEW_MEMBER_DAYS)}
             value={recent.length}
-            hint="iscritti di recente"
+            hint={t.dashboard.recentlyJoined}
           />
           <Stat
-            label="Senza account"
+            label={t.dashboard.withoutAccount}
             value={withoutAccount.length}
-            hint="mai invitati o revocati"
+            hint={t.dashboard.neverInvited}
           />
           <Stat
-            label="Ore della palestra"
+            label={t.dashboard.gymHours}
             value={Math.round(gymHours)}
-            hint="saldi iniziali inclusi"
+            hint={t.dashboard.openingBalancesIncluded}
           />
         </div>
       </Section>
 
       <Section
-        title="Lezioni del mese"
+        title={t.dashboard.monthLessons}
         icon={CalendarCheckIcon}
         action={
           <Link
             href="/presenze"
             className="flex items-center gap-1 text-sm font-medium text-accent hover:opacity-80"
           >
-            Presenze
+            {t.nav.presenze}
             <ChevronRightIcon className="h-4 w-4" />
           </Link>
         }
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
           <Stat
-            label="In calendario"
+            label={t.dashboard.scheduled}
             value={sessions.length}
-            hint={`${activeCourses ?? 0} corsi attivi`}
+            hint={t.dashboard.activeCourses(activeCourses ?? 0)}
           />
-          <Stat label="Già svolte" value={held.length} hint={`${cancelled.length} annullate`} />
-          <Stat label="Presenze" value={attendances} hint="registrate questo mese" />
           <Stat
-            label="Media per lezione"
+            label={t.dashboard.held}
+            value={held.length}
+            hint={t.dashboard.cancelledCount(cancelled.length)}
+          />
+          <Stat
+            label={t.dashboard.attendances}
+            value={attendances}
+            hint={t.dashboard.recordedThisMonth}
+          />
+          <Stat
+            label={t.dashboard.averagePerLesson}
             value={averageTurnout.toFixed(1)}
-            hint="allievi presenti"
+            hint={t.dashboard.studentsPresent}
           />
         </div>
 
         <div className="flex flex-col gap-2">
           <h3 className="text-xs uppercase tracking-wide text-foreground/55">
-            Oggi
+            {t.dashboard.todayHeading}
           </h3>
           {todaySessions.length === 0 ? (
             <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
-              Nessuna lezione in programma oggi.
+              {t.dashboard.noLessonsToday}
             </p>
           ) : (
             <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
@@ -206,7 +217,7 @@ export async function StaffDashboard({
                       {formatTime(session.start_time)} · {session.course_name}
                     </span>
                     <span className="text-xs text-foreground/55">
-                      {session.instructor_name ?? "nessun istruttore"}
+                      {session.instructor_name ?? t.dashboard.noInstructor}
                     </span>
                   </div>
                   <Link
@@ -214,8 +225,8 @@ export async function StaffDashboard({
                     className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
                   >
                     {session.present_count > 0
-                      ? `${session.present_count} presenti`
-                      : "Appello"}
+                      ? t.dashboard.presentCount(session.present_count)
+                      : t.dashboard.rollCall}
                     <ChevronRightIcon className="h-4 w-4" />
                   </Link>
                 </li>
@@ -225,9 +236,9 @@ export async function StaffDashboard({
         </div>
       </Section>
 
-      <Section title="Cinture" icon={TrendingUpIcon}>
+      <Section title={t.dashboard.belts} icon={TrendingUpIcon}>
         <p className="text-sm text-foreground/60">
-          Distribuzione fra i {active.length} membri attivi.
+          {t.dashboard.beltSpread(active.length)}
         </p>
 
         <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
@@ -236,7 +247,7 @@ export async function StaffDashboard({
               <Belt belt={belt} stripes={0} className="shrink-0" />
 
               <span className="w-16 shrink-0 text-sm font-medium sm:w-20">
-                {BELT_LABELS[belt] ?? belt}
+                {beltLabel(belt, t)}
               </span>
 
               {/* A bar rather than a chart library: one number per row, and a
@@ -257,8 +268,7 @@ export async function StaffDashboard({
         {unknownBelts.length > 0 ? (
           <p className="flex items-start gap-2 text-xs text-foreground/55">
             <AlertCircleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            {unknownBelts.length} membri hanno una cintura non riconosciuta e non
-            compaiono nel grafico.
+            {t.dashboard.unknownBelts(unknownBelts.length)}
           </p>
         ) : null}
       </Section>

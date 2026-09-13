@@ -1,6 +1,7 @@
 import Image from "next/image";
 
-import { BELT_LABELS } from "@/utils/supabase/profile";
+import { beltLabel } from "@/utils/supabase/profile";
+import { getDictionary } from "@/utils/i18n/server";
 
 // The files in public/belts are named by colour, and the enum's "purple" is
 // "violet" there. Mapping here keeps the database vocabulary and the asset
@@ -33,12 +34,6 @@ const SIZES = {
 
 export type BeltSize = keyof typeof SIZES;
 
-export function beltLabel(belt: string, stripes: number): string {
-  const name = BELT_LABELS[belt] ?? belt;
-  if (stripes <= 0) return `Cintura ${name.toLowerCase()}`;
-  return `Cintura ${name.toLowerCase()}, ${stripes} tacc${stripes === 1 ? "a" : "he"}`;
-}
-
 /**
  * The belt itself, drawn, rather than its colour and stripe count spelled out.
  *
@@ -50,7 +45,10 @@ export function beltLabel(belt: string, stripes: number): string {
  * The colour and stripe count stay available as the alt text, which is what a
  * screen reader reads and what the old text node used to say.
  */
-export function Belt({
+// An async Server Component so it can read the dictionary itself. Every place
+// it is used renders on the server, and the alternative — threading the belt
+// name through as a prop — would put the same lookup at a dozen call sites.
+export async function Belt({
   belt,
   stripes,
   size = "sm",
@@ -61,8 +59,9 @@ export function Belt({
   size?: BeltSize;
   className?: string;
 }) {
+  const { t } = await getDictionary();
   const color = BELT_FILE_COLOR[belt];
-  const label = beltLabel(belt, stripes);
+  const label = t.belts.label(beltLabel(belt, t), stripes);
 
   // An unknown colour means a new enum value arrived without its artwork.
   // Falling back to the words is better than a broken image.

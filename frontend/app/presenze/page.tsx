@@ -8,8 +8,8 @@ import {
 import { formatDate } from "@/utils/dates";
 import { getOrCreateProfile } from "@/utils/supabase/profile";
 import { getAccess, requireAdmin } from "@/utils/supabase/require-admin";
+import { getDictionary } from "@/utils/i18n/server";
 import {
-  WEEKDAY_LABELS,
   addDays,
   checkinState,
   formatDayHeading,
@@ -20,7 +20,9 @@ import {
   monthStart,
   shiftMonth,
   weekStart,
+  weekdayLabels,
 } from "@/utils/schedule";
+import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { checkIn, undoCheckIn } from "./actions";
 
 type Session = {
@@ -72,6 +74,7 @@ export default async function PresenzePage({
   searchParams: Promise<Search>;
 }) {
   const search = await searchParams;
+  const { locale, t } = await getDictionary();
   // requireAdmin, not requireRegistryViewer: this is the one previously
   // staff-only section a student reaches, because check-in has to live where
   // the lessons are listed. What differs by role is what the page renders.
@@ -171,11 +174,11 @@ export default async function PresenzePage({
   return (
     <div className="flex w-full flex-col gap-4 sm:gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Presenze</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          {t.presenze.title}
+        </h1>
         <p className="text-sm leading-relaxed text-foreground/65">
-          {isStaff
-            ? "Le lezioni in calendario. Apri una lezione per fare l'appello."
-            : "Le lezioni in calendario. Fai il check-in quando sei in palestra: ogni presenza vale un'ora."}
+          {isStaff ? t.presenze.staffLead : t.presenze.memberLead}
         </p>
       </header>
 
@@ -195,15 +198,14 @@ export default async function PresenzePage({
         <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
-            Non è stato possibile caricare il calendario. Controlla che le
-            migration del database siano state applicate.
+            {t.presenze.loadFailed}
           </span>
         </p>
       ) : null}
       {profileMissing ? (
         <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-          Il tuo profilo non è disponibile, quindi il check-in è disattivato.
+          {t.presenze.profileMissing}
         </p>
       ) : null}
 
@@ -211,10 +213,16 @@ export default async function PresenzePage({
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-heading text-base font-semibold sm:text-lg">
             {isGrid
-              ? formatMonthHeading(anchor)
-              : `Settimana del ${formatDate(weekStart(anchor))}`}
+              ? formatMonthHeading(anchor, locale)
+              : t.presenze.weekOf(formatDate(weekStart(anchor)))}
           </h2>
-          <ViewToggle isGrid={isGrid} listHref={href({ v: null, g: null })} gridHref={href({ v: GRID })} />
+          <ViewToggle
+            isGrid={isGrid}
+            listHref={href({ v: null, g: null })}
+            gridHref={href({ v: GRID })}
+            listLabel={t.presenze.viewList}
+            gridLabel={t.presenze.viewGrid}
+          />
         </div>
 
         <nav className="flex items-center justify-between gap-2">
@@ -223,21 +231,21 @@ export default async function PresenzePage({
             className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
           >
             <ChevronLeftIcon className="h-4 w-4" />
-            {isGrid ? "Mese prima" : "Prima"}
+            {isGrid ? t.presenze.previousMonth : t.presenze.previousWeek}
           </Link>
 
           <Link
             href={isGrid ? `/presenze?v=${GRID}` : "/presenze"}
             className="rounded-full px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-muted"
           >
-            Oggi
+            {t.common.today}
           </Link>
 
           <Link
             href={href({ da: next, g: null })}
             className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
           >
-            {isGrid ? "Mese dopo" : "Dopo"}
+            {isGrid ? t.presenze.nextMonth : t.presenze.nextWeek}
             <ChevronRightIcon className="h-4 w-4" />
           </Link>
         </nav>
@@ -251,7 +259,7 @@ export default async function PresenzePage({
           <div className="-mx-1 overflow-x-auto px-1">
             <div className="min-w-[34rem]">
               <div className="grid grid-cols-7 gap-1 pb-1">
-                {WEEKDAY_LABELS.map((day) => (
+                {weekdayLabels(t).map((day) => (
                   <span
                     key={day.value}
                     className="px-1 text-center text-xs font-medium uppercase tracking-wide text-foreground/50"
@@ -276,6 +284,7 @@ export default async function PresenzePage({
                         query={currentQuery}
                         ownAttendance={ownAttendance}
                         isStaff={isStaff}
+                        t={t}
                       />
                     ))}
                   </div>
@@ -290,13 +299,13 @@ export default async function PresenzePage({
             // phone, and the links into it carry "#giorno".
             <section id="giorno" className="flex scroll-mt-20 flex-col gap-2">
               <h3 className="font-heading text-sm font-semibold text-foreground/70">
-                {formatDayHeading(openDay)}
-                {openDay === today ? " · oggi" : ""}
+                {formatDayHeading(openDay, t)}
+                {openDay === today ? t.presenze.todaySuffix : ""}
               </h3>
 
               {openSessions.length === 0 ? (
                 <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
-                  Nessuna lezione in questo giorno.
+                  {t.presenze.noLessonsThisDay}
                 </p>
               ) : (
                 <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
@@ -313,6 +322,7 @@ export default async function PresenzePage({
                       now={now}
                       profileMissing={profileMissing}
                       query={currentQuery}
+                      t={t}
                     />
                   ))}
                 </ul>
@@ -322,7 +332,7 @@ export default async function PresenzePage({
         </>
       ) : sessions.length === 0 ? (
         <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
-          Nessuna lezione in questa settimana.
+          {t.presenze.noLessonsThisWeek}
         </p>
       ) : (
         <div className="flex flex-col gap-4">
@@ -335,8 +345,8 @@ export default async function PresenzePage({
                     date === today ? "text-accent" : "text-foreground/70"
                   }`}
                 >
-                  {formatDayHeading(date)}
-                  {date === today ? " · oggi" : ""}
+                  {formatDayHeading(date, t)}
+                  {date === today ? t.presenze.todaySuffix : ""}
                 </h2>
 
                 <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
@@ -350,6 +360,7 @@ export default async function PresenzePage({
                       now={now}
                       profileMissing={profileMissing}
                       query={currentQuery}
+                      t={t}
                     />
                   ))}
                 </ul>
@@ -367,10 +378,14 @@ function ViewToggle({
   isGrid,
   listHref,
   gridHref,
+  listLabel,
+  gridLabel,
 }: {
   isGrid: boolean;
   listHref: string;
   gridHref: string;
+  listLabel: string;
+  gridLabel: string;
 }) {
   const base = "rounded-full px-3 py-1.5 text-xs font-medium transition-colors";
   const on = "bg-foreground text-background";
@@ -383,14 +398,14 @@ function ViewToggle({
         aria-current={isGrid ? undefined : "page"}
         className={`${base} ${isGrid ? off : on}`}
       >
-        Lista
+        {listLabel}
       </Link>
       <Link
         href={gridHref}
         aria-current={isGrid ? "page" : undefined}
         className={`${base} ${isGrid ? on : off}`}
       >
-        Griglia
+        {gridLabel}
       </Link>
     </div>
   );
@@ -417,6 +432,7 @@ function DayCell({
   query,
   ownAttendance,
   isStaff,
+  t,
 }: {
   date: string;
   sessions: Session[];
@@ -427,6 +443,7 @@ function DayCell({
   query: string;
   ownAttendance: Map<string, boolean>;
   isStaff: boolean;
+  t: Dictionary;
 }) {
   const single = isStaff && sessions.length === 1 ? sessions[0] : null;
   const href = single
@@ -498,8 +515,8 @@ function DayCell({
       href={href}
       title={
         single
-          ? `Appello: ${single.course_name}`
-          : `${sessions.length} lezioni — apri il giorno`
+          ? t.presenze.cellRollCall(single.course_name)
+          : t.presenze.cellOpenDay(sessions.length)
       }
       className={`${shell} transition-colors hover:border-accent`}
     >
@@ -516,6 +533,7 @@ function SessionRow({
   now,
   profileMissing,
   query,
+  t,
 }: {
   session: Session;
   isStaff: boolean;
@@ -524,6 +542,7 @@ function SessionRow({
   now: Date;
   profileMissing: boolean;
   query: string;
+  t: Dictionary;
 }) {
   const cancelled = session.status === "cancelled";
   const state = checkinState({
@@ -546,8 +565,8 @@ function SessionRow({
         <span className="text-xs text-foreground/55">
           {formatTime(session.start_time)}–{formatTime(session.end_time)}
           {" · "}
-          {session.instructor_name ?? "nessun istruttore"}
-          {cancelled ? " · lezione annullata" : ""}
+          {session.instructor_name ?? t.presenze.noInstructor}
+          {cancelled ? t.presenze.cancelledSuffix : ""}
         </span>
       </div>
 
@@ -556,7 +575,9 @@ function SessionRow({
           href={`/presenze/${session.id}?from=${encodeURIComponent(query)}`}
           className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
         >
-          {session.present_count > 0 ? `${session.present_count} presenti` : "Appello"}
+          {session.present_count > 0
+            ? t.presenze.presentCount(session.present_count)
+            : t.presenze.rollCall}
           <ChevronRightIcon className="h-4 w-4" />
         </Link>
       ) : allowCheckin ? (
@@ -566,9 +587,10 @@ function SessionRow({
           checkedIn={checkedIn}
           disabled={profileMissing}
           query={query}
+          t={t}
         />
       ) : (
-        <CheckinBadge state={state} checkedIn={checkedIn} />
+        <CheckinBadge state={state} checkedIn={checkedIn} t={t} />
       )}
     </li>
   );
@@ -579,23 +601,27 @@ function SessionRow({
 function CheckinBadge({
   state,
   checkedIn,
+  t,
 }: {
   state: ReturnType<typeof checkinState>;
   checkedIn: boolean | undefined;
+  t: Dictionary;
 }) {
   if (checkedIn === true) {
     return (
       <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-accent">
         <CheckCircleIcon className="h-4 w-4" />
-        Presente
+        {t.presenze.present}
       </span>
     );
   }
 
   const muted = "shrink-0 text-xs text-foreground/50";
-  if (checkedIn === false) return <span className={muted}>assente</span>;
-  if (state === "cancelled") return <span className={muted}>annullata</span>;
-  if (state === "open") return <span className={muted}>check-in aperto</span>;
+  if (checkedIn === false) return <span className={muted}>{t.presenze.absent}</span>;
+  if (state === "cancelled")
+    return <span className={muted}>{t.presenze.cancelledState}</span>;
+  if (state === "open")
+    return <span className={muted}>{t.presenze.openState}</span>;
   return null;
 }
 
@@ -607,17 +633,19 @@ function CheckinControl({
   checkedIn,
   disabled,
   query,
+  t,
 }: {
   sessionId: string;
   state: ReturnType<typeof checkinState>;
   checkedIn: boolean | undefined;
   disabled: boolean;
   query: string;
+  t: Dictionary;
 }) {
   const muted = "shrink-0 text-xs text-foreground/50";
 
   if (checkedIn === false) {
-    return <span className={muted}>assente</span>;
+    return <span className={muted}>{t.presenze.absent}</span>;
   }
 
   if (checkedIn === true) {
@@ -625,7 +653,7 @@ function CheckinControl({
       <div className="flex shrink-0 items-center gap-2">
         <span className="flex items-center gap-1 text-xs font-medium text-accent">
           <CheckCircleIcon className="h-4 w-4" />
-          Presente
+          {t.presenze.present}
         </span>
         {state === "open" ? (
           <form action={undoCheckIn}>
@@ -635,7 +663,7 @@ function CheckinControl({
               type="submit"
               className="rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted"
             >
-              Annulla
+              {t.presenze.undo}
             </button>
           </form>
         ) : null}
@@ -644,13 +672,13 @@ function CheckinControl({
   }
 
   if (state === "cancelled") {
-    return <span className={muted}>annullata</span>;
+    return <span className={muted}>{t.presenze.cancelledState}</span>;
   }
   if (state === "too_early") {
-    return <span className={muted}>check-in non ancora aperto</span>;
+    return <span className={muted}>{t.presenze.tooEarly}</span>;
   }
   if (state === "closed") {
-    return <span className={muted}>check-in chiuso</span>;
+    return <span className={muted}>{t.presenze.closed}</span>;
   }
 
   return (
@@ -662,7 +690,7 @@ function CheckinControl({
         disabled={disabled}
         className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
       >
-        Check-in
+        {t.presenze.checkIn}
       </button>
     </form>
   );

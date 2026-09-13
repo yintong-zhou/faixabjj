@@ -12,22 +12,41 @@ import {
   UserIcon,
   UsersIcon,
 } from "@/components/icons";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import type { Locale } from "@/utils/i18n/locales";
 
-const HOME_ITEM = { href: "/", label: "Home", icon: HomeIcon } as const;
+// Every word this component renders. It is a Client Component — it needs the
+// pathname to mark the active tab — and a client component cannot read the
+// locale cookie, so the server passes the translated strings in.
+export type NavLabels = {
+  home: string;
+  dashboard: string;
+  presenze: string;
+  corsi: string;
+  registro: string;
+  account: string;
+  signIn: string;
+  signOut: string;
+  language: string;
+  themeToLight: string;
+  themeToDark: string;
+};
+
+const HOME_ITEM = { href: "/", key: "home", icon: HomeIcon } as const;
 const PRESENZE_ITEM = {
   href: "/presenze",
-  label: "Presenze",
+  key: "presenze",
   icon: CalendarCheckIcon,
 } as const;
-const CORSI_ITEM = { href: "/corsi", label: "Corsi", icon: CalendarPlusIcon } as const;
-const REGISTRO_ITEM = { href: "/registro", label: "Registro", icon: UsersIcon } as const;
+const CORSI_ITEM = { href: "/corsi", key: "corsi", icon: CalendarPlusIcon } as const;
+const REGISTRO_ITEM = { href: "/registro", key: "registro", icon: UsersIcon } as const;
 const DASHBOARD_ITEM = {
   href: "/dashboard",
-  label: "Dashboard",
+  key: "dashboard",
   icon: DashboardIcon,
 } as const;
-const ACCOUNT_ITEM = { href: "/account", label: "Account", icon: UserIcon } as const;
+const ACCOUNT_ITEM = { href: "/account", key: "account", icon: UserIcon } as const;
 
 // Only so the list below has a type wide enough to hold every item: an array
 // literal of two entries infers those two `href` strings and rejects the third.
@@ -80,11 +99,15 @@ export function NavShell({
   isLoggedIn,
   canViewRegistry,
   canManageClasses,
+  locale,
+  labels,
 }: {
   children: ReactNode;
   isLoggedIn: boolean;
   canViewRegistry: boolean;
   canManageClasses: boolean;
+  locale: Locale;
+  labels: NavLabels;
 }) {
   const pathname = usePathname();
   const navItems = navItemsFor(isLoggedIn, canViewRegistry, canManageClasses);
@@ -115,7 +138,7 @@ export function NavShell({
           </Link>
           <div className="flex items-center gap-2">
             <nav className="hidden gap-1 sm:flex">
-              {navItems.map(({ href, label }) => (
+              {navItems.map(({ href, key }) => (
                 <Link
                   key={href}
                   href={href}
@@ -125,7 +148,7 @@ export function NavShell({
                       : "text-foreground/70 hover:bg-muted"
                   }`}
                 >
-                  {label}
+                  {labels[key]}
                 </Link>
               ))}
             </nav>
@@ -135,7 +158,7 @@ export function NavShell({
                   type="submit"
                   className="rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-muted"
                 >
-                  Esci
+                  {labels.signOut}
                 </button>
               </form>
             ) : (
@@ -143,10 +166,11 @@ export function NavShell({
                 href="/login"
                 className="rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-muted"
               >
-                Accedi
+                {labels.signIn}
               </Link>
             )}
-            <ThemeToggle />
+            <LanguageSwitcher locale={locale} label={labels.language} />
+            <ThemeToggle toLight={labels.themeToLight} toDark={labels.themeToDark} />
           </div>
         </div>
       </header>
@@ -157,7 +181,7 @@ export function NavShell({
 
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 backdrop-blur sm:hidden">
         <div className="flex items-stretch justify-around pb-[env(safe-area-inset-bottom)]">
-          {navItems.map(({ href, label, icon: Icon }) => {
+          {navItems.map(({ href, key, icon: Icon }) => {
             const active = isActive(pathname, href);
             return (
               <Link
@@ -168,7 +192,7 @@ export function NavShell({
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                {label}
+                {labels[key]}
               </Link>
             );
           })}

@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { it, type Dictionary } from "../i18n/dictionaries/it";
+
 // The profile *is* the registry row: `person.auth_user_id` already links an
 // account to the unified student/instructor registry, so account management
 // reuses it instead of introducing a second table that would drift from it.
@@ -49,18 +51,42 @@ export async function getOrCreateProfile(
   return (created as Profile | null) ?? null;
 }
 
-export const BELT_LABELS: Record<string, string> = {
-  white: "Bianca",
-  blue: "Blu",
-  purple: "Viola",
-  brown: "Marrone",
-  black: "Nera",
-};
+export function beltLabels(t: Dictionary = it): Record<string, string> {
+  return {
+    white: t.belts.white,
+    blue: t.belts.blue,
+    purple: t.belts.purple,
+    brown: t.belts.brown,
+    black: t.belts.black,
+  };
+}
 
-export const ROLE_LABELS: Record<string, string> = {
-  student: "Allievo",
-  assistant: "Assistente",
-  instructor: "Istruttore",
-  head_coach: "Maestro",
-  admin: "Admin",
-};
+export function beltLabel(belt: string, t: Dictionary = it): string {
+  return beltLabels(t)[belt] ?? belt;
+}
+
+// The order belts are awarded in — white through black. BELT_LABELS' key order
+// happens to match today, but relying on an object literal's shape for a domain
+// rule is how it silently stops matching.
+export const BELT_ORDER = ["white", "blue", "purple", "brown", "black"] as const;
+
+export function beltRank(belt: string): number {
+  const index = (BELT_ORDER as readonly string[]).indexOf(belt);
+  // An unknown belt sorts last rather than first: it is a data problem, and
+  // putting it at the top of every roll call would be a daily annoyance.
+  return index === -1 ? BELT_ORDER.length : index;
+}
+
+export function roleLabels(t: Dictionary = it): Record<string, string> {
+  return {
+    student: t.roles.student,
+    assistant: t.roles.assistant,
+    instructor: t.roles.instructor,
+    head_coach: t.roles.head_coach,
+    admin: t.roles.admin,
+  };
+}
+
+export function roleLabel(role: string, t: Dictionary = it): string {
+  return roleLabels(t)[role] ?? role;
+}

@@ -7,6 +7,7 @@ import {
   requireAdmin,
   requireClassManager,
 } from "@/utils/supabase/require-admin";
+import { getDictionary } from "@/utils/i18n/server";
 
 const PATH = "/presenze";
 
@@ -40,18 +41,19 @@ function backToSession(
 // not re-checked here on purpose: the policy enforces it, and a second copy in
 // TypeScript would be a second definition free to drift from the first.
 export async function checkIn(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase, userId, email } = await requireAdmin(PATH);
   const query = (formData.get("_query") as string | null) ?? "";
   const sessionId = formData.get("session_id") as string;
 
   if (!sessionId) {
-    back({ error: "Lezione non specificata." }, query);
+    back({ error: t.msg.sessionNotSpecified }, query);
     return;
   }
 
   const profile = await getOrCreateProfile(supabase, userId, email);
   if (!profile) {
-    back({ error: "Il tuo profilo non è disponibile." }, query);
+    back({ error: t.msg.profileUnavailable }, query);
     return;
   }
 
@@ -67,8 +69,8 @@ export async function checkIn(formData: FormData) {
       {
         error:
           error.code === "23505"
-            ? "Risulti già presente a questa lezione."
-            : "Il check-in per questa lezione non è aperto.",
+            ? t.msg.alreadyPresent
+            : t.msg.checkinClosed,
       },
       query,
     );
@@ -76,17 +78,18 @@ export async function checkIn(formData: FormData) {
   }
 
   revalidatePath(PATH);
-  back({ ok: "Check-in registrato." }, query);
+  back({ ok: t.msg.checkinRecorded }, query);
 }
 
 export async function undoCheckIn(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase, userId, email } = await requireAdmin(PATH);
   const query = (formData.get("_query") as string | null) ?? "";
   const sessionId = formData.get("session_id") as string;
 
   const profile = await getOrCreateProfile(supabase, userId, email);
   if (!profile) {
-    back({ error: "Il tuo profilo non è disponibile." }, query);
+    back({ error: t.msg.profileUnavailable }, query);
     return;
   }
 
@@ -101,12 +104,12 @@ export async function undoCheckIn(formData: FormData) {
     .select("id");
 
   if (error || !data || data.length === 0) {
-    back({ error: "Non è più possibile annullare questo check-in." }, query);
+    back({ error: t.msg.undoTooLate }, query);
     return;
   }
 
   revalidatePath(PATH);
-  back({ ok: "Check-in annullato." }, query);
+  back({ ok: t.msg.checkinUndone }, query);
 }
 
 // ---------------------------------------------------------------------------
@@ -116,6 +119,7 @@ export async function undoCheckIn(formData: FormData) {
 // "present" and "absent"; "not recorded" is a real answer and means no row,
 // which is different information from an explicit absence.
 export async function saveRollCall(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireClassManager(PATH);
   const sessionId = formData.get("session_id") as string;
   const from = (formData.get("from") as string | null) ?? "";
@@ -159,7 +163,7 @@ export async function saveRollCall(formData: FormData) {
       .upsert(rows, { onConflict: "person_id,session_id" });
 
     if (error) {
-      backToSession(sessionId, { error: "Appello non salvato." }, from);
+      backToSession(sessionId, { error: t.msg.rollCallFailed }, from);
       return;
     }
   }
@@ -172,7 +176,7 @@ export async function saveRollCall(formData: FormData) {
       .in("person_id", cleared);
 
     if (error) {
-      backToSession(sessionId, { error: "Appello salvato solo in parte." }, from);
+      backToSession(sessionId, { error: t.msg.rollCallPartial }, from);
       return;
     }
   }
@@ -181,12 +185,13 @@ export async function saveRollCall(formData: FormData) {
   revalidatePath(`/presenze/${sessionId}`);
   backToSession(
     sessionId,
-    { ok: `Appello salvato: ${present.length} presenti.` },
+    { ok: t.msg.rollCallSaved(present.length) },
     from,
   );
 }
 
 export async function cancelSession(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireClassManager(PATH);
   const sessionId = formData.get("session_id") as string;
   const from = (formData.get("from") as string | null) ?? "";
@@ -199,12 +204,13 @@ export async function cancelSession(formData: FormData) {
   revalidatePath(PATH);
   backToSession(
     sessionId,
-    error ? { error: "Annullamento non riuscito." } : { ok: "Lezione annullata." },
+    error ? { error: t.msg.cancelFailed } : { ok: t.msg.lessonCancelled },
     from,
   );
 }
 
 export async function restoreSession(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireClassManager(PATH);
   const sessionId = formData.get("session_id") as string;
   const from = (formData.get("from") as string | null) ?? "";
@@ -217,12 +223,13 @@ export async function restoreSession(formData: FormData) {
   revalidatePath(PATH);
   backToSession(
     sessionId,
-    error ? { error: "Ripristino non riuscito." } : { ok: "Lezione ripristinata." },
+    error ? { error: t.msg.restoreFailed } : { ok: t.msg.lessonRestored },
     from,
   );
 }
 
 export async function setSessionInstructor(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireClassManager(PATH);
   const sessionId = formData.get("session_id") as string;
   const from = (formData.get("from") as string | null) ?? "";
@@ -236,7 +243,7 @@ export async function setSessionInstructor(formData: FormData) {
   revalidatePath(`/presenze/${sessionId}`);
   backToSession(
     sessionId,
-    error ? { error: "Istruttore non aggiornato." } : { ok: "Istruttore aggiornato." },
+    error ? { error: t.msg.instructorNotUpdated } : { ok: t.msg.instructorUpdated },
     from,
   );
 }

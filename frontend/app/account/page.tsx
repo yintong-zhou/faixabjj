@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Belt } from "@/components/belt";
 import { formatDate } from "@/utils/dates";
+import { getDictionary } from "@/utils/i18n/server";
 import { LESSONS_PER_WEEK, formatHours, hoursFor } from "@/utils/hours";
 import { PasswordInput } from "@/components/password-input";
 import { requireAdmin, canManageUsers } from "@/utils/supabase/require-admin";
 import {
-  ROLE_LABELS,
   getOrCreateProfile,
+  roleLabel,
 } from "@/utils/supabase/profile";
 import {
   AlertCircleIcon,
@@ -26,6 +27,7 @@ export default async function AccountPage({
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   const { ok, error } = await searchParams;
+  const { t } = await getDictionary();
   const { supabase, userId, email } = await requireAdmin("/account");
   const profile = await getOrCreateProfile(supabase, userId, email);
   const isManager = await canManageUsers(supabase);
@@ -36,8 +38,7 @@ export default async function AccountPage({
         <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
-            Il tuo profilo non è disponibile. Se il problema persiste, controlla
-            che le migration del database siano state applicate.
+            {t.account.profileUnavailable}
           </span>
         </p>
       </div>
@@ -63,10 +64,10 @@ export default async function AccountPage({
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5 sm:gap-8">
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Il mio account
+          {t.account.title}
         </h1>
         <p className="text-sm leading-relaxed text-foreground/65">
-          Gestisci i tuoi dati personali e le credenziali di accesso.
+          {t.account.lead}
         </p>
       </header>
 
@@ -86,13 +87,13 @@ export default async function AccountPage({
       <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
           <UserIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-          Dati personali
+          {t.account.personalData}
         </h2>
 
         <form action={updateProfile} className="flex flex-col gap-3 sm:gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="full_name" className="text-sm font-medium">
-              Nome e cognome
+              {t.account.fullName}
             </label>
             <input
               id="full_name"
@@ -106,7 +107,7 @@ export default async function AccountPage({
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="email" className="text-sm font-medium">
-              Email
+              {t.auth.email}
             </label>
             <input
               id="email"
@@ -117,15 +118,14 @@ export default async function AccountPage({
               className={fieldClass}
             />
             <p className="text-xs text-foreground/55">
-              Cambiando indirizzo riceverai una email di conferma: il nuovo
-              indirizzo diventa attivo solo dopo averla aperta.
+              {t.account.emailChangeNote}
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="phone" className="text-sm font-medium">
-                Telefono
+                {t.account.phone}
               </label>
               <input
                 id="phone"
@@ -139,7 +139,7 @@ export default async function AccountPage({
 
             <div className="flex flex-col gap-1.5">
               <label htmlFor="birth_date" className="text-sm font-medium">
-                Data di nascita
+                {t.account.birthDate}
               </label>
               <input
                 id="birth_date"
@@ -153,7 +153,7 @@ export default async function AccountPage({
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="notes" className="text-sm font-medium">
-              Note
+              {t.account.notes}
             </label>
             <textarea
               id="notes"
@@ -168,7 +168,7 @@ export default async function AccountPage({
             type="submit"
             className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
-            Salva modifiche
+            {t.common.saveChanges}
           </button>
         </form>
       </section>
@@ -177,18 +177,14 @@ export default async function AccountPage({
         <div className="flex flex-col gap-1">
           <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
             <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-            Grado e ruoli
+            {t.account.rankAndRoles}
           </h2>
           <p className="text-xs text-foreground/55">
-            Cintura, tacche e ruoli non sono modificabili da qui: la promozione
-            resta una decisione dell&apos;istruttore.
+            {t.account.rankReadOnly}
           </p>
           {training.isPartlyEstimated ? (
             <p className="text-xs leading-relaxed text-foreground/55">
-              Le ore includono un saldo di partenza, stimato a {LESSONS_PER_WEEK}{" "}
-              lezioni a settimana per il periodo prima del tracciamento. Da lì in
-              poi crescono solo con il tuo check-in o con l&apos;appello
-              dell&apos;istruttore.
+              {t.account.openingBalanceNote(LESSONS_PER_WEEK)}
             </p>
           ) : null}
         </div>
@@ -196,7 +192,7 @@ export default async function AccountPage({
         <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              Cintura
+              {t.account.belt}
             </dt>
             <dd className="text-sm font-medium">
               <Belt
@@ -209,43 +205,46 @@ export default async function AccountPage({
           </div>
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              Cambio cintura da
+              {t.account.beltSince}
             </dt>
             <dd className="text-sm font-medium">{formatDate(profile.rank_since)}</dd>
           </div>
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              Ultima tacca
+              {t.account.stripeSince}
             </dt>
             <dd className="text-sm font-medium">{formatDate(profile.stripe_since)}</dd>
           </div>
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              Iscritto dal
+              {t.account.joinedOn}
             </dt>
             <dd className="text-sm font-medium">{formatDate(profile.joined_at)}</dd>
           </div>
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              Ore di lezione
+              {t.account.classHours}
             </dt>
             <dd className="text-sm font-medium">
-              {formatHours(training.total)}
+              {formatHours(training.total, t)}
               {training.isPartlyEstimated ? (
-                <span className="font-normal text-foreground/55"> (stima)</span>
+                <span className="font-normal text-foreground/55">
+                  {" "}
+                  {t.account.estimateSuffix}
+                </span>
               ) : null}
             </dd>
           </div>
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              Ruoli attivi
+              {t.account.activeRoles}
             </dt>
             <dd className="text-sm font-medium">
               {roles && roles.length > 0
                 ? roles
-                    .map((r) => ROLE_LABELS[r.role as string] ?? r.role)
+                    .map((r) => roleLabel(r.role as string, t))
                     .join(", ")
-                : "Nessuno"}
+                : t.common.none}
             </dd>
           </div>
         </dl>
@@ -255,7 +254,7 @@ export default async function AccountPage({
             href="/registro"
             className="self-start text-sm font-medium text-accent hover:opacity-80"
           >
-            Gestisci i membri dal Registro →
+            {t.account.manageMembers}
           </Link>
         ) : null}
       </section>
@@ -263,32 +262,38 @@ export default async function AccountPage({
       <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
           <KeyIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-          Password
+          {t.account.passwordSection}
         </h2>
 
         <form action={updatePassword} className="flex flex-col gap-3 sm:gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="password" className="text-sm font-medium">
-              Nuova password
+              {t.auth.newPassword}
             </label>
             <PasswordInput
               id="password"
               name="password"
               required
               autoComplete="new-password"
+              showLabel={t.auth.showPassword}
+              hideLabel={t.auth.hidePassword}
             />
-            <p className="text-xs text-foreground/55">Almeno 8 caratteri.</p>
+            <p className="text-xs text-foreground/55">
+              {t.account.passwordMinimum}
+            </p>
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="confirm_password" className="text-sm font-medium">
-              Conferma password
+              {t.auth.confirmPassword}
             </label>
             <PasswordInput
               id="confirm_password"
               name="confirm_password"
               required
               autoComplete="new-password"
+              showLabel={t.auth.showPassword}
+              hideLabel={t.auth.hidePassword}
             />
           </div>
 
@@ -296,7 +301,7 @@ export default async function AccountPage({
             type="submit"
             className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
-            Aggiorna password
+            {t.account.updatePassword}
           </button>
         </form>
       </section>

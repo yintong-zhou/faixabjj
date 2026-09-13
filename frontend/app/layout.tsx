@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Work_Sans } from "next/font/google";
 import { cookies } from "next/headers";
+import { InlineScript } from "@/components/inline-script";
 import { NavShell } from "@/components/nav-shell";
 import { createClient } from "@/utils/supabase/server";
 import { getAccess } from "@/utils/supabase/require-admin";
 import { SITE_NAME, SITE_URL } from "@/utils/site";
+import { getDictionary } from "@/utils/i18n/server";
+import { LOCALE_TAG } from "@/utils/i18n/locales";
 import "./globals.css";
 
 const sora = Sora({
@@ -19,55 +22,50 @@ const workSans = Work_Sans({
   weight: ["400", "500"],
 });
 
-export const metadata: Metadata = {
-  // Absolute base for every relative URL below. Without it Open Graph tags
-  // and canonical links resolve to nothing and crawlers drop them.
-  metadataBase: new URL(SITE_URL),
-  // Interior pages set only their own title; the template adds the brand.
-  title: {
-    default: "FAIXABJJ - ore, gradi e cinture per palestre di BJJ",
-    template: "%s · FAIXABJJ",
-  },
-  description:
-    "Traccia ore di lezione, gradi e passaggi di cintura in una scuola di Brazilian Jiu-Jitsu, con un registro unico per allievi e istruttori.",
-  applicationName: SITE_NAME,
-  keywords: [
-    "Brazilian Jiu-Jitsu",
-    "BJJ",
-    "gestione palestra BJJ",
-    "registro presenze BJJ",
-    "conteggio ore allenamento",
-    "gradi e cinture",
-    "promozione cintura BJJ",
-  ],
-  category: "sports",
-  openGraph: {
-    type: "website",
-    siteName: SITE_NAME,
-    locale: "it_IT",
-    url: "/",
-    images: [
-      {
-        url: "/logo/faixabjj_logo.png",
-        width: 618,
-        height: 404,
-        alt: "FAIXA BJJ",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary",
-    title: "FAIXABJJ",
-    description:
-      "Ore, gradi e cinture per una scuola di Brazilian Jiu-Jitsu, in un registro unico.",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
-  },
-  formatDetection: { telephone: false, email: false, address: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getDictionary();
+
+  return {
+    // Absolute base for every relative URL below. Without it Open Graph tags
+    // and canonical links resolve to nothing and crawlers drop them.
+    metadataBase: new URL(SITE_URL),
+    // Interior pages set only their own title; the template adds the brand.
+    title: {
+      default: t.home.metaTitle,
+      template: "%s · FAIXABJJ",
+    },
+    description: t.home.metaDescription,
+    applicationName: SITE_NAME,
+    keywords: t.home.keywords,
+    category: "sports",
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: "it_IT",
+      url: "/",
+      images: [
+        {
+          url: "/logo/faixabjj_logo.png",
+          width: 618,
+          height: 404,
+          alt: "FAIXA BJJ",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary",
+      title: "FAIXABJJ",
+      description:
+        "Ore, gradi e cinture per una scuola di Brazilian Jiu-Jitsu, in un registro unico.",
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, "max-image-preview": "large" },
+    },
+    formatDetection: { telephone: false, email: false, address: false },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -83,6 +81,9 @@ export const viewport: Viewport = {
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();`;
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // The reader's language, from their saved choice or their browser. Resolved
+  // once here and handed down, so no component below has to read the cookie.
+  const { locale, t } = await getDictionary();
   const supabase = createClient(await cookies());
   const { data: claimsData } = await supabase.auth.getClaims();
   const isLoggedIn = !!claimsData?.claims;
@@ -95,7 +96,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
   return (
     <html
-      lang="it"
+      // The real language of the document, not a fixed "it": it is what a
+      // screen reader picks its voice from and what a translation tool reads.
+      lang={LOCALE_TAG[locale]}
       className={`${sora.variable} ${workSans.variable} h-full antialiased`}
       // The blocking script below sets `data-theme` on this element before
       // React hydrates, on purpose — the server render never knows the
@@ -105,14 +108,30 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         {/* Runs before paint so a stored theme choice applies immediately,
-            with no flash of the system-default theme first. */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+            with no flash of the system-default theme first. Wrapped in
+            InlineScript because React warns in development about any <script>
+            a render produces. */}
+        <InlineScript html={THEME_INIT_SCRIPT} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <NavShell
           isLoggedIn={isLoggedIn}
           canViewRegistry={canViewRegistry}
           canManageClasses={canManageClasses}
+          locale={locale}
+          labels={{
+            home: t.nav.home,
+            dashboard: t.nav.dashboard,
+            presenze: t.nav.presenze,
+            corsi: t.nav.corsi,
+            registro: t.nav.registro,
+            account: t.nav.account,
+            signIn: t.nav.signIn,
+            signOut: t.nav.signOut,
+            language: t.nav.language,
+            themeToLight: t.nav.theme.toLight,
+            themeToDark: t.nav.theme.toDark,
+          }}
         >
           {children}
         </NavShell>

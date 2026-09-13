@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Belt } from "@/components/belt";
-import { ROLE_LABELS } from "@/utils/supabase/profile";
+import { roleLabel } from "@/utils/supabase/profile";
+import { getDictionary } from "@/utils/i18n/server";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
 import { LESSONS_PER_WEEK, TRACKING_STARTED_ON, formatHours, hoursFor } from "@/utils/hours";
@@ -61,6 +62,7 @@ export default async function MemberDetailPage({
 }) {
   const { id } = await params;
   const { from } = await searchParams;
+  const { t } = await getDictionary();
   // Same gate as the list: staff only, 404 for everyone else.
   const { supabase, access } = await requireRegistryViewer(`/registro/${id}`);
 
@@ -113,7 +115,7 @@ export default async function MemberDetailPage({
           className="flex w-fit items-center gap-1.5 text-sm font-medium text-foreground/60 hover:text-foreground"
         >
           <ChevronLeftIcon className="h-4 w-4" />
-          Registro
+          {t.registro.backToRegistry}
         </Link>
 
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -128,15 +130,14 @@ export default async function MemberDetailPage({
           />
           {member.auth_user_id ? null : (
             <span className="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground/55">
-              senza account
+              {t.registro.noAccount}
             </span>
           )}
         </div>
 
         {access.canEditRegistry ? null : (
           <p className="text-sm text-foreground/60">
-            Sola lettura: con il tuo ruolo di istruttore la scheda non è
-            modificabile.
+            {t.registro.detailReadOnly}
           </p>
         )}
       </header>
@@ -144,26 +145,26 @@ export default async function MemberDetailPage({
       <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
           <UserIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-          Anagrafica
+          {t.registro.personalSection}
         </h2>
         <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-          <Field label="Email" value={member.email ?? "—"} />
-          <Field label="Telefono" value={member.phone ?? "—"} />
-          <Field label="Data di nascita" value={formatDate(member.birth_date)} />
-          <Field label="Iscritto dal" value={formatDate(member.joined_at)} />
+          <Field label={t.auth.email} value={member.email ?? t.common.dash} />
+          <Field label={t.account.phone} value={member.phone ?? t.common.dash} />
+          <Field label={t.account.birthDate} value={formatDate(member.birth_date)} />
+          <Field label={t.account.joinedOn} value={formatDate(member.joined_at)} />
         </dl>
       </section>
 
       <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
           <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-          Percorso
+          {t.registro.pathSection}
         </h2>
         <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
           {/* Colour and stripes are one thing on a belt, so they are one
               field: the belt drawn, rather than a name and a number to
               recombine mentally. */}
-          <Field label="Cintura">
+          <Field label={t.account.belt}>
             <Belt
               belt={member.current_belt}
               stripes={member.current_stripes}
@@ -171,33 +172,37 @@ export default async function MemberDetailPage({
               className="mt-0.5"
             />
           </Field>
-          <Field label="Cambio cintura da" value={formatDate(member.rank_since)} />
-          <Field label="Ultima tacca" value={formatDate(member.stripe_since)} />
+          <Field label={t.account.beltSince} value={formatDate(member.rank_since)} />
+          <Field label={t.account.stripeSince} value={formatDate(member.stripe_since)} />
           <Field
-            label="Da quanto fa BJJ"
-            value={formatDays(daysSince(member.joined_at))}
+            label={t.registro.trainingTime}
+            value={formatDays(daysSince(member.joined_at), t)}
           />
           <Field
-            label="Da quanto ha questa cintura"
-            value={formatDays(daysSince(member.rank_since))}
+            label={t.registro.beltTime}
+            value={formatDays(daysSince(member.rank_since), t)}
           />
           <Field
-            label="Dall'ultima tacca"
-            value={formatDays(daysSince(member.stripe_since))}
+            label={t.registro.stripeTime}
+            value={formatDays(daysSince(member.stripe_since), t)}
           />
-          <Field label="Ore totali" value={formatHours(training.total)} />
-          <Field label="Ore registrate" value={formatHours(training.recorded)} />
-          <Field label="Ore iniziali (stima)" value={formatHours(training.estimated)} />
+          <Field label={t.registro.totalHours} value={formatHours(training.total, t)} />
+          <Field
+            label={t.registro.recordedHours}
+            value={formatHours(training.recorded, t)}
+          />
+          <Field
+            label={t.registro.openingHours}
+            value={formatHours(training.estimated, t)}
+          />
         </dl>
 
         {training.isPartlyEstimated ? (
           <p className="text-xs leading-relaxed text-foreground/55">
-            Le ore iniziali coprono il solo periodo dall&apos;iscrizione al{" "}
-            {formatDate(TRACKING_STARTED_ON)}, calcolate a {LESSONS_PER_WEEK}{" "}
-            lezioni a settimana perché per quegli anni non esiste uno storico
-            delle presenze. Sono un saldo di partenza e non crescono più: dal{" "}
-            {formatDate(TRACKING_STARTED_ON)} ogni ora arriva soltanto dal
-            check-in dell&apos;allievo o dall&apos;appello dell&apos;istruttore.
+            {t.registro.openingBalanceExplained(
+              formatDate(TRACKING_STARTED_ON),
+              LESSONS_PER_WEEK,
+            )}
           </p>
         ) : null}
       </section>
@@ -205,21 +210,21 @@ export default async function MemberDetailPage({
       <section className="flex flex-col gap-2 rounded-xl border border-border p-4 sm:gap-3 sm:p-5">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
           <FileTextIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-          Note
+          {t.registro.notesSection}
         </h2>
         <p className="text-sm whitespace-pre-wrap text-foreground/80">
-          {member.notes ?? "—"}
+          {member.notes ?? t.common.dash}
         </p>
       </section>
 
       <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
           <UsersIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-          Ruoli
+          {t.registro.rolesSection}
         </h2>
 
         {roles.length === 0 ? (
-          <p className="text-sm text-foreground/60">Nessun ruolo assegnato.</p>
+          <p className="text-sm text-foreground/60">{t.registro.noRoles}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {roles.map((role) => (
@@ -228,12 +233,15 @@ export default async function MemberDetailPage({
                 className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
               >
                 <span className="text-sm font-medium">
-                  {ROLE_LABELS[role.role] ?? role.role}
+                  {roleLabel(role.role, t)}
                 </span>
                 <span className="text-xs text-foreground/55">
                   {role.end_date
-                    ? `dal ${formatDate(role.start_date)} al ${formatDate(role.end_date)}`
-                    : `dal ${formatDate(role.start_date)} · attivo`}
+                    ? t.registro.roleRange(
+                        formatDate(role.start_date),
+                        formatDate(role.end_date),
+                      )
+                    : t.registro.roleOpen(formatDate(role.start_date))}
                 </span>
               </li>
             ))}

@@ -11,11 +11,13 @@ import {
 } from "@/components/icons";
 import { RowMenu } from "@/components/row-menu";
 import { requireClassManager } from "@/utils/supabase/require-admin";
+import { getDictionary } from "@/utils/i18n/server";
+import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { TECHNICAL_ROLES } from "@/utils/members";
 import {
-  WEEKDAY_LABELS,
   formatTime,
   formatWeekdays,
+  weekdayLabels,
 } from "@/utils/schedule";
 import {
   addCourse,
@@ -66,11 +68,13 @@ function TimeField({
   prefix,
   value,
   idPrefix,
+  t,
 }: {
   label: string;
   prefix: "start" | "end";
   value?: string;
   idPrefix: string;
+  t: Dictionary;
 }) {
   const [hour, minute] = (value ? formatTime(value) : ":").split(":");
   // A new course starts on the hour by default: classes almost always do, and
@@ -87,7 +91,7 @@ function TimeField({
           name={`${prefix}_hour`}
           required
           defaultValue={hour}
-          aria-label={`${label}: ore`}
+          aria-label={t.corsi.hourAria(label)}
           className={fieldClass}
         >
           <option value="" disabled>
@@ -107,7 +111,7 @@ function TimeField({
           name={`${prefix}_minute`}
           required
           defaultValue={minuteValue}
-          aria-label={`${label}: minuti`}
+          aria-label={t.corsi.minuteAria(label)}
           className={fieldClass}
         >
           {MINUTES.map((m) => (
@@ -127,10 +131,12 @@ function CourseFields({
   course,
   instructors,
   idPrefix,
+  t,
 }: {
   course?: Course;
   instructors: Instructor[];
   idPrefix: string;
+  t: Dictionary;
 }) {
   // A course saved earlier may point at somebody who no longer holds a
   // technical role. Dropping them from the list would make the browser fall
@@ -142,7 +148,7 @@ function CourseFields({
           ...instructors,
           {
             id: course.instructor_id,
-            full_name: course.instructor_name ?? "Istruttore attuale",
+            full_name: course.instructor_name ?? t.corsi.currentInstructor,
           },
         ]
       : instructors;
@@ -151,7 +157,7 @@ function CourseFields({
     <>
       <div className="flex flex-col gap-1.5">
         <label htmlFor={`${idPrefix}-name`} className="text-sm font-medium">
-          Nome del corso
+          {t.corsi.courseName}
         </label>
         <input
           id={`${idPrefix}-name`}
@@ -163,9 +169,9 @@ function CourseFields({
       </div>
 
       <fieldset className="flex flex-col gap-1.5">
-        <legend className="text-sm font-medium">Giorni</legend>
+        <legend className="text-sm font-medium">{t.corsi.days}</legend>
         <div className="flex flex-wrap gap-2 pt-1">
-          {WEEKDAY_LABELS.map((day) => (
+          {weekdayLabels(t).map((day) => (
             <label
               key={day.value}
               className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm"
@@ -185,22 +191,25 @@ function CourseFields({
 
       <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
         <TimeField
-          label="Inizio"
+          label={t.corsi.startTime}
           prefix="start"
           value={course?.start_time}
           idPrefix={idPrefix}
+          t={t}
         />
 
         <TimeField
-          label="Fine"
+          label={t.corsi.endTime}
           prefix="end"
           value={course?.end_time}
           idPrefix={idPrefix}
+          t={t}
         />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${idPrefix}-starts_on`} className="text-sm font-medium">
-            Attivo dal <span className="text-foreground/50">(oggi se vuoto)</span>
+            {t.corsi.activeFrom}{" "}
+            <span className="text-foreground/50">{t.corsi.todayIfEmpty}</span>
           </label>
           <input
             id={`${idPrefix}-starts_on`}
@@ -213,7 +222,8 @@ function CourseFields({
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${idPrefix}-ends_on`} className="text-sm font-medium">
-            Fino al <span className="text-foreground/50">(senza fine se vuoto)</span>
+            {t.corsi.activeUntil}{" "}
+            <span className="text-foreground/50">{t.corsi.neverEndsIfEmpty}</span>
           </label>
           <input
             id={`${idPrefix}-ends_on`}
@@ -226,7 +236,7 @@ function CourseFields({
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${idPrefix}-opens`} className="text-sm font-medium">
-            Check-in da (min prima)
+            {t.corsi.checkinBefore}
           </label>
           <input
             id={`${idPrefix}-opens`}
@@ -241,7 +251,7 @@ function CourseFields({
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${idPrefix}-closes`} className="text-sm font-medium">
-            Check-in fino a (min dopo)
+            {t.corsi.checkinAfter}
           </label>
           <input
             id={`${idPrefix}-closes`}
@@ -256,8 +266,8 @@ function CourseFields({
 
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label htmlFor={`${idPrefix}-instructor_id`} className="text-sm font-medium">
-            Istruttore{" "}
-            <span className="text-foreground/50">(predefinito del corso)</span>
+            {t.corsi.instructor}{" "}
+            <span className="text-foreground/50">{t.corsi.instructorDefault}</span>
           </label>
           <select
             id={`${idPrefix}-instructor_id`}
@@ -265,7 +275,7 @@ function CourseFields({
             defaultValue={course?.instructor_id ?? ""}
             className={fieldClass}
           >
-            <option value="">Nessuno</option>
+            <option value="">{t.common.none}</option>
             {options.map((person) => (
               <option key={person.id} value={person.id}>
                 {person.full_name}
@@ -277,7 +287,7 @@ function CourseFields({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor={`${idPrefix}-description`} className="text-sm font-medium">
-          Descrizione
+          {t.corsi.description}
         </label>
         <textarea
           id={`${idPrefix}-description`}
@@ -297,6 +307,7 @@ export default async function CorsiPage({
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   const { ok, error } = await searchParams;
+  const { t } = await getDictionary();
   // Instructors, maestri and admin. An allievo gets a 404, not a redirect.
   const { supabase } = await requireClassManager("/corsi");
 
@@ -341,8 +352,7 @@ export default async function CorsiPage({
         <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
-            Non è stato possibile caricare i corsi. Controlla che le migration
-            del database siano state applicate.
+            {t.corsi.loadFailed}
           </span>
         </p>
       ) : null}
@@ -352,7 +362,7 @@ export default async function CorsiPage({
             disclosure triangle. */}
         <summary className="cursor-pointer px-4 py-3 font-heading text-base font-semibold sm:px-5 sm:py-4">
           <CalendarPlusIcon className="mr-2 inline-block h-4.5 w-4.5 align-[-0.2em] text-accent" />
-          Aggiungi corso
+          {t.corsi.addCourse}
         </summary>
 
         <form
@@ -360,20 +370,16 @@ export default async function CorsiPage({
           className="flex flex-col gap-3 px-4 pb-4 sm:gap-4 sm:px-5 sm:pb-5"
         >
           <p className="text-xs text-foreground/55">
-            Salvando il corso vengono generate le lezioni delle prossime otto
-            settimane. Le lezioni già passate non vengono mai toccate.
-            L&apos;istruttore indicato qui è il predefinito: le lezioni generate
-            lo ereditano e resta modificabile sulla singola lezione, dalla
-            pagina dell&apos;appello in Presenze.
+            {t.corsi.addHint}
           </p>
 
-          <CourseFields instructors={instructors} idPrefix="new" />
+          <CourseFields instructors={instructors} idPrefix="new" t={t} />
 
           <button
             type="submit"
             className="self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
-            Crea corso
+            {t.corsi.createCourse}
           </button>
         </form>
       </details>
@@ -387,35 +393,36 @@ export default async function CorsiPage({
                 {course.name}
                 {course.is_active ? null : (
                   <span className="rounded-full border border-border px-2 py-0.5 text-xs font-normal text-foreground/55">
-                    sospeso
+                    {t.corsi.suspended}
                   </span>
                 )}
               </span>
 
               <span className="text-xs text-foreground/70">
-                {formatWeekdays(course.weekdays)}
+                {formatWeekdays(course.weekdays, t)}
                 {" · "}
                 {formatTime(course.start_time)}–{formatTime(course.end_time)}
                 {" · "}
-                {course.instructor_name ?? "nessun istruttore"}
+                {course.instructor_name ?? t.corsi.noInstructor}
               </span>
 
               <span className="text-xs text-foreground/55">
                 {course.upcoming_sessions === 0
-                  ? "nessuna lezione futura in calendario"
-                  : `${course.upcoming_sessions} lezioni in calendario`}
-                {" · check-in da "}
-                {course.checkin_opens_minutes_before} min prima a{" "}
-                {course.checkin_closes_minutes_after} min dopo
+                  ? t.corsi.noUpcoming
+                  : t.corsi.upcomingCount(course.upcoming_sessions)}
+                {t.corsi.checkinWindow(
+                  course.checkin_opens_minutes_before,
+                  course.checkin_closes_minutes_after,
+                )}
               </span>
             </div>
 
-            <RowMenu label={`Azioni per ${course.name}`}>
+            <RowMenu label={t.corsi.rowActions(course.name)}>
               <form action={extendCalendar}>
                 <input type="hidden" name="course_id" value={course.id} />
                 <button type="submit" className={menuItemClass}>
                   <CalendarCheckIcon className={menuIconClass} />
-                  Estendi calendario
+                  {t.corsi.extendCalendar}
                 </button>
               </form>
 
@@ -432,18 +439,18 @@ export default async function CorsiPage({
                   ) : (
                     <PlayIcon className={menuIconClass} />
                   )}
-                  {course.is_active ? "Sospendi" : "Riattiva"}
+                  {course.is_active ? t.corsi.suspend : t.corsi.reactivate}
                 </button>
               </form>
 
               <form action={deleteCourse}>
                 <input type="hidden" name="course_id" value={course.id} />
                 <ConfirmSubmitButton
-                  message={`Eliminare ${course.name}? Possibile solo se non ha presenze registrate; altrimenti puoi sospenderlo.`}
+                  message={t.corsi.deleteConfirm(course.name)}
                   className={`${menuItemClass} text-accent hover:bg-accent/10`}
                 >
                   <TrashIcon className={menuIconClass} />
-                  Elimina
+                  {t.corsi.remove}
                 </ConfirmSubmitButton>
               </form>
             </RowMenu>
@@ -454,7 +461,7 @@ export default async function CorsiPage({
             <details className="mt-1">
               <summary className="cursor-pointer text-xs font-medium text-accent">
                 <PencilIcon className="mr-1.5 inline-block h-3.5 w-3.5 align-[-0.2em]" />
-                Modifica
+                {t.corsi.edit}
               </summary>
               <form
                 action={updateCourse}
@@ -465,12 +472,13 @@ export default async function CorsiPage({
                   course={course}
                   instructors={instructors}
                   idPrefix={`edit-${course.id}`}
+                  t={t}
                 />
                 <button
                   type="submit"
                   className="self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
                 >
-                  Salva modifiche
+                  {t.common.saveChanges}
                 </button>
               </form>
             </details>
@@ -479,8 +487,7 @@ export default async function CorsiPage({
 
         {courses.length === 0 ? (
           <li className="px-3 py-3 text-sm text-foreground/60 sm:p-4">
-            Nessun corso ancora. Creane uno qui sopra: le lezioni compaiono in
-            Presenze subito dopo.
+            {t.corsi.empty}
           </li>
         ) : null}
       </ul>

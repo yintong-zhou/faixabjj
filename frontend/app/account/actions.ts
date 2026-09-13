@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/utils/supabase/require-admin";
 import { getOrCreateProfile } from "@/utils/supabase/profile";
+import { getDictionary } from "@/utils/i18n/server";
 
 function back(params: Record<string, string>) {
   redirect(`/account?${new URLSearchParams(params).toString()}`);
@@ -15,17 +16,18 @@ const text = (formData: FormData, key: string) => {
 };
 
 export async function updateProfile(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase, userId, email: currentEmail } = await requireAdmin("/account");
   const profile = await getOrCreateProfile(supabase, userId, currentEmail);
 
   if (!profile) {
-    back({ error: "Profilo non trovato." });
+    back({ error: t.msg.profileNotFound });
     return;
   }
 
   const fullName = text(formData, "full_name");
   if (!fullName) {
-    back({ error: "Il nome non può essere vuoto." });
+    back({ error: t.msg.nameEmpty });
     return;
   }
 
@@ -42,7 +44,7 @@ export async function updateProfile(formData: FormData) {
     .eq("id", profile.id);
 
   if (error) {
-    back({ error: "Non è stato possibile salvare il profilo." });
+    back({ error: t.msg.profileSaveFailed });
     return;
   }
 
@@ -53,41 +55,42 @@ export async function updateProfile(formData: FormData) {
     const { error: emailError } = await supabase.auth.updateUser({ email: newEmail });
 
     if (emailError) {
-      back({ error: "Profilo salvato, ma il cambio email non è riuscito." });
+      back({ error: t.msg.profileSavedEmailFailed });
       return;
     }
 
     revalidatePath("/account");
-    back({ ok: "Profilo salvato. Conferma il nuovo indirizzo dal link che ti abbiamo inviato per email." });
+    back({ ok: t.msg.profileSavedEmailPending });
     return;
   }
 
   revalidatePath("/account");
-  back({ ok: "Profilo aggiornato." });
+  back({ ok: t.msg.profileSaved });
 }
 
 export async function updatePassword(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireAdmin("/account");
 
   const password = formData.get("password") as string;
   const confirm = formData.get("confirm_password") as string;
 
   if (!password || password.length < 8) {
-    back({ error: "La password deve avere almeno 8 caratteri." });
+    back({ error: t.auth.tooShort });
     return;
   }
 
   if (password !== confirm) {
-    back({ error: "Le due password non coincidono." });
+    back({ error: t.auth.mismatch });
     return;
   }
 
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    back({ error: "Non è stato possibile aggiornare la password." });
+    back({ error: t.auth.updateFailed });
     return;
   }
 
-  back({ ok: "Password aggiornata." });
+  back({ ok: t.msg.passwordUpdated });
 }

@@ -9,8 +9,9 @@ import {
   TrendingUpIcon,
 } from "@/components/icons";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
-import { LESSONS_PER_WEEK, formatHours, hoursFor } from "@/utils/hours";
+import { LESSONS_PER_WEEK, hoursFor } from "@/utils/hours";
 import type { Profile } from "@/utils/supabase/profile";
+import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { addDays, formatDayHeading, formatTime } from "@/utils/schedule";
 import { Section, Stat } from "./stat";
 
@@ -32,10 +33,12 @@ export async function MemberDashboard({
   supabase,
   profile,
   today,
+  t,
 }: {
   supabase: SupabaseClient;
   profile: Profile;
   today: string;
+  t: Dictionary;
 }) {
   const since = addDays(today, -WINDOW_DAYS);
 
@@ -96,7 +99,7 @@ export async function MemberDashboard({
 
   return (
     <>
-      <Section title="Il tuo grado" icon={TrendingUpIcon}>
+      <Section title={t.dashboard.yourRank} icon={TrendingUpIcon}>
         <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
           <Belt
             belt={profile.current_belt}
@@ -106,23 +109,23 @@ export async function MemberDashboard({
           <dl className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             <div>
               <dt className="text-xs uppercase tracking-wide text-foreground/55">
-                Con questa cintura
+                {t.dashboard.atThisBelt}
               </dt>
               <dd className="text-sm font-medium">
-                {formatDays(daysSince(profile.rank_since))}
+                {formatDays(daysSince(profile.rank_since), t)}
               </dd>
             </div>
             <div>
               <dt className="text-xs uppercase tracking-wide text-foreground/55">
-                Dall&apos;ultima tacca
+                {t.dashboard.sinceLastStripe}
               </dt>
               <dd className="text-sm font-medium">
-                {formatDays(daysSince(profile.stripe_since))}
+                {formatDays(daysSince(profile.stripe_since), t)}
               </dd>
             </div>
             <div>
               <dt className="text-xs uppercase tracking-wide text-foreground/55">
-                Iscritto dal
+                {t.account.joinedOn}
               </dt>
               <dd className="text-sm font-medium">{formatDate(profile.joined_at)}</dd>
             </div>
@@ -131,61 +134,65 @@ export async function MemberDashboard({
 
         <p className="flex items-start gap-2 text-xs leading-relaxed text-foreground/55">
           <AlertCircleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          Cintura e tacche le assegna il tuo istruttore: qui vedi solo lo stato
-          attuale, la promozione non è mai automatica.
+          {t.dashboard.promotionNote}
         </p>
       </Section>
 
       <Section
-        title="Il tuo allenamento"
+        title={t.dashboard.yourTraining}
         icon={CalendarCheckIcon}
         action={
           <Link
             href="/presenze"
             className="flex items-center gap-1 text-sm font-medium text-accent hover:opacity-80"
           >
-            Presenze
+            {t.nav.presenze}
             <ChevronRightIcon className="h-4 w-4" />
           </Link>
         }
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
           <Stat
-            label="Ore totali"
-            value={formatHours(hours.total).replace(" ore", "")}
-            hint={hours.isPartlyEstimated ? "saldo iniziale incluso" : "ore registrate"}
+            label={t.dashboard.totalHours}
+            value={hours.total.toFixed(1)}
+            hint={
+              hours.isPartlyEstimated
+                ? t.dashboard.openingBalanceIncluded
+                : t.dashboard.recordedHours
+            }
           />
           <Stat
-            label={`Ultimi ${RECENT_DAYS} gg`}
+            label={t.dashboard.lastDays(RECENT_DAYS)}
             value={recentCount}
-            hint="lezioni fatte"
+            hint={t.dashboard.lessonsDone}
           />
           <Stat
-            label="Media"
+            label={t.dashboard.average}
             value={perWeek.toFixed(1)}
-            hint="lezioni a settimana"
+            hint={t.dashboard.lessonsPerWeek}
           />
           <Stat
-            label="Ultima volta"
-            value={lastAttended ? formatDate(lastAttended.session_date) : "—"}
-            hint={lastAttended ? lastAttended.course_name : `nessuna negli ultimi ${WINDOW_DAYS} gg`}
+            label={t.dashboard.lastTime}
+            value={lastAttended ? formatDate(lastAttended.session_date) : t.common.dash}
+            hint={
+              lastAttended
+                ? lastAttended.course_name
+                : t.dashboard.noneInWindow(WINDOW_DAYS)
+            }
           />
         </div>
 
         {hours.isPartlyEstimated ? (
           <p className="text-xs leading-relaxed text-foreground/55">
-            Il totale include un saldo di partenza, stimato a {LESSONS_PER_WEEK}{" "}
-            lezioni a settimana per il periodo prima del tracciamento. Da lì in
-            poi cresce solo con il tuo check-in o con l&apos;appello
-            dell&apos;istruttore.
+            {t.dashboard.memberEstimateNote(LESSONS_PER_WEEK)}
           </p>
         ) : null}
       </Section>
 
-      <Section title="Prossime lezioni" icon={CalendarCheckIcon}>
+      <Section title={t.dashboard.nextLessons} icon={CalendarCheckIcon}>
         {upcoming.length === 0 ? (
           <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
-            Nessuna lezione in calendario nei prossimi giorni.
+            {t.dashboard.noUpcoming}
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
@@ -195,7 +202,7 @@ export async function MemberDashboard({
                   {formatTime(session.start_time)} · {session.course_name}
                 </span>
                 <span className="text-xs text-foreground/55">
-                  {formatDayHeading(session.session_date)}
+                  {formatDayHeading(session.session_date, t)}
                 </span>
               </li>
             ))}
@@ -203,8 +210,7 @@ export async function MemberDashboard({
         )}
 
         <p className="text-xs text-foreground/55">
-          Il check-in si fa da Presenze, quando sei in palestra e la finestra è
-          aperta.
+          {t.dashboard.checkinHint}
         </p>
       </Section>
     </>

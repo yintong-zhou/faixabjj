@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireClassManager } from "@/utils/supabase/require-admin";
 import { addDays, expandWeekdays, parseWeekdays } from "@/utils/schedule";
+import type { Dictionary } from "@/utils/i18n/dictionaries/it";
+import { getDictionary } from "@/utils/i18n/server";
 
 const PATH = "/corsi";
 
@@ -62,22 +64,23 @@ function readTime(formData: FormData, prefix: string): string | null {
 // a crafted POST skips.
 function readCourseForm(
   formData: FormData,
+  t: Dictionary,
 ): { error: string } | { values: CourseValues } {
   const name = text(formData, "name");
-  if (!name) return { error: "Il nome del corso è obbligatorio." };
+  if (!name) return { error: t.msg.courseNameRequired };
 
   const startTime = readTime(formData, "start");
   const endTime = readTime(formData, "end");
   if (!startTime || !endTime) {
-    return { error: "Orario di inizio e di fine sono obbligatori." };
+    return { error: t.msg.timesRequired };
   }
   if (endTime <= startTime) {
-    return { error: "L'orario di fine deve essere dopo quello di inizio." };
+    return { error: t.msg.endBeforeStart };
   }
 
   const weekdays = parseWeekdays(formData.getAll("weekdays").map(String));
   if (weekdays.length === 0) {
-    return { error: "Scegli almeno un giorno della settimana." };
+    return { error: t.msg.pickOneDay };
   }
 
   const opensBefore = Number.parseInt(
@@ -89,16 +92,16 @@ function readCourseForm(
     10,
   );
   if (!Number.isInteger(opensBefore) || opensBefore < 0 || opensBefore > 1440) {
-    return { error: "I minuti di apertura del check-in devono stare fra 0 e 1440." };
+    return { error: t.msg.opensRange };
   }
   if (!Number.isInteger(closesAfter) || closesAfter < 0 || closesAfter > 1440) {
-    return { error: "I minuti di chiusura del check-in devono stare fra 0 e 1440." };
+    return { error: t.msg.closesRange };
   }
 
   const startsOn = text(formData, "starts_on");
   const endsOn = text(formData, "ends_on");
   if (startsOn && endsOn && endsOn < startsOn) {
-    return { error: "La data di fine deve essere dopo quella di inizio." };
+    return { error: t.msg.endDateBeforeStart };
   }
 
   return {
@@ -148,10 +151,11 @@ async function syncSessions(supabase: SupabaseClient, course: SyncTarget) {
 const SYNC_COLUMNS = "id, weekdays, starts_on, ends_on";
 
 export async function addCourse(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireClassManager(PATH);
   const query = (formData.get("_query") as string | null) ?? "";
 
-  const parsed = readCourseForm(formData);
+  const parsed = readCourseForm(formData, t);
   if ("error" in parsed) {
     back({ error: parsed.error }, query);
     return;
@@ -164,7 +168,7 @@ export async function addCourse(formData: FormData) {
     .maybeSingle();
 
   if (error || !data) {
-    back({ error: "Corso non creato." }, query);
+    back({ error: t.msg.courseNotCreated }, query);
     return;
   }
 
@@ -174,25 +178,26 @@ export async function addCourse(formData: FormData) {
 
   back(
     synced.error
-      ? { error: `${parsed.values.name} creato, ma il calendario non è stato generato.` }
+      ? { error: t.msg.courseCreatedNoCalendar(parsed.values.name) }
       : {
-          ok: `${parsed.values.name} creato, ${synced.count} lezioni in calendario.`,
+          ok: t.msg.courseCreated(parsed.values.name, synced.count),
         },
     query,
   );
 }
 
 export async function updateCourse(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireClassManager(PATH);
   const query = (formData.get("_query") as string | null) ?? "";
   const id = formData.get("course_id") as string;
 
   if (!id) {
-    back({ error: "Corso non specificato." }, query);
+    back({ error: t.msg.courseNotSpecified }, query);
     return;
   }
 
-  const parsed = readCourseForm(formData);
+  const parsed = readCourseForm(formData, t);
   if ("error" in parsed) {
     back({ error: parsed.error }, query);
     return;
@@ -206,7 +211,7 @@ export async function updateCourse(formData: FormData) {
     .maybeSingle();
 
   if (error || !data) {
-    back({ error: "Modifica non riuscita." }, query);
+    back({ error: t.msg.courseUpdateFailed }, query);
     return;
   }
 
@@ -218,13 +223,14 @@ export async function updateCourse(formData: FormData) {
 
   back(
     synced.error
-      ? { error: "Corso aggiornato, ma il calendario non è stato rigenerato." }
-      : { ok: `${parsed.values.name} aggiornato e calendario rigenerato.` },
+      ? { error: t.msg.courseUpdatedNoCalendar }
+      : { ok: t.msg.courseUpdated(parsed.values.name) },
     query,
   );
 }
 
 export async function extendCalendar(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireClassManager(PATH);
   const query = (formData.get("_query") as string | null) ?? "";
   const id = formData.get("course_id") as string;
@@ -236,7 +242,7 @@ export async function extendCalendar(formData: FormData) {
     .maybeSingle();
 
   if (error || !data) {
-    back({ error: "Corso non trovato." }, query);
+    back({ error: t.msg.courseNotFound }, query);
     return;
   }
 
@@ -246,15 +252,16 @@ export async function extendCalendar(formData: FormData) {
 
   back(
     synced.error
-      ? { error: "Calendario non esteso." }
+      ? { error: t.msg.calendarNotExtended }
       : {
-          ok: `Calendario di ${(data as { name: string }).name} esteso a ${synced.count} lezioni.`,
+          ok: t.msg.calendarExtended((data as { name: string }).name, synced.count),
         },
     query,
   );
 }
 
 export async function toggleCourseActive(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireClassManager(PATH);
   const query = (formData.get("_query") as string | null) ?? "";
   const id = formData.get("course_id") as string;
@@ -266,15 +273,16 @@ export async function toggleCourseActive(formData: FormData) {
     .eq("id", id);
 
   if (error) {
-    back({ error: "Operazione non riuscita." }, query);
+    back({ error: t.msg.genericFailed }, query);
     return;
   }
 
   revalidatePath(PATH);
-  back({ ok: active ? "Corso riattivato." : "Corso sospeso." }, query);
+  back({ ok: active ? t.msg.courseReactivated : t.msg.courseSuspended }, query);
 }
 
 export async function deleteCourse(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireClassManager(PATH);
   const query = (formData.get("_query") as string | null) ?? "";
   const id = formData.get("course_id") as string;
@@ -287,8 +295,8 @@ export async function deleteCourse(formData: FormData) {
     back(
       {
         error: error.message.includes("presenze registrate")
-          ? "Il corso ha presenze registrate: puoi solo sospenderlo."
-          : "Eliminazione non riuscita.",
+          ? t.msg.courseHasAttendance
+          : t.msg.deleteFailed,
       },
       query,
     );
@@ -297,5 +305,5 @@ export async function deleteCourse(formData: FormData) {
 
   revalidatePath(PATH);
   revalidatePath("/presenze");
-  back({ ok: "Corso eliminato." }, query);
+  back({ ok: t.msg.courseDeleted }, query);
 }

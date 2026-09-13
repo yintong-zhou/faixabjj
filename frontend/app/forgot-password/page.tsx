@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getDictionary } from "@/utils/i18n/server";
 import { requestPasswordReset } from "./actions";
 
 export default async function ForgotPasswordPage({
@@ -7,22 +8,22 @@ export default async function ForgotPasswordPage({
   searchParams: Promise<{ sent?: string }>;
 }) {
   const { sent } = await searchParams;
+  const { t } = await getDictionary();
 
   if (sent) {
     return (
       <div className="mx-auto flex w-full max-w-sm flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Controlla la tua email
+          {t.auth.sentTitle}
         </h1>
         <p className="text-sm leading-relaxed text-foreground/65">
-          Se l&apos;indirizzo è registrato, riceverai a breve un link per
-          reimpostare la password.
+          {t.auth.sentLead}
         </p>
         <Link
           href="/login"
           className="mt-4 w-fit text-sm font-medium text-accent hover:opacity-80"
         >
-          Torna al login
+          {t.auth.backToLogin}
         </Link>
       </div>
     );
@@ -32,18 +33,17 @@ export default async function ForgotPasswordPage({
     <div className="mx-auto flex w-full max-w-sm flex-col gap-6 sm:gap-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Password dimenticata
+          {t.auth.forgotTitle}
         </h1>
         <p className="text-sm leading-relaxed text-foreground/65">
-          Inserisci la tua email: se l&apos;account esiste, ti mandiamo un
-          link per reimpostare la password.
+          {t.auth.forgotLead}
         </p>
       </div>
 
       <form action={requestPasswordReset} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className="text-sm font-medium">
-            Email
+            {t.auth.email}
           </label>
           <input
             id="email"
@@ -59,12 +59,12 @@ export default async function ForgotPasswordPage({
           type="submit"
           className="mt-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
         >
-          Invia link
+          {t.auth.forgotButton}
         </button>
       </form>
 
       <Link href="/login" className="w-fit text-sm font-medium text-accent hover:opacity-80">
-        Torna al login
+        {t.auth.backToLogin}
       </Link>
     </div>
   );

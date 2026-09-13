@@ -17,6 +17,8 @@
 // also counting real attendance would count every week from go-live onwards
 // twice.
 
+import { it, type Dictionary } from "./i18n/dictionaries/it";
+
 /** Lessons a member is assumed to attend in a week, before records existed. */
 export const LESSONS_PER_WEEK = 3;
 
@@ -101,12 +103,12 @@ export function hoursFor(
   };
 }
 
-export function formatHours(value: number): string {
-  return `${value.toFixed(1)} ore`;
+export function formatHours(value: number, t: Dictionary = it): string {
+  return t.hours.hours(value.toFixed(1));
 }
 
 /** The sentence used wherever an estimated total is shown. */
-export function estimateNote(estimated: number): string {
-  return `Include ${estimated.toFixed(1)} ore iniziali, stimate a ${LESSONS_PER_WEEK} lezioni a settimana dall'iscrizione per il periodo prima del tracciamento. Da allora le ore aumentano solo con il check-in o l'appello.`;
+export function estimateNote(estimated: number, t: Dictionary = it): string {
+  return t.hours.estimateNote(estimated.toFixed(1), LESSONS_PER_WEEK);
 }
 

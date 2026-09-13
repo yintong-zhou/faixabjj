@@ -9,6 +9,7 @@ import {
   requireUserManager,
 } from "@/utils/supabase/require-admin";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
+import { getDictionary } from "@/utils/i18n/server";
 
 const PATH = "/registro";
 
@@ -54,6 +55,7 @@ const text = (formData: FormData, key: string) => {
 // can fail on a duplicate email. Doing it after the registry insert would leave
 // a person row behind with no account whenever the address is already taken.
 export async function addPerson(formData: FormData) {
+  const { t } = await getDictionary();
   const { supabase } = await requireRegistryEditor(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
@@ -62,37 +64,37 @@ export async function addPerson(formData: FormData) {
   // through the form's `required` attributes, which a crafted POST skips.
   const fullName = text(formData, "full_name");
   if (!fullName) {
-    back({ error: "Il nome è obbligatorio." }, query);
+    back({ error: t.msg.nameRequired }, query);
     return;
   }
 
   const email = text(formData, "email");
   if (!email) {
-    back({ error: "L'email è obbligatoria." }, query);
+    back({ error: t.msg.emailRequired }, query);
     return;
   }
 
   const joinedAt = text(formData, "joined_at");
   if (!joinedAt) {
-    back({ error: "La data di iscrizione è obbligatoria." }, query);
+    back({ error: t.msg.joinDateRequired }, query);
     return;
   }
 
   const belt = formData.get("current_belt") as string;
   if (!BELTS.includes(belt as (typeof BELTS)[number])) {
-    back({ error: "Seleziona una cintura." }, query);
+    back({ error: t.msg.pickBelt }, query);
     return;
   }
 
   const stripes = Number.parseInt((formData.get("current_stripes") as string) ?? "0", 10);
   if (!Number.isInteger(stripes) || stripes < 0 || stripes > 4) {
-    back({ error: "Le tacche devono essere un numero da 0 a 4." }, query);
+    back({ error: t.msg.stripesRange }, query);
     return;
   }
 
   const role = formData.get("role") as string;
   if (!ASSIGNABLE_ROLES.includes(role as (typeof ASSIGNABLE_ROLES)[number])) {
-    back({ error: "Seleziona un ruolo." }, query);
+    back({ error: t.msg.pickRole }, query);
     return;
   }
 
@@ -104,8 +106,8 @@ export async function addPerson(formData: FormData) {
       {
         error:
           cause instanceof MissingSecretKeyError
-            ? "SUPABASE_SECRET_KEY non è configurata: non è possibile creare account."
-            : "Client di amministrazione non disponibile.",
+            ? t.msg.secretMissingCreate
+            : t.msg.adminClientMissing,
       },
       query,
     );
@@ -126,7 +128,7 @@ export async function addPerson(formData: FormData) {
 
   if (authError || !created?.user) {
     back(
-      { error: "Account non creato: l'indirizzo email potrebbe essere già registrato." },
+      { error: t.msg.accountNotCreated },
       query,
     );
     return;
@@ -157,7 +159,7 @@ export async function addPerson(formData: FormData) {
   if (error || !person) {
     back(
       {
-        error: `Account creato per ${email}, ma i dati della scheda non sono stati salvati.`,
+        error: t.msg.accountCreatedNoProfile(email),
       },
       query,
     );
@@ -170,7 +172,7 @@ export async function addPerson(formData: FormData) {
 
   if (roleError) {
     back(
-      { error: `${fullName} è stata aggiunta, ma il ruolo non è stato assegnato.` },
+      { error: t.msg.personAddedNoRole(fullName) },
       query,
     );
     return;
@@ -179,7 +181,7 @@ export async function addPerson(formData: FormData) {
   revalidatePath(PATH);
   back(
     {
-      ok: `${fullName} aggiunta al registro. Account attivo: password provvisoria ${DEFAULT_PASSWORD}, da cambiare al primo accesso.`,
+      ok: t.msg.personAdded(fullName, DEFAULT_PASSWORD),
     },
     query,
   );
@@ -192,6 +194,7 @@ export async function addPerson(formData: FormData) {
 // The trigger in 20260911160000 links the new auth user back to this person by
 // email instead of creating a duplicate row.
 export async function inviteToPortal(formData: FormData) {
+  const { t } = await getDictionary();
   // The admin client below uses the secret key, which bypasses Row Level
   // Security entirely, so the database will not enforce the privilege here.
   await requireUserManager(PATH);
@@ -202,7 +205,7 @@ export async function inviteToPortal(formData: FormData) {
 
   if (!email) {
     back(
-      { error: "Serve un indirizzo email sulla scheda per invitare questa persona." },
+      { error: t.msg.emailNeededToInvite },
       query,
     );
     return;
@@ -216,8 +219,8 @@ export async function inviteToPortal(formData: FormData) {
       {
         error:
           cause instanceof MissingSecretKeyError
-            ? "SUPABASE_SECRET_KEY non è configurata: gli inviti sono disattivati."
-            : "Client di amministrazione non disponibile.",
+            ? t.msg.secretMissingInvite
+            : t.msg.adminClientMissing,
       },
       query,
     );
@@ -231,14 +234,14 @@ export async function inviteToPortal(formData: FormData) {
 
   if (error) {
     back(
-      { error: "Invito non riuscito. L'indirizzo potrebbe essere già registrato." },
+      { error: t.msg.inviteFailed },
       query,
     );
     return;
   }
 
   revalidatePath(PATH);
-  back({ ok: `Invito inviato a ${email}.` }, query);
+  back({ ok: t.msg.inviteSent(email) }, query);
 }
 
 // Resets a member's password to the shared default, rather than emailing a
@@ -248,13 +251,14 @@ export async function inviteToPortal(formData: FormData) {
 // replace it at their next login exactly like a freshly created account.
 // Without that flag this would leave an account on a password everyone knows.
 export async function setTemporaryPassword(formData: FormData) {
+  const { t } = await getDictionary();
   await requireUserManager(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
   const targetId = formData.get("user_id") as string;
 
   if (!targetId) {
-    back({ error: "Utente non specificato." }, query);
+    back({ error: t.msg.userNotSpecified }, query);
     return;
   }
 
@@ -263,7 +267,7 @@ export async function setTemporaryPassword(formData: FormData) {
     admin = createAdminClient();
   } catch {
     back(
-      { error: "SUPABASE_SECRET_KEY non è configurata: il reset è disattivato." },
+      { error: t.msg.secretMissingReset },
       query,
     );
     return;
@@ -275,33 +279,34 @@ export async function setTemporaryPassword(formData: FormData) {
   });
 
   if (error || !data?.user) {
-    back({ error: "Reimpostazione non riuscita." }, query);
+    back({ error: t.msg.resetFailed }, query);
     return;
   }
 
   back(
     {
-      ok: `Password di ${data.user.email ?? "l'utente"} riportata a quella provvisoria (${DEFAULT_PASSWORD}): le verrà chiesto di cambiarla al primo accesso.`,
+      ok: t.msg.passwordReset(data.user.email ?? t.msg.someUser, DEFAULT_PASSWORD),
     },
     query,
   );
 }
 
 export async function revokeAccess(formData: FormData) {
+  const { t } = await getDictionary();
   const { userId: currentUserId } = await requireUserManager(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
   const targetId = formData.get("user_id") as string;
 
   if (!targetId) {
-    back({ error: "Utente non specificato." }, query);
+    back({ error: t.msg.userNotSpecified }, query);
     return;
   }
 
   // Removing your own access would lock you out mid-session, and if you were
   // the last manager it would leave the portal with nobody able to invite.
   if (targetId === currentUserId) {
-    back({ error: "Non puoi revocare il tuo stesso accesso." }, query);
+    back({ error: t.msg.cannotRevokeSelf }, query);
     return;
   }
 
@@ -310,7 +315,7 @@ export async function revokeAccess(formData: FormData) {
     admin = createAdminClient();
   } catch {
     back(
-      { error: "SUPABASE_SECRET_KEY non è configurata: la revoca è disattivata." },
+      { error: t.msg.secretMissingRevoke },
       query,
     );
     return;
@@ -322,10 +327,10 @@ export async function revokeAccess(formData: FormData) {
   const { error } = await admin.auth.admin.deleteUser(targetId);
 
   if (error) {
-    back({ error: "Revoca non riuscita." }, query);
+    back({ error: t.msg.revokeFailed }, query);
     return;
   }
 
   revalidatePath(PATH);
-  back({ ok: "Accesso revocato. La scheda resta nel registro." }, query);
+  back({ ok: t.msg.accessRevoked }, query);
 }
