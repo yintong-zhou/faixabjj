@@ -35,7 +35,7 @@ Schema lives as plain SQL migrations in `supabase/migrations/` (standard Supabas
 - `20260911000000_account_management.sql` — profile provisioning (`on auth.users insert` trigger + backfill), the first `can_manage_users()`, and the anti-self-promotion guards.
 - `20260911120000_role_based_access.sql` — **the current permission model.** Adds the `admin` role to the `person_role` enum and replaces the flat policies with per-role ones. Read this one first when reasoning about who can see or change what.
 
-**⚠️ Migrations are applied by hand, from the dashboard, and the MCP in this environment cannot do it:** the Supabase MCP connection available in this environment authenticates to a *different* Supabase account/project (`ICPN_Main`, ref `szxiviyiavzdkaxasvic`) than the one this app actually points to (`frontend/.env.local`'s `NEXT_PUBLIC_SUPABASE_URL`, ref `poksgledkecwviypspmi`). Do not run schema/RLS changes against whatever project the connected MCP happens to show — verify the project ref matches `poksgledkecwviypspmi` first. Until that's sorted out, apply migrations by pasting them into the SQL Editor of the **correct** project's dashboard, or by connecting the right MCP/CLI and re-checking `list_migrations`.
+**⚠️ Migrations are applied by hand, from the dashboard, and the MCP in this environment cannot do it:** Do not run schema/RLS changes against whatever project the connected MCP happens to show — verify the project ref matches `poksgledkecwviypspmi` first. Until that's sorted out, apply migrations by pasting them into the SQL Editor of the **correct** project's dashboard, or by connecting the right MCP/CLI and re-checking `list_migrations`.
 
 ### Connecting the frontend to Supabase
 
@@ -82,16 +82,16 @@ that creates the row (plus a backfill), and `getOrCreateProfile()` in
 `frontend/utils/supabase/profile.ts` creates it on demand as a fallback.
 
 **Permission model.** This app is **not** flat — the early "every authenticated
-user is trusted staff" design is gone. Roles come from an *active*
+user is trusted staff" design is gone. Roles come from an _active_
 `assigned_role` (`end_date is null`) and map onto four SQL predicates:
 
-| Role | Registro | Corsi / Presenze | Write registry | Manage accounts |
-|---|---|---|---|---|
-| `student` | not visible | Presenze only, check-in for self | no | no |
-| `assistant` | not visible | Presenze only, check-in for self | no | no |
-| `instructor` | read-only | full | no | no |
-| `head_coach` | full | full | yes | yes |
-| `admin` | full | full | yes | yes |
+| Role         | Registro    | Corsi / Presenze                 | Write registry | Manage accounts |
+| ------------ | ----------- | -------------------------------- | -------------- | --------------- |
+| `student`    | not visible | Presenze only, check-in for self | no             | no              |
+| `assistant`  | not visible | Presenze only, check-in for self | no             | no              |
+| `instructor` | read-only   | full                             | no             | no              |
+| `head_coach` | full        | full                             | yes            | yes             |
+| `admin`      | full        | full                             | yes            | yes             |
 
 `assistant` sitting with `student` rather than with the technical staff was an
 explicit decision, not an oversight. `admin` is a role for whoever runs the
@@ -106,7 +106,7 @@ The frontend calls them (`getAccess()`, `requireRegistryViewer()`,
 re-implementing the rules — keep it that way, one definition per privilege.
 `getAccess()` **fails closed**: an RPC error yields no access, never full access.
 Note the consequence — before `20260911120000` is applied to a project the RPC
-does not exist, so *everyone* is treated as an allievo.
+does not exist, so _everyone_ is treated as an allievo.
 
 A user with no active role is an allievo. Enforcement is layered: the nav hides
 links, the page calls `requireRegistryViewer()` / `requireUserManager()`
@@ -202,7 +202,7 @@ refuses the writes anyway.
   **`frontend/utils/members.ts` is the single home for this rule**
   (`PORTAL_ONLY_ROLE`, `PORTAL_ONLY_ROLES`, `TECHNICAL_ROLES`); import from
   there rather than redeclaring the strings per page. The filter is array
-  *equality* (`not active_roles eq {admin}`), not "contains admin": somebody who
+  _equality_ (`not active_roles eq {admin}`), not "contains admin": somebody who
   is both maestro and admin still trains here and stays visible. `active_roles`
   is coalesced to an empty array and sorted in the view, so `{admin}` matches
   exactly the admin-only case. The Registro role filter drops its "Admin" option
@@ -222,17 +222,17 @@ refuses the writes anyway.
   Required: name, email, role, join date and belt — validated in the server
   action, not only through the form's `required` attributes, which a crafted
   POST skips. Optional: phone, birth date, stripes, rank date, notes.
-  **Order matters:** the auth user is created *first*, because that is the step
+  **Order matters:** the auth user is created _first_, because that is the step
   that fails on a duplicate email; doing it after the registry write would strand
   a person row with no account every time the address is already taken. Most people in a gym are records to
-  track, not portal users. It runs on the *user's* Supabase client, not the
+  track, not portal users. It runs on the _user's_ Supabase client, not the
   service-role one, so RLS does the enforcing; it needs no secret key.
-- **"Reimposta password"** (`setTemporaryPassword`) does *not* email a recovery link, and shows no password on screen. It is a single confirmed button in the kebab that restores the account to the shared default from `frontend/utils/default-password.ts` — the one `addPerson` starts every account on, and the only one that needs no reading back off the screen because it is already printed in the "Aggiungi persona" panel. The action **re-arms `must_change_password`**; without that flag the account would be left sitting on a password everybody knows.
-- **"Invita al portale"** (`inviteToPortal`) covers the member who has *no*
+- **"Reimposta password"** (`setTemporaryPassword`) does _not_ email a recovery link, and shows no password on screen. It is a single confirmed button in the kebab that restores the account to the shared default from `frontend/utils/default-password.ts` — the one `addPerson` starts every account on, and the only one that needs no reading back off the screen because it is already printed in the "Aggiungi persona" panel. The action **re-arms `must_change_password`**; without that flag the account would be left sitting on a password everybody knows.
+- **"Invita al portale"** (`inviteToPortal`) covers the member who has _no_
   account — in practice someone whose access was revoked. It sends an email and
   lets them choose their own password, so no default password and no forced
   change are involved. It is the only action in the app that sends mail.
-- **`rank_since` vs `stripe_since`.** `rank_since` means *belt promotion date* (label "Cambio cintura da"); `stripe_since`, added in `20260911220000`, means *last stripe awarded* (label "Ultima tacca"). They move at different rates — a belt lasts years, stripes come every few months — and "how long at this belt" is what promotion eligibility hangs on, so it must not be inferred from the stripe date. `20260911200000` split them the other way round (a `belt_since` column) and `20260911220000` corrects it; that correction is a follow-up rather than an edit because the first one had already been applied. Existing rows were backfilled from `rank_since`, the closest approximation available; outliers need correcting by hand. Both dates are frozen by `guard_person_auth_link`, because backdating either is how you would fake eligibility for the next promotion.
+- **`rank_since` vs `stripe_since`.** `rank_since` means _belt promotion date_ (label "Cambio cintura da"); `stripe_since`, added in `20260911220000`, means _last stripe awarded_ (label "Ultima tacca"). They move at different rates — a belt lasts years, stripes come every few months — and "how long at this belt" is what promotion eligibility hangs on, so it must not be inferred from the stripe date. `20260911200000` split them the other way round (a `belt_since` column) and `20260911220000` corrects it; that correction is a follow-up rather than an edit because the first one had already been applied. Existing rows were backfilled from `rank_since`, the closest approximation available; outliers need correcting by hand. Both dates are frozen by `guard_person_auth_link`, because backdating either is how you would fake eligibility for the next promotion.
 - **Each row shows two day counters** under the name: days since `joined_at` (how long they have trained at all) and days since `rank_since` (how long at the current belt — the figure promotion eligibility actually hangs on). `daysSince()` in `frontend/utils/dates.ts` normalises **both ends to UTC midnight**: comparing a UTC-parsed `date` column against a local-time `now` drifts by a day depending on the viewer's timezone and the hour of the request. A future date clamps to 0 rather than going negative.
 - **The list row shows no email** — it was removed to keep the row scannable. Everything recorded about a person lives on the detail page, `/registro/[id]`, reached from the kebab's **Dettagli** item. That page reads from `person` (plus `person_hours`) rather than from `member_overview`: a single record needs no pre-joined roles array, and the table carries `notes`, which the list view leaves out. It also lists the **full role history**, closed assignments included. The kebab carries the list's current filters in a `from` param so the back link returns to the exact list you opened it from.
 - **Dettagli is available to instructors too**, so the kebab now renders for every viewer; only the account actions inside it are gated on `canEditRegistry`.
@@ -263,7 +263,7 @@ behind each lesson, and the place a member checks themselves in.
 
 **Three tables** (`20260912000000_class_schedule.sql`):
 
-- `course` — the recurring *rule*, not a lesson: `weekdays` (an ISO
+- `course` — the recurring _rule_, not a lesson: `weekdays` (an ISO
   `smallint[]`, 1 = Monday), one `start_time`/`end_time` pair, an optional
   `starts_on`/`ends_on` range, and the two check-in margins. A course that runs
   at different times on different days is modelled as **two courses** — that
@@ -321,13 +321,13 @@ the sum.
   up as a measurement.
 - **Anywhere an estimated total is shown it must say so.** The Registro row
   appends "(stima)" with the explanation in its `title`; the member detail
-  page breaks the total into *Ore totali / Ore registrate / Ore stimate* with
+  page breaks the total into _Ore totali / Ore registrate / Ore stimate_ with
   the method spelled out, because that record is what decides a promotion;
   `/account` shows the member their own total with the same caveat.
 - Partial weeks count pro rata rather than rounding up, or somebody who joined
   yesterday would be handed a free lesson.
 
-**One attendance is one hour**, and `duration_hours` was *removed* rather than
+**One attendance is one hour**, and `duration_hours` was _removed_ rather than
 defaulted to 1: with a default, a crafted write can still store 2 and the rule
 becomes a convention. The cost is that a four-hour seminar cannot be one row.
 `person_hours` is therefore `count(*) filter (where present)`, not a sum — and
@@ -390,7 +390,7 @@ makes a row jump under the finger; the list settles into the new order after
 "Salva appello".
 
 **The lesson's instructor starts ticked present.** Whoever is teaching is on
-the mat. It is a *default*, not a forced value: the state can still be
+the mat. It is a _default_, not a forced value: the state can still be
 changed, and nothing is written until the roll call is submitted — so the
 rule that an hour is only ever recorded by a check-in or an instructor's
 confirmation still holds. The instructor here is the one on the session
@@ -470,10 +470,10 @@ The app speaks Italian, English and Brazilian Portuguese. Italian is the
 source of truth; the other two must match its shape.
 
 - **`frontend/utils/i18n/dictionaries/it.ts` defines the `Dictionary` type**
-  and `en.ts` / `pt-BR.ts` are *typed as* it, so a key that Italian has and a
+  and `en.ts` / `pt-BR.ts` are _typed as_ it, so a key that Italian has and a
   translation lacks is a compile error rather than a blank string in the UI.
   Note the deliberate absence of `as const` on the Italian object: it would
-  turn every value into a string *literal* type, and English would then have
+  turn every value into a string _literal_ type, and English would then have
   to contain the Italian words to satisfy the type.
 - **Pages read the dictionary by property, not through a `t("a.b.c")` lookup.**
   `const { t } = await getDictionary()` then `t.registro.title` — checked by
@@ -573,8 +573,6 @@ source of truth; the other two must match its shape.
 - **Theme (light/dark):** manual toggle in the header (`frontend/components/theme-toggle.tsx`), not just OS `prefers-color-scheme`. State is `localStorage["theme"]` (`"light"` \| `"dark"`, absent = follow system) applied as `data-theme` on `<html>`. Three pieces make this work together — keep them in sync if you touch theming:
   - `frontend/app/globals.css` defines light tokens on `:root`, a `prefers-color-scheme: dark` override guarded by `:not([data-theme="light"])`, and unconditional `:root[data-theme="dark"]` / `:root[data-theme="light"]` blocks so an explicit choice always wins over system preference in both directions.
   - A blocking inline script in `frontend/app/layout.tsx`'s `<head>` applies any stored theme before first paint (prevents a flash of the wrong theme). Don't move theme-reading logic into a React effect — that runs after paint.
-  - **The script goes through `frontend/components/inline-script.tsx`, not a bare `<script>`.** React logs *"Encountered a script tag while rendering React component"* in development for any `<script>` a render produces. The helper is the fix Next's own "Preventing flash before hydration" guide prescribes: `type="text/javascript"` on the server pass, so the browser runs it during parsing, and `type="text/plain"` on the client pass, so React's render produces something inert. `suppressHydrationWarning` covers the resulting `type` mismatch, which is the point rather than a bug.
-  - **`theme-toggle.tsx` re-applies the stored theme in a `useLayoutEffect`.** This looks redundant next to the blocking script and is not: in development, Strict Mode remounts once and resets `<html>` to only the attributes React manages from JSX, wiping the `data-theme` the script set. It is a no-op in production. `useLayoutEffect` rather than `useEffect` so it still runs before paint.
   - `theme-toggle.tsx` reads state via `useSyncExternalStore` (not `useEffect` + `useState`) so it renders `null` on the server without triggering the `react-hooks/set-state-in-effect` lint rule; a custom `faixabjj-theme-change` event re-syncs other instances of the toggle after a click.
 
 ## Commands
@@ -608,12 +606,12 @@ It deliberately is **not** a full gym management system — no payments, no onli
 
 ## Planned architecture
 
-| Layer | Choice |
-|---|---|
-| Frontend | Next.js (App Router) + Tailwind CSS — see stack discrepancy note above |
-| Backend / Database | Supabase (Postgres + Auth) |
-| Permissions | Row Level Security on Supabase, based on the person's active role |
-| Hosting | Vercel |
+| Layer              | Choice                                                                 |
+| ------------------ | ---------------------------------------------------------------------- |
+| Frontend           | Next.js (App Router) + Tailwind CSS — see stack discrepancy note above |
+| Backend / Database | Supabase (Postgres + Auth)                                             |
+| Permissions        | Row Level Security on Supabase, based on the person's active role      |
+| Hosting            | Vercel                                                                 |
 
 ### Data model (planned)
 
