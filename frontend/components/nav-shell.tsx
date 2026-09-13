@@ -101,7 +101,7 @@ export function NavShell({
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary p-1.5">
               <Image
-                src="/faixabjj_only-removebg-preview.png"
+                src="/logo/faixabjj_only-removebg-preview.png"
                 alt=""
                 width={500}
                 height={500}

@@ -1,6 +1,8 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BELT_LABELS, ROLE_LABELS } from "@/utils/supabase/profile";
+import { Belt } from "@/components/belt";
+import { ROLE_LABELS } from "@/utils/supabase/profile";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { daysSince, formatDays } from "@/utils/dates";
 import {
@@ -32,11 +34,19 @@ type RoleRow = {
   end_date: string | null;
 };
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({
+  label,
+  value,
+  children,
+}: {
+  label: string;
+  value?: string;
+  children?: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-0.5">
       <dt className="text-xs uppercase tracking-wide text-foreground/55">{label}</dt>
-      <dd className="text-sm font-medium break-words">{value}</dd>
+      <dd className="text-sm font-medium break-words">{children ?? value}</dd>
     </div>
   );
 }
@@ -107,12 +117,11 @@ export default async function MemberDetailPage({
         </h1>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-secondary/40 px-2.5 py-0.5 text-xs font-medium">
-            {BELT_LABELS[member.current_belt] ?? member.current_belt}
-            {member.current_stripes > 0
-              ? ` · ${member.current_stripes} tacc${member.current_stripes === 1 ? "a" : "he"}`
-              : ""}
-          </span>
+          <Belt
+            belt={member.current_belt}
+            stripes={member.current_stripes}
+            size="md"
+          />
           {member.auth_user_id ? null : (
             <span className="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground/55">
               senza account
@@ -147,11 +156,17 @@ export default async function MemberDetailPage({
           Percorso
         </h2>
         <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-          <Field
-            label="Cintura"
-            value={BELT_LABELS[member.current_belt] ?? member.current_belt}
-          />
-          <Field label="Tacche" value={String(member.current_stripes)} />
+          {/* Colour and stripes are one thing on a belt, so they are one
+              field: the belt drawn, rather than a name and a number to
+              recombine mentally. */}
+          <Field label="Cintura">
+            <Belt
+              belt={member.current_belt}
+              stripes={member.current_stripes}
+              size="md"
+              className="mt-0.5"
+            />
+          </Field>
           <Field label="Cambio cintura da" value={member.rank_since} />
           <Field label="Ultima tacca" value={member.stripe_since ?? "—"} />
           <Field

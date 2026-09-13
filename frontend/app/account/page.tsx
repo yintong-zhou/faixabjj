@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { Belt } from "@/components/belt";
 import { PasswordInput } from "@/components/password-input";
 import { requireAdmin, canManageUsers } from "@/utils/supabase/require-admin";
 import {
-  BELT_LABELS,
   ROLE_LABELS,
   getOrCreateProfile,
 } from "@/utils/supabase/profile";
@@ -181,10 +181,12 @@ export default async function AccountPage({
               Cintura
             </dt>
             <dd className="text-sm font-medium">
-              {BELT_LABELS[profile.current_belt] ?? profile.current_belt}
-              {profile.current_stripes > 0
-                ? ` · ${profile.current_stripes} tacc${profile.current_stripes === 1 ? "a" : "he"}`
-                : ""}
+              <Belt
+                belt={profile.current_belt}
+                stripes={profile.current_stripes}
+                size="md"
+                className="mt-0.5"
+              />
             </dd>
           </div>
           <div>

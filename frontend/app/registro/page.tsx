@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Belt } from "@/components/belt";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { RowMenu } from "@/components/row-menu";
 import { isAdminClientConfigured } from "@/utils/supabase/admin";
@@ -26,6 +27,9 @@ import {
 } from "./actions";
 
 const PAGE_SIZE = 20;
+
+// The role that means "runs the portal", not "trains here".
+const PORTAL_ONLY_ROLE = "admin";
 
 const menuItemClass =
   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-neutral-light/60";
@@ -90,6 +94,13 @@ export default async function RegistroPage({
   let query = supabase
     .from("member_overview")
     .select("*", { count: "exact" })
+    // Whoever runs the portal without teaching is not a member of the gym, so
+    // they do not belong in the member overview. The test is array *equality*,
+    // not "contains admin": somebody who is both maestro and admin still trains
+    // here and must stay on the list. `active_roles` is coalesced to an empty
+    // array in the view and sorted, so `{admin}` matches exactly the admin-only
+    // case and never a row with no roles at all.
+    .not("active_roles", "eq", `{${PORTAL_ONLY_ROLE}}`)
     .order("full_name");
 
   // Name only — searching by email was explicitly excluded. The strip keeps a
@@ -387,11 +398,16 @@ export default async function RegistroPage({
               className={fieldClass}
             >
               <option value="">Tutti</option>
-              {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
+              {/* No "Admin" entry: a portal-only admin is filtered out of the
+                  list below, so the option would always return nothing. Admin
+                  is still assignable from "Aggiungi persona". */}
+              {Object.entries(ROLE_LABELS)
+                .filter(([value]) => value !== PORTAL_ONLY_ROLE)
+                .map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -463,10 +479,10 @@ export default async function RegistroPage({
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
                   {member.full_name}
-                  <span className="rounded-full bg-secondary/40 px-2 py-0.5 text-xs font-normal">
-                    {BELT_LABELS[member.current_belt] ?? member.current_belt}
-                    {member.current_stripes > 0 ? ` · ${member.current_stripes}` : ""}
-                  </span>
+                  <Belt
+                    belt={member.current_belt}
+                    stripes={member.current_stripes}
+                  />
                   {member.auth_user_id ? null : (
                     <span className="rounded-full border border-border px-2 py-0.5 text-xs font-normal text-foreground/55">
                       senza account
@@ -482,8 +498,9 @@ export default async function RegistroPage({
                 <span className="text-xs text-foreground/70">
                   {formatDays(daysSince(member.joined_at))} di BJJ
                   {" · "}
-                  {formatDays(daysSince(member.rank_since))} con la cintura{" "}
-                  {(BELT_LABELS[member.current_belt] ?? member.current_belt).toLowerCase()}
+                  {/* The colour is no longer spelled out here: the belt is
+                      drawn next to the name, a few pixels above. */}
+                  {formatDays(daysSince(member.rank_since))} con la cintura attuale
                 </span>
 
                 <span className="text-xs text-foreground/55">

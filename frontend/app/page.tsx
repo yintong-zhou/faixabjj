@@ -40,7 +40,7 @@ export default function Home() {
       <section className="flex flex-col gap-4 sm:gap-5">
         <div className="w-fit rounded-lg bg-secondary p-3 sm:p-4">
           <Image
-            src="/faixabjj_logo-removebg-preview.png"
+            src="/logo/faixabjj_logo-removebg-preview.png"
             alt="FAIXA BJJ"
             width={618}
             height={404}

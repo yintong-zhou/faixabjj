@@ -194,6 +194,14 @@ refuses the writes anyway.
   shareable, survives a reload, and the page needs no client JS. Row actions
   carry the current query back in a `_query` hidden field so acting on a row
   does not reset the list you were looking at.
+- **A portal-only admin is excluded from the list.** `admin` means "runs the
+  portal without teaching", so such an account is not a member of the gym. The
+  filter is array *equality* (`not active_roles eq {admin}`), not "contains
+  admin": somebody who is both maestro and admin still trains here and stays on
+  the list. `active_roles` is coalesced to an empty array and sorted in the
+  view, so `{admin}` matches exactly the admin-only case. The role filter drops
+  its "Admin" option for the same reason — it would always return nothing —
+  while "Aggiungi persona" still offers the role.
 - **Search matches the name only**, never the email — an explicit decision.
   User input is stripped of `%`, `,`, `(`, `)` and backslashes before reaching
   `ilike`, since those characters break PostgREST's filter syntax.
@@ -330,6 +338,11 @@ count to staff only.
 - `frontend/components/nav-shell.tsx` is the app shell: a sticky header with horizontal nav on `sm:` and up, a fixed bottom tab bar below `sm:`. It wraps `{children}` in the root layout — don't duplicate navigation inside individual pages.
 - The nav is **role-aware**: `navItemsFor()` in that file renders only Home for a visitor, Dashboard + Account for an allievo, and the full set for staff. `canViewRegistry` is computed server-side in `frontend/app/layout.tsx` (via `getAccess()`) and passed down as a prop, like `isLoggedIn`. This only hides links — see the permission model above for the real enforcement.
 - `frontend/components/icons.tsx` — small hand-rolled inline SVG icons (no icon library dependency). Add new icons here rather than pulling in a package.
+- **Belts are drawn, not spelled out.** `frontend/components/belt.tsx` renders the belt graphic wherever a person's rank is shown — the Registro list and detail page, `/account`, the roll call. Use it instead of printing the colour and a stripe count; the two are one thing on a belt. Three things about it are deliberate:
+  - The artwork lives in `frontend/public/belts/<colour>-<n>-stripe.png` (1000×300, transparent). The `belt_rank` enum says `purple` but the files say `violet`, so `BELT_FILE_COLOR` maps between them — don't rename the enum to match the assets.
+  - The images are transparent, so a white belt would vanish on the light theme and a black one on the dark theme. The component puts them on a bordered, faintly tinted plate; that border is what makes them visible, not decoration.
+  - The colour and stripe count survive as the `alt` text, which is what a screen reader reads and what the removed text node used to say. `BELT_LABELS` is still needed for the filter chips and `<select>` options, which cannot hold an image.
+- Logos live in `frontend/public/logo/`, belts in `frontend/public/belts/` — not at the root of `public/`.
 - `frontend/components/coming-soon.tsx` — shared placeholder, now used only by `/dashboard` until it is wired to real Supabase data. Replace a route's `ComingSoon` usage with real content rather than adding a parallel page.
 - All copy in the UI is in Italian.
 - **Theme (light/dark):** manual toggle in the header (`frontend/components/theme-toggle.tsx`), not just OS `prefers-color-scheme`. State is `localStorage["theme"]` (`"light"` \| `"dark"`, absent = follow system) applied as `data-theme` on `<html>`. Three pieces make this work together — keep them in sync if you touch theming:

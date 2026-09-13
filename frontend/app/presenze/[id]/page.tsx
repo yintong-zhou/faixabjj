@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Belt } from "@/components/belt";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import {
   AlertCircleIcon,
@@ -7,7 +8,6 @@ import {
   ChevronLeftIcon,
   PlayIcon,
 } from "@/components/icons";
-import { BELT_LABELS } from "@/utils/supabase/profile";
 import { requireClassManager } from "@/utils/supabase/require-admin";
 import { formatDayHeading, formatTime } from "@/utils/schedule";
 import {
@@ -34,6 +34,7 @@ type Member = {
   id: string;
   full_name: string;
   current_belt: string;
+  current_stripes: number;
   active_roles: string[];
 };
 
@@ -74,7 +75,7 @@ export default async function RollCallPage({
     await Promise.all([
       supabase
         .from("member_overview")
-        .select("id, full_name, current_belt, active_roles")
+        .select("id, full_name, current_belt, current_stripes, active_roles")
         .order("full_name"),
       supabase
         .from("attendance")
@@ -231,9 +232,11 @@ export default async function RollCallPage({
                       </span>
                     ) : null}
                   </span>
-                  <span className="text-xs text-foreground/55">
-                    {BELT_LABELS[member.current_belt] ?? member.current_belt}
-                  </span>
+                  <Belt
+                    belt={member.current_belt}
+                    stripes={member.current_stripes}
+                    className="mt-0.5"
+                  />
                 </div>
 
                 {/* Three states, not two: "—" means no row at all, which is
