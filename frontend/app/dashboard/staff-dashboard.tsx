@@ -123,7 +123,7 @@ export async function StaffDashboard({
         icon={UsersIcon}
         action={
           <Link
-            href="/registro"
+            href="/members"
             className="flex items-center gap-1 text-sm font-medium text-accent hover:opacity-80"
           >
             {t.nav.registro}
@@ -160,7 +160,7 @@ export async function StaffDashboard({
         icon={CalendarCheckIcon}
         action={
           <Link
-            href="/presenze"
+            href="/attendance"
             className="flex items-center gap-1 text-sm font-medium text-accent hover:opacity-80"
           >
             {t.nav.presenze}
@@ -221,7 +221,7 @@ export async function StaffDashboard({
                     </span>
                   </div>
                   <Link
-                    href={`/presenze/${session.id}`}
+                    href={`/attendance/${session.id}`}
                     className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
                   >
                     {session.present_count > 0

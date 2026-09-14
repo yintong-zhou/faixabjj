@@ -25,7 +25,7 @@ export function dictionaryFor(locale: Locale): Dictionary {
 
 /**
  * The reader's language: their saved choice, else the closest match to the
- * browser's `Accept-Language`, else Italian.
+ * browser's `Accept-Language`, else English, the app's default language.
  *
  * The header is consulted only when no cookie exists. Once somebody has
  * chosen, the choice wins even if their browser disagrees — a Brazilian
@@ -41,8 +41,8 @@ export async function getLocale(): Promise<Locale> {
     const headerStore = await headers();
     return matchLocale(headerStore.get("accept-language"));
   } catch {
-    // Headers are not always available (a statically rendered page); Italian
-    // is a sane answer rather than a crash.
+    // Headers are not always available (a statically rendered page); the
+    // default language is a sane answer rather than a crash.
     return DEFAULT_LOCALE;
   }
 }

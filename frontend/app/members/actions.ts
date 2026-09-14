@@ -11,7 +11,7 @@ import {
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { getDictionary } from "@/utils/i18n/server";
 
-const PATH = "/registro";
+const PATH = "/members";
 
 // Filters and the current page live in the URL, so every action carries them
 // back — otherwise acting on a row would silently reset the list you were

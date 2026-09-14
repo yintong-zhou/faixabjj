@@ -78,7 +78,7 @@ export default async function PresenzePage({
   // requireAdmin, not requireRegistryViewer: this is the one previously
   // staff-only section a student reaches, because check-in has to live where
   // the lessons are listed. What differs by role is what the page renders.
-  const { supabase, userId, email } = await requireAdmin("/presenze");
+  const { supabase, userId, email } = await requireAdmin("/attendance");
   const access = await getAccess(supabase);
   const isStaff = access.canManageClasses;
 
@@ -164,7 +164,7 @@ export default async function PresenzePage({
       else next.set(key, value);
     }
     const query = next.toString();
-    return query ? `/presenze?${query}` : "/presenze";
+    return query ? `/attendance?${query}` : "/attendance";
   };
 
   const anchorMonth = monthStart(anchor).slice(0, 7);
@@ -235,7 +235,7 @@ export default async function PresenzePage({
           </Link>
 
           <Link
-            href={isGrid ? `/presenze?v=${GRID}` : "/presenze"}
+            href={isGrid ? `/attendance?v=${GRID}` : "/attendance"}
             className="rounded-full px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-muted"
           >
             {t.common.today}
@@ -447,7 +447,7 @@ function DayCell({
 }) {
   const single = isStaff && sessions.length === 1 ? sessions[0] : null;
   const href = single
-    ? `/presenze/${single.id}?from=${encodeURIComponent(query)}`
+    ? `/attendance/${single.id}?from=${encodeURIComponent(query)}`
     : dayHref;
   const shell = [
     "flex min-h-16 flex-col gap-1 rounded-lg border p-1 text-left sm:min-h-24 sm:p-1.5",
@@ -572,7 +572,7 @@ function SessionRow({
 
       {isStaff ? (
         <Link
-          href={`/presenze/${session.id}?from=${encodeURIComponent(query)}`}
+          href={`/attendance/${session.id}?from=${encodeURIComponent(query)}`}
           className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
         >
           {session.present_count > 0

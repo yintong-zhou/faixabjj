@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Early scaffolding stage. The repository follows the 3-tier agent architecture defined in [`AGENT.md`](AGENT.md) (directives / orchestration / execution). The `frontend/` app has been bootstrapped with `create-next-app` (Next.js App Router + Tailwind CSS); it now has a branded, mobile-first shell and IA (see "Frontend UI" below) and a working admin login gate (see "Authentication" below), `/registro` (member overview with filters and pagination), `/corsi` (recurring course definitions) and `/presenze` (lesson calendar, roll call and student check-in) are wired to real data. `/dashboard` is wired too, as two views behind one route (see "Dashboard" below).
+Early scaffolding stage. The repository follows the 3-tier agent architecture defined in [`AGENT.md`](AGENT.md) (directives / orchestration / execution). The `frontend/` app has been bootstrapped with `create-next-app` (Next.js App Router + Tailwind CSS); it now has a branded, mobile-first shell and IA (see "Frontend UI" below) and a working admin login gate (see "Authentication" below), `/members` (member overview with filters and pagination), `/courses` (recurring course definitions) and `/attendance` (lesson calendar, roll call and student check-in) are wired to real data. `/dashboard` is wired too, as two views behind one route (see "Dashboard" below).
 
 `backend/` (FastAPI) from the `AGENT.md` template has **not** been created. It's marked "se necessario" (if necessary) there, and per the README's architecture Supabase (Postgres + Auth + Row Level Security) is the backend — no separate API layer is needed unless/until logic emerges that can't live in Supabase (RLS policies, Postgres functions/triggers) or client-side. Add `backend/` only when a concrete need for a server-side API shows up.
 
@@ -43,7 +43,7 @@ The frontend talks to Supabase directly via the client library (`@supabase/supab
 
 - `frontend/utils/supabase/client.ts` — browser client, for Client Components
 - `frontend/utils/supabase/server.ts` — server client (cookie-based), takes `createClient(await cookies())`, for Server Components/Actions/Route Handlers
-- `frontend/utils/supabase/proxy.ts` + `frontend/proxy.ts` — refreshes the auth session cookie on every request **and** gates `/registro`, `/presenze`, `/dashboard` behind login (see "Authentication"). Next.js renamed the `middleware.ts` file convention to `proxy.ts`; don't recreate the old filename.
+- `frontend/utils/supabase/proxy.ts` + `frontend/proxy.ts` — refreshes the auth session cookie on every request **and** gates `/members`, `/attendance`, `/dashboard` behind login (see "Authentication"). Next.js renamed the `middleware.ts` file convention to `proxy.ts`; don't recreate the old filename.
 - `frontend/.env.example` — template; `frontend/.env.local` (gitignored) has this project's real values filled in already. Note: this project uses Supabase's newer **publishable** key (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`), not the legacy `anon` key — don't rename it back.
 
 ## Authentication
@@ -54,7 +54,7 @@ Single-tier admin login — no self-serve signup, no per-role permissions yet. A
 - `frontend/app/login/page.tsx` + `frontend/app/login/actions.ts` — email/password form posting to a `"use server"` action (`supabase.auth.signInWithPassword`). On failure it redirects back to `/login?error=...` with a deliberately generic message ("Email o password non corrette") — never surface the raw Supabase error, it would let someone enumerate registered emails.
 - **Password recovery:** `/forgot-password` (`page.tsx` + `actions.ts`) calls `resetPasswordForEmail(email, { redirectTo: "<origin>/reset-password" })` and always redirects to the same `?sent=1` confirmation regardless of outcome — same anti-enumeration reasoning as login. `/reset-password` is a **Client Component** (not Server) because the recovery link redirects with the session tokens in the URL **hash fragment** (`#access_token=...&type=recovery`), which never reaches the server — only `@supabase/ssr`'s browser client can see it. That client auto-detects the fragment and fires an `onAuthStateChange` `"PASSWORD_RECOVERY"` event; the page listens for that (plus a `getSession()` fallback in case the event fired before the listener attached) before showing the new-password form, and falls back to an "invalid link" state after a 2s timeout if neither fires.
 - `frontend/app/auth/signout/route.ts` — POST route handler, signs out and redirects to `/login`. The "Esci"/"Accedi" control in `frontend/components/nav-shell.tsx` posts here; `isLoggedIn` is computed server-side in `frontend/app/layout.tsx` (via `getClaims()`) and passed down as a prop, not read client-side.
-- `frontend/utils/supabase/proxy.ts` redirects logged-out visitors away from `/registro`, `/presenze`, `/dashboard`, `/account` to `/login?next=<path>`, and redirects logged-in visitors away from `/login` to `/dashboard`. `PROTECTED_PREFIXES` in that file is the single source of truth for which routes are gated — update it there, not per-page, when adding a new protected section.
+- `frontend/utils/supabase/proxy.ts` redirects logged-out visitors away from `/members`, `/attendance`, `/dashboard`, `/account` to `/login?next=<path>`, and redirects logged-in visitors away from `/login` to `/dashboard`. `PROTECTED_PREFIXES` in that file is the single source of truth for which routes are gated — update it there, not per-page, when adding a new protected section.
 - Every protected page **also** calls `frontend/utils/supabase/require-admin.ts`'s `requireAdmin()` itself (defense in depth per Supabase's own Next.js SSR auth guide: proxy-only cookie checks are spoofable, so protected pages must verify independently too, not rely solely on the proxy).
 - Uses `supabase.auth.getClaims()`, not the older `getUser()`, to check identity — current Supabase guidance, verifies the JWT locally (WebCrypto/JWKS) instead of a network round-trip when the project uses asymmetric signing keys (the default for new projects).
 - The home page (`/`) is the landing page for **signed-out visitors only**. It stays publicly reachable, but `VISITOR_ONLY` in `frontend/utils/supabase/proxy.ts` redirects an authenticated visitor to `/dashboard`, exactly like `/login` — once there is a session it has nothing left to show. The nav drops the Home item for every signed-in user (staff included) and the header logo points at `/dashboard` instead, so the redirect is a safety net rather than the normal path.
@@ -71,9 +71,9 @@ Two areas, both under `/account`, both in `PROTECTED_PREFIXES`.
   an instructor decision, never self-service. Email changes go through
   `auth.updateUser({ email })` and only take effect after the confirmation link
   is opened.
-- **`/registro`** — where accounts are managed, together with the member
+- **`/members`** — where accounts are managed, together with the member
   overview. There is deliberately no separate user-management page: one list of
-  people, not two showing the same names. See "Registro" below.
+  people, not two showing the same names. See "Members" below.
 
 The profile is the `person` row linked by `person.auth_user_id`, not a separate
 table — the unified registry already models "a person who logs in".
@@ -141,7 +141,7 @@ hiding in a schema change.
 **Service-role key.** `frontend/utils/supabase/admin.ts` reads
 `SUPABASE_SECRET_KEY` (no `NEXT_PUBLIC_` prefix) and is marked `server-only`, so
 importing it from a Client Component is a build error. This key **bypasses RLS**,
-so every server action in `frontend/app/registro/actions.ts` re-checks `requireUserManager()`
+so every server action in `frontend/app/members/actions.ts` re-checks `requireUserManager()`
 itself — the database will not enforce the privilege on those calls. Without the
 key the page still renders but the destructive controls are disabled.
 
@@ -160,11 +160,11 @@ password, so the app opens nothing else until that password is replaced.
   is writable only by the service role and still rides in the verified JWT,
   where both the proxy and `requireSession()` can read it with no extra query.
 - Enforced in two places, the usual defense in depth: `frontend/utils/supabase/proxy.ts`
-  redirects every path to `/cambia-password`, and `requireAdmin()` does the same
+  redirects every path to `/change-password`, and `requireAdmin()` does the same
   per page. `/auth/*` is exempt, or signing out would be unreachable and the only
   escape would be clearing cookies.
 - `requireSession()` vs `requireAdmin()`: identical except that `requireAdmin`
-  enforces the pending change. `/cambia-password` is the one page that must use
+  enforces the pending change. `/change-password` is the one page that must use
   `requireSession`, or it would redirect to itself forever. Every other protected
   page uses `requireAdmin`.
 - The action **refuses the default password** as the new one — without that check
@@ -173,9 +173,9 @@ password, so the app opens nothing else until that password is replaced.
   carries `must_change_password: true`, so without it the proxy bounces the user
   straight back to the form.
 
-## Registro
+## Members
 
-`/registro` is the member overview: every person in the gym with their active
+`/members` is the member overview: every person in the gym with their active
 roles, belt, accumulated hours and join date. It is also where accounts are
 managed — invite, password reset, revoke access — because splitting the two
 would mean two lists of the same people.
@@ -234,7 +234,7 @@ refuses the writes anyway.
   change are involved. It is the only action in the app that sends mail.
 - **`rank_since` vs `stripe_since`.** `rank_since` means _belt promotion date_ (label "Cambio cintura da"); `stripe_since`, added in `20260911220000`, means _last stripe awarded_ (label "Ultima tacca"). They move at different rates — a belt lasts years, stripes come every few months — and "how long at this belt" is what promotion eligibility hangs on, so it must not be inferred from the stripe date. `20260911200000` split them the other way round (a `belt_since` column) and `20260911220000` corrects it; that correction is a follow-up rather than an edit because the first one had already been applied. Existing rows were backfilled from `rank_since`, the closest approximation available; outliers need correcting by hand. Both dates are frozen by `guard_person_auth_link`, because backdating either is how you would fake eligibility for the next promotion.
 - **Each row shows two day counters** under the name: days since `joined_at` (how long they have trained at all) and days since `rank_since` (how long at the current belt — the figure promotion eligibility actually hangs on). `daysSince()` in `frontend/utils/dates.ts` normalises **both ends to UTC midnight**: comparing a UTC-parsed `date` column against a local-time `now` drifts by a day depending on the viewer's timezone and the hour of the request. A future date clamps to 0 rather than going negative.
-- **The list row shows no email** — it was removed to keep the row scannable. Everything recorded about a person lives on the detail page, `/registro/[id]`, reached from the kebab's **Dettagli** item. That page reads from `person` (plus `person_hours`) rather than from `member_overview`: a single record needs no pre-joined roles array, and the table carries `notes`, which the list view leaves out. It also lists the **full role history**, closed assignments included. The kebab carries the list's current filters in a `from` param so the back link returns to the exact list you opened it from.
+- **The list row shows no email** — it was removed to keep the row scannable. Everything recorded about a person lives on the detail page, `/members/[id]`, reached from the kebab's **Dettagli** item. That page reads from `person` (plus `person_hours`) rather than from `member_overview`: a single record needs no pre-joined roles array, and the table carries `notes`, which the list view leaves out. It also lists the **full role history**, closed assignments included. The kebab carries the list's current filters in a `from` param so the back link returns to the exact list you opened it from.
 - **Dettagli is available to instructors too**, so the kebab now renders for every viewer; only the account actions inside it are gated on `canEditRegistry`.
 - **Every row action sits behind a kebab menu** (`frontend/components/row-menu.tsx`), pinned to the right of the row, so a destructive control is never one stray tap away while scrolling. The menu is a Client Component; the action forms are server-rendered and passed in as `children`, which is what keeps the server actions working inside it. It closes on Escape and on an outside pointer press, and needs no explicit close-on-submit because every action navigates and remounts the row. Rows with no available action render no kebab at all.
 - A member with `auth_user_id = null` shows as **"senza account"**: either
@@ -255,10 +255,10 @@ even though the table policies forbid it. `person_hours` was created in
 `20260910000000` without the option and was readable by everyone; the Registro
 migration fixes it. Check this on any new view.
 
-## Presenze e corsi
+## Attendance and courses
 
-Two sections, one data model. `/corsi` is where staff describe the recurring
-classes; `/presenze` is the calendar those definitions generate, the roll call
+Two sections, one data model. `/courses` is where staff describe the recurring
+classes; `/attendance` is the calendar those definitions generate, the roll call
 behind each lesson, and the place a member checks themselves in.
 
 **Three tables** (`20260912000000_class_schedule.sql`):
@@ -341,14 +341,14 @@ predicate, `can_manage_classes()` = instructor + head_coach + admin, exposed by
 instructor runs the classes but must never change anybody's belt. Two
 privileges, two predicates — do not collapse them.
 
-**`/presenze` is open to every signed-in member**, unlike `/registro`. This is
+**`/attendance` is open to every signed-in member**, unlike `/members`. This is
 the one previously staff-only section a student reaches, and it has to be:
 check-in must live where the lessons are listed, and there is only one such
 list. The page calls `requireAdmin()` and branches on `canManageClasses` —
 staff get the roll call link and the presence count, a member gets a check-in
 button for themselves.
 
-**Two views, one page.** `/presenze` renders either the weekly list (default)
+**Two views, one page.** `/attendance` renders either the weekly list (default)
 or a month grid, switched by a segmented control. Both are server-rendered and
 need no client JS, because the whole view state is in the URL — `v=griglia`
 selects the grid, `da` is the anchor date, `g` is the day opened under the
@@ -466,8 +466,14 @@ Three things worth knowing:
 
 ## Languages
 
-The app speaks Italian, English and Brazilian Portuguese. Italian is the
-source of truth; the other two must match its shape.
+The app speaks English, Italian and Brazilian Portuguese. **English is the
+default language** (`DEFAULT_LOCALE` in `utils/i18n/locales.ts`) — it is what a
+visitor with no saved choice and no matching `Accept-Language` gets, and what
+the pure helpers fall back to when a caller passes no dictionary.
+
+Italian is still the language the dictionaries are _authored_ in: `it.ts`
+defines the `Dictionary` type and the other two must match its shape. Authoring
+language and default language are two different things — do not collapse them.
 
 - **`frontend/utils/i18n/dictionaries/it.ts` defines the `Dictionary` type**
   and `en.ts` / `pt-BR.ts` are _typed as_ it, so a key that Italian has and a
@@ -500,7 +506,7 @@ source of truth; the other two must match its shape.
   tokens in the URL fragment.
 - **`Belt` is an async Server Component** and reads the dictionary itself,
   rather than taking the belt name as a prop at a dozen call sites.
-- **The pure utils take the dictionary as a parameter with an Italian
+- **The pure utils take the dictionary as a parameter with an English
   default** (`formatDays`, `formatHours`, `formatWeekdays`,
   `formatDayHeading`, `beltLabel`, `roleLabel`). They are covered by unit
   tests, and a function that reaches for a cookie is neither pure nor
@@ -511,6 +517,10 @@ source of truth; the other two must match its shape.
   month grid's header — and two sources for one list is how they drift apart.
   Twelve month names in three languages is exactly what a platform already
   has.
+- **URL paths are English**, all of them — `/members`, `/attendance`,
+  `/courses`, `/change-password`, the `#how-it-works` anchor. The dictionary
+  _keys_ keep their Italian names (`t.registro`, `t.presenze`, `t.corsi`), which
+  is internal and deliberate.
 - **Dates stay dd/mm/yyyy in every language**, per the explicit instruction;
   the locale changes the words around them, not the number format.
 - **Server actions look their own messages up** (`t.msg.*`). An error that
@@ -520,8 +530,6 @@ source of truth; the other two must match its shape.
   flag and a code, those names are now each option's `aria-label` and `title`
   rather than visible text — they are still what a screen reader announces, so
   `LOCALE_LABELS` stays untranslated.
-- The `#come-funziona` anchor on the landing page stays Italian on purpose —
-  it is part of a URL somebody may already have shared.
 
 ## Frontend UI
 
@@ -558,7 +566,7 @@ source of truth; the other two must match its shape.
   nobody. `metadataBase` is required — without an absolute base, canonical and
   Open Graph URLs resolve to nothing and crawlers drop them.
 - **The landing page links to `/login`, never into the app.** Its buttons used
-  to point at `/registro` and `/dashboard`, which sent every visitor straight
+  to point at `/members` and `/dashboard`, which sent every visitor straight
   through the proxy to a login form. The page is only ever seen by somebody who
   is not signed in, so signing in is the only action that makes sense on it.
 - Design tokens (colors, fonts) come from `brand-guidelines.md` at the repo root — implemented as CSS variables in `frontend/app/globals.css` (Tailwind v4 `@theme inline`, not a `tailwind.config.js`). Headings use Sora (`font-heading`), body text uses Work Sans (`font-body`), both loaded via `next/font/google` in `frontend/app/layout.tsx`.

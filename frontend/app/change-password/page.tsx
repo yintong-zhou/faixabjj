@@ -13,7 +13,7 @@ export default async function ChangePasswordPage({
   const { t } = await getDictionary();
   // requireSession, not requireAdmin: requireAdmin would redirect a user with a
   // pending change straight back to this page, forever.
-  const { mustChangePassword } = await requireSession("/cambia-password");
+  const { mustChangePassword } = await requireSession("/change-password");
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col gap-6 sm:gap-8">

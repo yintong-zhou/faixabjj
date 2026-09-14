@@ -7,15 +7,15 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 // Sections gated behind admin login. The home page stays public as the
 // landing page.
 const PROTECTED_PREFIXES = [
-  "/registro",
-  "/corsi",
-  "/presenze",
+  "/members",
+  "/courses",
+  "/attendance",
   "/dashboard",
   "/account",
-  "/cambia-password",
+  "/change-password",
 ];
 
-const PASSWORD_CHANGE_PATH = "/cambia-password";
+const PASSWORD_CHANGE_PATH = "/change-password";
 
 export const updateSession = async (request: NextRequest) => {
   let supabaseResponse = NextResponse.next({ request });

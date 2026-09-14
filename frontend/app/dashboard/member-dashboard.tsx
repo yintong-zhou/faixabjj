@@ -143,7 +143,7 @@ export async function MemberDashboard({
         icon={CalendarCheckIcon}
         action={
           <Link
-            href="/presenze"
+            href="/attendance"
             className="flex items-center gap-1 text-sm font-medium text-accent hover:opacity-80"
           >
             {t.nav.presenze}

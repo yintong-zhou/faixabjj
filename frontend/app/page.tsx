@@ -104,7 +104,7 @@ export default async function Home() {
             {t.home.ctaPrimary}
           </Link>
           <Link
-            href="#come-funziona"
+            href="#how-it-works"
             className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
           >
             {t.home.ctaSecondary}
@@ -139,7 +139,7 @@ export default async function Home() {
 
       {/* The anchor stays Italian: it is part of the URL, and changing it per
           language would break every link somebody has already shared. */}
-      <section id="come-funziona" className="flex scroll-mt-20 flex-col gap-4 sm:gap-6">
+      <section id="how-it-works" className="flex scroll-mt-20 flex-col gap-4 sm:gap-6">
         <h2 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">
           {t.home.howItWorks}
         </h2>

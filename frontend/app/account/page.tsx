@@ -251,7 +251,7 @@ export default async function AccountPage({
 
         {isManager ? (
           <Link
-            href="/registro"
+            href="/members"
             className="self-start text-sm font-medium text-accent hover:opacity-80"
           >
             {t.account.manageMembers}

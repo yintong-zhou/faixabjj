@@ -17,7 +17,8 @@
 // also counting real attendance would count every week from go-live onwards
 // twice.
 
-import { it, type Dictionary } from "./i18n/dictionaries/it";
+import { en } from "./i18n/dictionaries/en";
+import type { Dictionary } from "./i18n/dictionaries/it";
 
 /** Lessons a member is assumed to attend in a week, before records existed. */
 export const LESSONS_PER_WEEK = 3;
@@ -103,12 +104,12 @@ export function hoursFor(
   };
 }
 
-export function formatHours(value: number, t: Dictionary = it): string {
+export function formatHours(value: number, t: Dictionary = en): string {
   return t.hours.hours(value.toFixed(1));
 }
 
 /** The sentence used wherever an estimated total is shown. */
-export function estimateNote(estimated: number, t: Dictionary = it): string {
+export function estimateNote(estimated: number, t: Dictionary = en): string {
   return t.hours.estimateNote(estimated.toFixed(1), LESSONS_PER_WEEK);
 }
 

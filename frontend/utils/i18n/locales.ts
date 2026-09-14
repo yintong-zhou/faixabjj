@@ -9,7 +9,11 @@ export const LOCALES = ["it", "en", "pt-BR"] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
-export const DEFAULT_LOCALE: Locale = "it";
+// English, not Italian: the gym's intake is international, and English is the
+// language a first-time visitor is most likely to read. Italian stays the
+// language the dictionaries are authored in (`it.ts` defines the type), which
+// is a different thing from the language the app opens in.
+export const DEFAULT_LOCALE: Locale = "en";
 
 export const LOCALE_COOKIE = "faixabjj-locale";
 
@@ -47,7 +51,7 @@ export function isLocale(value: string | undefined | null): value is Locale {
 /**
  * Best match for an `Accept-Language` header, used only when no choice has
  * been made yet. Deliberately crude — it compares the primary subtag, so
- * "pt-PT" lands on Brazilian Portuguese, which is far closer than Italian.
+ * "pt-PT" lands on Brazilian Portuguese, which is far closer than English.
  */
 export function matchLocale(acceptLanguage: string | null | undefined): Locale {
   if (!acceptLanguage) return DEFAULT_LOCALE;

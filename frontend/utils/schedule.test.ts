@@ -127,12 +127,12 @@ describe("weekStart / addDays", () => {
 
 describe("formatDayHeading", () => {
   it("keeps the weekday and renders the date as dd/mm/yyyy", () => {
-    expect(formatDayHeading("2026-09-14")).toBe("lunedì 14/09/2026");
+    expect(formatDayHeading("2026-09-14")).toBe("Monday 14/09/2026");
   });
 
   // UTC, so the heading names the same day for every viewer.
   it("does not shift the day across timezones", () => {
-    expect(formatDayHeading("2026-12-31")).toBe("giovedì 31/12/2026");
+    expect(formatDayHeading("2026-12-31")).toBe("Thursday 31/12/2026");
   });
 });
 
@@ -166,6 +166,6 @@ describe("month helpers", () => {
   });
 
   it("capitalises the month heading", () => {
-    expect(formatMonthHeading("2026-09-01")).toBe("Settembre 2026");
+    expect(formatMonthHeading("2026-09-01")).toBe("September 2026");
   });
 });

@@ -309,7 +309,7 @@ export default async function CorsiPage({
   const { ok, error } = await searchParams;
   const { t } = await getDictionary();
   // Instructors, maestri and admin. An allievo gets a 404, not a redirect.
-  const { supabase } = await requireClassManager("/corsi");
+  const { supabase } = await requireClassManager("/courses");
 
   const { data: courseRows, error: queryError } = await supabase
     .from("course_overview")

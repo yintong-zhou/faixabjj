@@ -9,7 +9,7 @@ import {
 } from "@/utils/supabase/require-admin";
 import { getDictionary } from "@/utils/i18n/server";
 
-const PATH = "/presenze";
+const PATH = "/attendance";
 
 function back(params: Record<string, string>, query?: string) {
   const search = new URLSearchParams(query ?? "");
@@ -31,7 +31,7 @@ function backToSession(
   if (from) {
     search.set("from", from);
   }
-  redirect(`/presenze/${sessionId}?${search.toString()}`);
+  redirect(`/attendance/${sessionId}?${search.toString()}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -182,7 +182,7 @@ export async function saveRollCall(formData: FormData) {
   }
 
   revalidatePath(PATH);
-  revalidatePath(`/presenze/${sessionId}`);
+  revalidatePath(`/attendance/${sessionId}`);
   backToSession(
     sessionId,
     { ok: t.msg.rollCallSaved(present.length) },
@@ -240,7 +240,7 @@ export async function setSessionInstructor(formData: FormData) {
     .update({ instructor_id: instructorId })
     .eq("id", sessionId);
 
-  revalidatePath(`/presenze/${sessionId}`);
+  revalidatePath(`/attendance/${sessionId}`);
   backToSession(
     sessionId,
     error ? { error: t.msg.instructorNotUpdated } : { ok: t.msg.instructorUpdated },

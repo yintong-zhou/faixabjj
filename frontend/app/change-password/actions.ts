@@ -7,7 +7,7 @@ import { requireSession } from "@/utils/supabase/require-admin";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { getDictionary } from "@/utils/i18n/server";
 
-const PATH = "/cambia-password";
+const PATH = "/change-password";
 
 export async function changePassword(formData: FormData) {
   // requireSession, not requireAdmin: this is the one page a user with a

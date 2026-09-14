@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { it, type Dictionary } from "../i18n/dictionaries/it";
+import { en } from "../i18n/dictionaries/en";
+import type { Dictionary } from "../i18n/dictionaries/it";
 
 // The profile *is* the registry row: `person.auth_user_id` already links an
 // account to the unified student/instructor registry, so account management
@@ -51,7 +52,7 @@ export async function getOrCreateProfile(
   return (created as Profile | null) ?? null;
 }
 
-export function beltLabels(t: Dictionary = it): Record<string, string> {
+export function beltLabels(t: Dictionary = en): Record<string, string> {
   return {
     white: t.belts.white,
     blue: t.belts.blue,
@@ -61,7 +62,7 @@ export function beltLabels(t: Dictionary = it): Record<string, string> {
   };
 }
 
-export function beltLabel(belt: string, t: Dictionary = it): string {
+export function beltLabel(belt: string, t: Dictionary = en): string {
   return beltLabels(t)[belt] ?? belt;
 }
 
@@ -77,7 +78,7 @@ export function beltRank(belt: string): number {
   return index === -1 ? BELT_ORDER.length : index;
 }
 
-export function roleLabels(t: Dictionary = it): Record<string, string> {
+export function roleLabels(t: Dictionary = en): Record<string, string> {
   return {
     student: t.roles.student,
     assistant: t.roles.assistant,
@@ -87,6 +88,6 @@ export function roleLabels(t: Dictionary = it): Record<string, string> {
   };
 }
 
-export function roleLabel(role: string, t: Dictionary = it): string {
+export function roleLabel(role: string, t: Dictionary = en): string {
   return roleLabels(t)[role] ?? role;
 }

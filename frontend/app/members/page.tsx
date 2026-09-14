@@ -87,7 +87,7 @@ export default async function RegistroPage({
   const search = await searchParams;
   const { t } = await getDictionary();
   // Staff only: an allievo or assistente gets a 404 here, not a redirect.
-  const { supabase, access } = await requireRegistryViewer("/registro");
+  const { supabase, access } = await requireRegistryViewer("/members");
 
   const page = Math.max(1, Number.parseInt(search.p ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
@@ -364,7 +364,7 @@ export default async function RegistroPage({
 
         <form
           method="get"
-          action="/registro"
+          action="/members"
           className="flex flex-col gap-2.5 px-4 pb-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3 sm:px-5 sm:pb-5"
         >
           <div className="flex min-w-52 flex-1 flex-col gap-1.5">
@@ -444,7 +444,7 @@ export default async function RegistroPage({
             </button>
             {activeFilters.length > 0 ? (
               <Link
-                href="/registro"
+                href="/members"
                 className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
               >
                 {t.registro.reset}
@@ -522,7 +522,7 @@ export default async function RegistroPage({
                   scrolling the list. */}
               <RowMenu label={t.registro.rowActions(member.full_name)}>
                 <Link
-                  href={`/registro/${member.id}?from=${encodeURIComponent(currentQuery)}`}
+                  href={`/members/${member.id}?from=${encodeURIComponent(currentQuery)}`}
                   className={menuItemClass}
                 >
                   <FileTextIcon className={menuIconClass} />
@@ -595,7 +595,7 @@ export default async function RegistroPage({
         <nav className="flex items-center justify-between gap-3">
           {page > 1 ? (
             <Link
-              href={`/registro?${queryString(search, { p: String(page - 1) })}`}
+              href={`/members?${queryString(search, { p: String(page - 1) })}`}
               className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
               <ChevronLeftIcon className="h-4 w-4" />
@@ -607,7 +607,7 @@ export default async function RegistroPage({
 
           {page < lastPage ? (
             <Link
-              href={`/registro?${queryString(search, { p: String(page + 1) })}`}
+              href={`/members?${queryString(search, { p: String(page + 1) })}`}
               className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
               {t.registro.next}

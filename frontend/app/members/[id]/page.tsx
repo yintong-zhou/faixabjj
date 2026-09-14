@@ -64,7 +64,7 @@ export default async function MemberDetailPage({
   const { from } = await searchParams;
   const { t } = await getDictionary();
   // Same gate as the list: staff only, 404 for everyone else.
-  const { supabase, access } = await requireRegistryViewer(`/registro/${id}`);
+  const { supabase, access } = await requireRegistryViewer(`/members/${id}`);
 
   // Read from `person`, not from `member_overview`: a single record needs no
   // pre-joined roles array, and the table carries `notes`, which the list view
@@ -105,7 +105,7 @@ export default async function MemberDetailPage({
   const roles = (roleRows ?? []) as RoleRow[];
   // Carries the list's filters and page back, so closing the detail view
   // returns to exactly the list you opened it from.
-  const backHref = from ? `/registro?${from}` : "/registro";
+  const backHref = from ? `/members?${from}` : "/members";
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 sm:gap-6">

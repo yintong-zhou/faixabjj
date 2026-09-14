@@ -35,12 +35,12 @@ export type NavLabels = {
 
 const HOME_ITEM = { href: "/", key: "home", icon: HomeIcon } as const;
 const PRESENZE_ITEM = {
-  href: "/presenze",
+  href: "/attendance",
   key: "presenze",
   icon: CalendarCheckIcon,
 } as const;
-const CORSI_ITEM = { href: "/corsi", key: "corsi", icon: CalendarPlusIcon } as const;
-const REGISTRO_ITEM = { href: "/registro", key: "registro", icon: UsersIcon } as const;
+const CORSI_ITEM = { href: "/courses", key: "corsi", icon: CalendarPlusIcon } as const;
+const REGISTRO_ITEM = { href: "/members", key: "registro", icon: UsersIcon } as const;
 const DASHBOARD_ITEM = {
   href: "/dashboard",
   key: "dashboard",
@@ -58,8 +58,8 @@ type NavItem =
   | typeof REGISTRO_ITEM
   | typeof ACCOUNT_ITEM;
 
-// Hiding a link is a convenience, never the access control: /registro, /corsi
-// and /presenze each verify the privilege themselves, and the RLS policies
+// Hiding a link is a convenience, never the access control: /members, /courses
+// and /attendance each verify the privilege themselves, and the RLS policies
 // verify it again in the database.
 function navItemsFor(
   isLoggedIn: boolean,

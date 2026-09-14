@@ -1,4 +1,5 @@
-import { it, type Dictionary } from "./i18n/dictionaries/it";
+import { en } from "./i18n/dictionaries/en";
+import type { Dictionary } from "./i18n/dictionaries/it";
 
 // Whole days between a `date` column (always "YYYY-MM-DD") and today.
 //
@@ -60,7 +61,7 @@ export function formatDate(isoDate: string | null | undefined): string {
 // The dictionary is a parameter with a default rather than something this
 // module reads for itself: these are pure functions covered by unit tests, and
 // a function that reaches for a cookie is neither pure nor testable.
-export function formatDays(days: number | null, t: Dictionary = it): string {
+export function formatDays(days: number | null, t: Dictionary = en): string {
   if (days === null) {
     return "—";
   }

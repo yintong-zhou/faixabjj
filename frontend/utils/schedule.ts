@@ -7,14 +7,15 @@
 // check-in window is computed once in SQL and arrives here as two instants.
 
 import { formatDate } from "./dates";
-import { it, type Dictionary } from "./i18n/dictionaries/it";
+import { en } from "./i18n/dictionaries/en";
+import type { Dictionary } from "./i18n/dictionaries/it";
 import { DEFAULT_LOCALE, LOCALE_TAG, type Locale } from "./i18n/locales";
 
 export type WeekdayLabel = { value: number; short: string; long: string };
 
 // ISO weekday numbering, 1 = Monday, which is what the `weekdays` column
 // stores and what the month grid is laid out in.
-export function weekdayLabels(t: Dictionary = it): WeekdayLabel[] {
+export function weekdayLabels(t: Dictionary = en): WeekdayLabel[] {
   return t.dates.weekdayShort.map((short, index) => ({
     value: index + 1,
     short,
@@ -150,7 +151,7 @@ export function checkinState({
 // The weekday comes from the dictionary rather than from Intl: the same names
 // are already needed for the course form's checkboxes and the grid header, and
 // two sources for one list is how they drift apart.
-export function formatDayHeading(isoDate: string, t: Dictionary = it): string {
+export function formatDayHeading(isoDate: string, t: Dictionary = en): string {
   const timestamp = Date.parse(`${isoDate}T00:00:00Z`);
   if (Number.isNaN(timestamp)) return isoDate;
 
@@ -190,7 +191,7 @@ export function formatTime(time: string): string {
 
 export function formatWeekdays(
   weekdays: number[] | null,
-  t: Dictionary = it,
+  t: Dictionary = en,
 ): string {
   if (!weekdays || weekdays.length === 0) {
     return t.corsi.noDays;

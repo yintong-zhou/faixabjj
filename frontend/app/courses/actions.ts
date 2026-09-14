@@ -8,7 +8,7 @@ import { addDays, expandWeekdays, parseWeekdays } from "@/utils/schedule";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { getDictionary } from "@/utils/i18n/server";
 
-const PATH = "/corsi";
+const PATH = "/courses";
 
 // Eight weeks of lessons is far enough ahead to plan around and near enough
 // that editing a course does not have to rewrite a year of calendar.
@@ -174,7 +174,7 @@ export async function addCourse(formData: FormData) {
 
   const synced = await syncSessions(supabase, data as SyncTarget);
   revalidatePath(PATH);
-  revalidatePath("/presenze");
+  revalidatePath("/attendance");
 
   back(
     synced.error
@@ -219,7 +219,7 @@ export async function updateCourse(formData: FormData) {
   // sync_course_sessions, not here.
   const synced = await syncSessions(supabase, data as SyncTarget);
   revalidatePath(PATH);
-  revalidatePath("/presenze");
+  revalidatePath("/attendance");
 
   back(
     synced.error
@@ -248,7 +248,7 @@ export async function extendCalendar(formData: FormData) {
 
   const synced = await syncSessions(supabase, data as SyncTarget);
   revalidatePath(PATH);
-  revalidatePath("/presenze");
+  revalidatePath("/attendance");
 
   back(
     synced.error
@@ -304,6 +304,6 @@ export async function deleteCourse(formData: FormData) {
   }
 
   revalidatePath(PATH);
-  revalidatePath("/presenze");
+  revalidatePath("/attendance");
   back({ ok: t.msg.courseDeleted }, query);
 }

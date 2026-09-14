@@ -93,7 +93,7 @@ export default async function RollCallPage({
   const { t } = await getDictionary();
   const states = rollCallStates(t);
   // Staff only. A student reaches the lesson list but never the roll call.
-  const { supabase } = await requireClassManager(`/presenze/${id}`);
+  const { supabase } = await requireClassManager(`/attendance/${id}`);
 
   const { data } = await supabase
     .from("session_overview")
@@ -168,7 +168,7 @@ export default async function RollCallPage({
 
   const presentCount = [...recorded.values()].filter((row) => row.present).length;
   // Carries the week the list was on, so closing the roll call returns to it.
-  const backHref = from ? `/presenze?${from}` : "/presenze";
+  const backHref = from ? `/attendance?${from}` : "/attendance";
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 sm:gap-6">
