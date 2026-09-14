@@ -516,7 +516,10 @@ source of truth; the other two must match its shape.
 - **Server actions look their own messages up** (`t.msg.*`). An error that
   travels back through a redirect is still copy.
 - The language names in the switcher are **never translated**: a Brazilian
-  scans the list for "Português", not for "Portuguese".
+  scans for "Português", not for "Portuguese". Since the switcher shows only a
+  flag and a code, those names are now each option's `aria-label` and `title`
+  rather than visible text — they are still what a screen reader announces, so
+  `LOCALE_LABELS` stays untranslated.
 - The `#come-funziona` anchor on the landing page stays Italian on purpose —
   it is part of a URL somebody may already have shared.
 
@@ -563,6 +566,10 @@ source of truth; the other two must match its shape.
 - The nav is **role-aware**: `navItemsFor()` in that file renders only Home for a visitor, Dashboard + Account for an allievo, and the full set for staff. `canViewRegistry` is computed server-side in `frontend/app/layout.tsx` (via `getAccess()`) and passed down as a prop, like `isLoggedIn`. This only hides links — see the permission model above for the real enforcement.
 - **Dates read dd/mm/yyyy everywhere.** `formatDate()` in `frontend/utils/dates.ts` is the single place that turns a Postgres `date` column ("YYYY-MM-DD") into what the app shows; `formatDayHeading()` in `utils/schedule.ts` builds on it, so the Presenze calendar reads "lunedì 14/09/2026". Both format in **UTC**, for the same reason `daysSince()` does — formatting a UTC-parsed date in local time shows the previous day to a viewer east of Greenwich. Never render a raw date column. The one thing that must stay ISO is the `value`/`defaultValue` of an `<input type="date">`: that is what the element accepts and posts back, and its on-screen format is the browser's business, not ours.
 - `frontend/components/icons.tsx` — small hand-rolled inline SVG icons (no icon library dependency). Add new icons here rather than pulling in a package.
+- **The language switcher is a flag and a two-letter code**, nothing else — `frontend/components/language-switcher.tsx`, with the three flags hand-drawn in `frontend/components/flags.tsx`. Three things are deliberate:
+  - **The flags are SVG, never the flag emoji.** Windows ships no glyphs for the regional-indicator pairs, so `🇮🇹` renders there as the bare letters "IT" — and the gym's front desk is exactly that machine. They go in their own file rather than in `icons.tsx` because they are flat multi-colour artwork, not `currentColor` line icons.
+  - Each flag sits on a `ring-1 ring-border` plate, for the reason the `Belt` images do: Italy's centre band is white and would bleed into the light theme's header.
+  - It is built on `<details>`/`<summary>` rather than React open/closed state, so it still opens **and still switches language with no JavaScript** — each option is a real submit button carrying its own `locale` value. The effect in the component adds only what the element lacks, closing on Escape and on an outside press; it needs no close-on-submit, because switching language navigates and remounts it. Don't replace it with a `useState` popover.
 - **Belts are drawn, not spelled out.** `frontend/components/belt.tsx` renders the belt graphic wherever a person's rank is shown — the Registro list and detail page, `/account`, the roll call. Use it instead of printing the colour and a stripe count; the two are one thing on a belt. Three things about it are deliberate:
   - The artwork lives in `frontend/public/belts/<colour>-<n>-stripe.png` (1000×300, transparent). The `belt_rank` enum says `purple` but the files say `violet`, so `BELT_FILE_COLOR` maps between them — don't rename the enum to match the assets.
   - The images are transparent, so a white belt would vanish on the light theme and a black one on the dark theme. The component puts them on a bordered, faintly tinted plate; that border is what makes them visible, not decoration.
