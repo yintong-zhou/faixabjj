@@ -9,7 +9,7 @@ import {
   TrendingUpIcon,
 } from "@/components/icons";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
-import { LESSONS_PER_WEEK, hoursFor } from "@/utils/hours";
+import { LESSONS_PER_WEEK, clockHours, formatHours, hoursFor } from "@/utils/hours";
 import type { Profile } from "@/utils/supabase/profile";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { addDays, formatDayHeading, formatTime } from "@/utils/schedule";
@@ -42,7 +42,7 @@ export async function MemberDashboard({
 }) {
   const since = addDays(today, -WINDOW_DAYS);
 
-  const [{ data: hoursRow }, { data: pastRows }, { data: nextRows }] =
+  const [{ data: hoursRow }, { data: pastRows }, { data: nextRows }, { data: rankRow }] =
     await Promise.all([
       supabase
         .from("person_hours")
@@ -63,6 +63,11 @@ export async function MemberDashboard({
         .order("session_date")
         .order("start_time")
         .limit(3),
+      supabase
+        .from("person_rank_hours")
+        .select("lessons_since_rank")
+        .eq("person_id", profile.id)
+        .maybeSingle(),
     ]);
 
   const past = (pastRows ?? []) as Session[];
@@ -121,6 +126,14 @@ export async function MemberDashboard({
               </dt>
               <dd className="text-sm font-medium">
                 {formatDays(daysSince(profile.stripe_since), t)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-foreground/55">
+                {t.promotions.atCurrentRank}
+              </dt>
+              <dd className="text-sm font-medium" title={t.promotions.hoursNote}>
+                {formatHours(clockHours(Number(rankRow?.lessons_since_rank ?? 0)), t)}
               </dd>
             </div>
             <div>
