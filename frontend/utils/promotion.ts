@@ -123,7 +123,11 @@ export function promotionStatus(
     options.today ?? new Date(Date.now()).toISOString().slice(0, 10);
 
   const step = nextStep(person.current_belt, person.current_stripes);
-  if (!step) return NOTHING;
+  // Copied, not returned by reference: NOTHING is a single module-level
+  // object, and spreading it still shares its blockers array unless that
+  // array is replaced too — a caller that ever does status.blockers.push(...)
+  // must not corrupt every other lookup in the same process.
+  if (!step) return { ...NOTHING, blockers: [] };
 
   const criterion = criteria.find(
     (c) => c.belt === step.belt && c.stripe === step.stripe,
