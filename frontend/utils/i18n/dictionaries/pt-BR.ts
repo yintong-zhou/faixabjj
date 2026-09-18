@@ -346,7 +346,11 @@ export const ptBR: Dictionary = {
     cancelLesson: "Cancelar aula",
     cancelConfirm:
       "Cancelar esta aula? O check-in encerra, mas as presenças já registradas permanecem.",
+    courseSuspendedNotice:
+      "Curso suspenso: o check-in está encerrado e as próximas aulas saem do calendário. As presenças já registradas permanecem.",
     selfCheckinTag: "check-in",
+    selfCheckins: (n: number) =>
+      `${n} ${n === 1 ? "pessoa fez" : "pessoas fizeram"} check-in sozinha${n === 1 ? "" : "s"}: confira antes de salvar.`,
     instructorTag: "instrutor",
     noMembers: "Nenhum membro no cadastro.",
     saveRollCall: "Salvar chamada",
@@ -428,6 +432,10 @@ export const ptBR: Dictionary = {
     genericFailed: "A operação não foi concluída.",
     alreadyPresent: "Você já consta como presente nesta aula.",
     undoTooLate: "Não é mais possível desfazer este check-in.",
+    checkinFailed:
+      "Não foi possível registrar o check-in. Tente de novo; se continuar, avise o instrutor.",
+    undoFailed:
+      "Não foi possível desfazer o check-in. Tente de novo; se continuar, avise o instrutor.",
     restoreFailed: "A restauração não foi concluída.",
     pickBelt: "Selecione uma faixa.",
     pickRole: "Selecione uma função.",
@@ -503,6 +511,8 @@ export const ptBR: Dictionary = {
     checkinRecorded: "Check-in registrado.",
     checkinUndone: "Check-in desfeito.",
     rollCallSaved: (present: number) => `Chamada salva: ${present} presentes.`,
+    rollCallSavedKept: (present: number, kept: number) =>
+      `Chamada salva: ${present} presentes. ${kept} check-in${kept === 1 ? "" : "s"} que ${kept === 1 ? "chegou" : "chegaram"} depois da abertura da chamada ${kept === 1 ? "foi mantido" : "foram mantidos"}.`,
     rollCallPartial: "A chamada foi salva apenas em parte.",
     rollCallFailed: "A chamada não foi salva.",
     instructorUpdated: "Instrutor atualizado.",

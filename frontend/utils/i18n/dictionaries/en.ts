@@ -345,7 +345,11 @@ export const en: Dictionary = {
     cancelLesson: "Cancel lesson",
     cancelConfirm:
       "Cancel this lesson? Check-in closes, but attendance already recorded is kept.",
+    courseSuspendedNotice:
+      "Course suspended: check-in is closed and its upcoming lessons are off the calendar. Attendance already recorded is kept.",
     selfCheckinTag: "check-in",
+    selfCheckins: (n: number) =>
+      `${n} ${n === 1 ? "person" : "people"} checked themselves in: review before saving.`,
     instructorTag: "instructor",
     noMembers: "No members in the registry.",
     saveRollCall: "Save roll call",
@@ -427,6 +431,10 @@ export const en: Dictionary = {
     genericFailed: "The operation did not go through.",
     alreadyPresent: "You are already recorded as present at this lesson.",
     undoTooLate: "This check-in can no longer be undone.",
+    checkinFailed:
+      "The check-in could not be recorded. Try again; if it keeps failing, tell your instructor.",
+    undoFailed:
+      "The check-in could not be undone. Try again; if it keeps failing, tell your instructor.",
     restoreFailed: "The restore did not go through.",
     pickBelt: "Choose a belt.",
     pickRole: "Choose a role.",
@@ -502,6 +510,8 @@ export const en: Dictionary = {
     checkinRecorded: "Check-in recorded.",
     checkinUndone: "Check-in undone.",
     rollCallSaved: (present: number) => `Roll call saved: ${present} present.`,
+    rollCallSavedKept: (present: number, kept: number) =>
+      `Roll call saved: ${present} present. ${kept} check-in${kept === 1 ? "" : "s"} that arrived after you opened the roll call ${kept === 1 ? "was" : "were"} kept.`,
     rollCallPartial: "The roll call was only partly saved.",
     rollCallFailed: "The roll call was not saved.",
     instructorUpdated: "Instructor updated.",

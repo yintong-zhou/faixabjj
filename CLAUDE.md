@@ -402,6 +402,53 @@ the row is theirs, `present` is true, `checked_in_by = 'self'`, and
 row and only while the window is open. `checked_in_by` is what makes a row the
 staff created un-undoable by the member it describes.
 
+**The roll call is a snapshot, and must not delete what it never saw.** The
+form carries a hidden `loaded_at`; on save, a member left "non registrato"
+whose `self` row was created _after_ that instant is kept rather than deleted,
+and the confirmation says how many. Without it the ordinary case destroys data:
+the instructor opens the roll call at 19:00, members check in at 19:05, the
+save at 19:20 wipes them, silently.
+
+**A confirmed check-in keeps its provenance.** `saveRollCall` writes only the
+rows whose state actually changed, so a `self` row the instructor leaves
+present stays `self`. Rewriting it to `staff` would erase the only record of
+who claimed that hour — which is the question the tag exists to answer — and
+would take away the member's own undo.
+
+**Suspending a course stops it** (`20260918010000_suspended_course_checkin.sql`).
+`is_active` used to describe only the course row: the lessons it had already
+generated stayed `scheduled`, kept appearing in the calendar and kept accepting
+check-in, so suspending changed nothing a member could see.
+`session_checkin_open()` now requires `c.is_active`, and `session_overview`
+carries `course_active` so the calendar can drop a suspended course **from
+today on** while keeping its past lessons. Three consequences worth knowing:
+the flag is authoritative rather than destructive, so reactivating brings the
+whole calendar back and a suspension never loses a schedule; past lessons are
+untouched, because they happened; and `/attendance/[id]` stays reachable for
+them, with a notice, since correcting the record of a lesson already taught is
+exactly what an instructor needs after putting a course on hold. The view
+exposes the flag instead of filtering on it itself — a view that decided this
+would leave no way to reach those past lessons at all.
+
+**An error is not a closed window.** `checkIn` maps only `23505` to "already
+present" and `42501` to "check-in closed"; anything else — the network, a
+missing migration, a mangled session id — gets a generic message and the real
+reason goes to the server log through `logDbError()`. The old code reported
+every failure as "closed", which sent the member and the instructor to check
+the clock for a problem that was never about time: with a migration missing,
+*every* check-in reads as closed. `undoCheckIn` splits the same two cases — a
+refusal deletes zero rows and raises nothing, an error is a different event.
+The database's own text never reaches the screen: codes and constraint names
+describe the schema.
+
+**The check-in window is deliberately narrow**: 15 minutes before the start, 0
+after the end (`20260918000000_checkin_window_defaults.sql`; the app's form
+defaults match). The original 60/30 left consecutive lessons open at the same
+time, and one attendance is one hour — a member could collect three by tapping
+three buttons. A member who forgot has to ask the instructor, which is the
+right escalation: the roll call is the authoritative record, the check-in is a
+convenience on top of it.
+
 **Two things that look like duplication but are not:**
 
 - The **weekday expansion** lives in TypeScript (`frontend/utils/schedule.ts`,

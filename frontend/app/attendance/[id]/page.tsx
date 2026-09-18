@@ -59,6 +59,7 @@ function rollCallStates(t: Dictionary) {
 type Session = {
   id: string;
   course_name: string;
+  course_active: boolean;
   session_date: string;
   start_time: string;
   end_time: string;
@@ -98,7 +99,7 @@ export default async function RollCallPage({
   const { data } = await supabase
     .from("session_overview")
     .select(
-      "id, course_name, session_date, start_time, end_time, status, instructor_id, instructor_name",
+      "id, course_name, course_active, session_date, start_time, end_time, status, instructor_id, instructor_name",
     )
     .eq("id", id)
     .maybeSingle();
@@ -109,6 +110,11 @@ export default async function RollCallPage({
 
   const session = data as Session;
   const cancelled = session.status === "cancelled";
+  // A suspended course drops out of the calendar from today on and its
+  // check-in is closed, but this page stays reachable: correcting the record
+  // of a lesson that already happened is exactly what an instructor needs
+  // after a course is put on hold.
+  const courseSuspended = session.course_active === false;
 
   const [{ data: memberRows }, { data: attendanceRows }, { data: instructorRows }] =
     await Promise.all([
@@ -167,6 +173,17 @@ export default async function RollCallPage({
   });
 
   const presentCount = [...recorded.values()].filter((row) => row.present).length;
+  // How many of those presences the members declared themselves. Shown as a
+  // line above the list, because confirming somebody else's claim is a
+  // different act from calling the roll, and the instructor should know which
+  // one they are doing before they save.
+  const selfCount = [...recorded.values()].filter(
+    (row) => row.present && row.checked_in_by === "self",
+  ).length;
+  // The instant this form was rendered, sent back on submit: a check-in that
+  // lands while the roll call is open is not in the snapshot, and must not be
+  // deleted by it. See saveRollCall.
+  const loadedAt = new Date().toISOString();
   // Carries the week the list was on, so closing the roll call returns to it.
   const backHref = from ? `/attendance?${from}` : "/attendance";
 
@@ -212,6 +229,12 @@ export default async function RollCallPage({
         <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
           {t.rollCall.cancelledNotice}
+        </p>
+      ) : null}
+      {courseSuspended ? (
+        <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {t.rollCall.courseSuspendedNotice}
         </p>
       ) : null}
 
@@ -283,6 +306,14 @@ export default async function RollCallPage({
       <form action={saveRollCall} className="flex flex-col gap-3">
         <input type="hidden" name="session_id" value={session.id} />
         <input type="hidden" name="from" value={from ?? ""} />
+        <input type="hidden" name="loaded_at" value={loadedAt} />
+
+        {selfCount > 0 ? (
+          <p className="flex items-start gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground/70">
+            <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+            {t.rollCall.selfCheckins(selfCount)}
+          </p>
+        ) : null}
 
         {/* A legend, because the icons replaced letters and `title` never
             appears on a phone, where this page is actually used. */}

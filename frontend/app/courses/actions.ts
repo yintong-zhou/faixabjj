@@ -84,11 +84,11 @@ function readCourseForm(
   }
 
   const opensBefore = Number.parseInt(
-    (formData.get("checkin_opens_minutes_before") as string) ?? "60",
+    (formData.get("checkin_opens_minutes_before") as string) ?? "15",
     10,
   );
   const closesAfter = Number.parseInt(
-    (formData.get("checkin_closes_minutes_after") as string) ?? "30",
+    (formData.get("checkin_closes_minutes_after") as string) ?? "0",
     10,
   );
   if (!Number.isInteger(opensBefore) || opensBefore < 0 || opensBefore > 1440) {

@@ -29,6 +29,7 @@ type Session = {
   id: string;
   course_id: string;
   course_name: string;
+  course_active: boolean;
   session_date: string;
   start_time: string;
   end_time: string;
@@ -92,11 +93,16 @@ export default async function PresenzePage({
     ? monthGridRange(anchor)
     : { from: weekStart(anchor), until: addDays(weekStart(anchor), 6) };
 
+  // A suspended course keeps its past lessons — they happened, and their roll
+  // call must stay reachable — but disappears from today on, check-in
+  // included. Suspending it and still listing tonight's class is the bug this
+  // filter closes.
   const { data, error: queryError } = await supabase
     .from("session_overview")
     .select("*")
     .gte("session_date", from)
     .lte("session_date", until)
+    .or(`course_active.is.true,session_date.lt.${today}`)
     .order("session_date")
     .order("start_time");
 

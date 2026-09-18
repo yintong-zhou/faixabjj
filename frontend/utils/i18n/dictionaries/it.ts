@@ -354,7 +354,11 @@ export const it = {
     cancelLesson: "Annulla lezione",
     cancelConfirm:
       "Annullare questa lezione? Il check-in si chiude, ma le presenze già registrate restano.",
+    courseSuspendedNotice:
+      "Corso sospeso: il check-in è chiuso e le prossime lezioni non compaiono in calendario. Le presenze già registrate restano.",
     selfCheckinTag: "check-in",
+    selfCheckins: (n: number) =>
+      `${n} ${n === 1 ? "persona ha" : "persone hanno"} fatto check-in da sola: controlla prima di salvare.`,
     instructorTag: "istruttore",
     noMembers: "Nessun membro nel registro.",
     saveRollCall: "Salva appello",
@@ -436,6 +440,10 @@ export const it = {
     genericFailed: "Operazione non riuscita.",
     alreadyPresent: "Risulti già presente a questa lezione.",
     undoTooLate: "Non è più possibile annullare questo check-in.",
+    checkinFailed:
+      "Non è stato possibile registrare il check-in. Riprova; se continua, avvisa l’istruttore.",
+    undoFailed:
+      "Non è stato possibile annullare il check-in. Riprova; se continua, avvisa l’istruttore.",
     restoreFailed: "Ripristino non riuscito.",
     pickBelt: "Seleziona una cintura.",
     pickRole: "Seleziona un ruolo.",
@@ -515,6 +523,8 @@ export const it = {
     checkinRecorded: "Check-in registrato.",
     checkinUndone: "Check-in annullato.",
     rollCallSaved: (present: number) => `Appello salvato: ${present} presenti.`,
+    rollCallSavedKept: (present: number, kept: number) =>
+      `Appello salvato: ${present} presenti. ${kept} check-in ${kept === 1 ? "arrivato" : "arrivati"} dopo l’apertura dell’appello ${kept === 1 ? "è stato mantenuto" : "sono stati mantenuti"}.`,
     rollCallPartial: "Appello salvato solo in parte.",
     rollCallFailed: "Appello non salvato.",
     instructorUpdated: "Istruttore aggiornato.",

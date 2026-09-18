@@ -244,7 +244,7 @@ function CourseFields({
             type="number"
             min={0}
             max={1440}
-            defaultValue={course?.checkin_opens_minutes_before ?? 60}
+            defaultValue={course?.checkin_opens_minutes_before ?? 15}
             className={fieldClass}
           />
         </div>
@@ -259,7 +259,7 @@ function CourseFields({
             type="number"
             min={0}
             max={1440}
-            defaultValue={course?.checkin_closes_minutes_after ?? 30}
+            defaultValue={course?.checkin_closes_minutes_after ?? 0}
             className={fieldClass}
           />
         </div>
