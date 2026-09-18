@@ -598,21 +598,16 @@ export const it = {
   },
 
   promotions: {
-    title: "Promozioni",
     queueTitle: "Minimi raggiunti",
     queueIntro:
       "Chi ha raggiunto i minimi di tempo e di ore per il grado successivo. È un suggerimento: la valutazione resta dell'istruttore.",
     queueEmpty: "Nessuno ha raggiunto i minimi al momento.",
     eligibleCount: (n: number) => (n === 1 ? "1 persona" : `${n} persone`),
-    proposedStep: "Passo proposto",
-    stripeStep: (n: number) => `${n}ª tacca`,
-    beltStep: (belt: string) => `Cintura ${belt}`,
     hoursNote: "Ore di lezione, calcolate a 1,5 ore per lezione",
     atCurrentRank: "Ore al grado attuale",
     criteriaTitle: "Criteri",
     criteriaIntro:
       "Ore e tempo minimi per ogni grado. I valori delle cinture vengono dai minimi IBJJF e dalla pratica comune; quelli delle tacche sono una stima iniziale, da tarare sulla palestra.",
-    grade: "Grado",
     minHours: "Ore minime",
     minDays: "Giorni minimi",
     minAge: "Età minima",

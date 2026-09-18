@@ -585,21 +585,16 @@ export const en: Dictionary = {
   },
 
   promotions: {
-    title: "Promotions",
     queueTitle: "Minimums met",
     queueIntro:
       "Who has met the time and hour minimums for their next grade. It is a suggestion: the assessment stays with the instructor.",
     queueEmpty: "Nobody has met the minimums right now.",
     eligibleCount: (n: number) => (n === 1 ? "1 person" : `${n} people`),
-    proposedStep: "Proposed step",
-    stripeStep: (n: number) => `Stripe ${n}`,
-    beltStep: (belt: string) => `${belt} belt`,
     hoursNote: "Mat hours, counted at 1.5 hours a lesson",
     atCurrentRank: "Hours at the current grade",
     criteriaTitle: "Criteria",
     criteriaIntro:
       "Minimum hours and time for each grade. The belt figures come from the IBJJF minimums and common practice; the stripe figures are a starting estimate, meant to be tuned for this gym.",
-    grade: "Grade",
     minHours: "Minimum hours",
     minDays: "Minimum days",
     minAge: "Minimum age",

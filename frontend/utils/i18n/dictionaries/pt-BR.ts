@@ -586,21 +586,16 @@ export const ptBR: Dictionary = {
   },
 
   promotions: {
-    title: "Promoções",
     queueTitle: "Mínimos atingidos",
     queueIntro:
       "Quem atingiu os mínimos de tempo e de horas para a próxima graduação. É uma sugestão: a avaliação continua sendo do professor.",
     queueEmpty: "Ninguém atingiu os mínimos no momento.",
     eligibleCount: (n: number) => (n === 1 ? "1 pessoa" : `${n} pessoas`),
-    proposedStep: "Próximo passo",
-    stripeStep: (n: number) => `${n}º grau`,
-    beltStep: (belt: string) => `Faixa ${belt}`,
     hoursNote: "Horas de aula, calculadas a 1,5 hora por aula",
     atCurrentRank: "Horas na graduação atual",
     criteriaTitle: "Critérios",
     criteriaIntro:
       "Horas e tempo mínimos para cada graduação. Os valores das faixas vêm dos mínimos da IBJJF e da prática comum; os dos graus são uma estimativa inicial, para ajustar à academia.",
-    grade: "Graduação",
     minHours: "Horas mínimas",
     minDays: "Dias mínimos",
     minAge: "Idade mínima",
