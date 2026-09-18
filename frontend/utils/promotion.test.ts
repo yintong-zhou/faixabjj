@@ -50,11 +50,11 @@ function person(overrides: Partial<PromotionInput> = {}): PromotionInput {
 describe("promotionStatus", () => {
   it("measures a stripe against stripe_since and the stripe's own counter", () => {
     // 2026-06-01 to 2026-09-18 is 109 days, past the 61 required.
-    // 30 lessons * 1.5 = 45 clock hours, past the 40 required.
+    // 45 lessons = 45 clock hours (one hour a lesson), past the 40 required.
     const status = promotionStatus(
       person({
         stripe_since: "2026-06-01",
-        lessons_since_stripe: 30,
+        lessons_since_stripe: 45,
         lessons_since_rank: 99,
       }),
       CRITERIA,
@@ -73,7 +73,7 @@ describe("promotionStatus", () => {
       person({
         current_stripes: 4,
         rank_since: "2025-01-01",
-        lessons_since_rank: 80,
+        lessons_since_rank: 120,
         lessons_since_stripe: 2,
       }),
       CRITERIA,
@@ -81,7 +81,7 @@ describe("promotionStatus", () => {
     );
 
     expect(status.next).toEqual({ belt: "blue", stripe: 0 });
-    expect(status.currentHours).toBe(120); // 80 * 1.5
+    expect(status.currentHours).toBe(120); // 120 lessons = 120 clock hours (one hour a lesson)
     expect(status.requiredHours).toBe(108);
   });
 
@@ -90,7 +90,7 @@ describe("promotionStatus", () => {
     const status = promotionStatus(
       person({
         stripe_since: "2026-07-19",
-        lessons_since_stripe: 40 / 1.5,
+        lessons_since_stripe: 40, // one hour a lesson: 40 lessons = 40 clock hours
       }),
       CRITERIA,
       opts,
@@ -126,7 +126,7 @@ describe("promotionStatus", () => {
       opts,
     );
 
-    expect(status.currentHours).toBe(9); // 6 estimated lessons * 1.5
+    expect(status.currentHours).toBe(6); // 6 estimated lessons = 6 clock hours (one hour a lesson)
   });
 
   it("refuses to call somebody eligible when the age is unknown", () => {

@@ -590,7 +590,7 @@ export const en: Dictionary = {
       "Who has met the time and hour minimums for their next grade. It is a suggestion: the assessment stays with the instructor.",
     queueEmpty: "Nobody has met the minimums right now.",
     eligibleCount: (n: number) => (n === 1 ? "1 person" : `${n} people`),
-    hoursNote: "Mat hours, counted at 1.5 hours a lesson",
+    hoursNote: "Mat hours, counted at 1 hour a lesson",
     atCurrentRank: "Hours at the current grade",
     criteriaTitle: "Criteria",
     criteriaIntro:

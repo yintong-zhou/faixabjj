@@ -83,14 +83,17 @@ describe("hoursFor", () => {
 
 describe("clockHours", () => {
   // The promotion criteria are stated in clock hours; the app counts
-  // attendance and calls each row an hour. This is the only conversion.
+  // attendance and calls each row an hour. This is the only conversion —
+  // currently the identity, since this gym's lesson lasts one hour.
   it("turns counted lessons into the clock hours the criteria use", () => {
-    expect(clockHours(100)).toBe(150);
-    expect(SESSION_LENGTH_HOURS).toBe(1.5);
+    expect(clockHours(100)).toBe(100);
+    expect(SESSION_LENGTH_HOURS).toBe(1);
   });
 
+  // A lessons value with two decimal places, so this still fails if the
+  // multiply-and-round step were dropped rather than merely re-scaled.
   it("keeps one decimal, like every other hour figure in the app", () => {
-    expect(clockHours(4.3)).toBe(6.5);
+    expect(clockHours(4.36)).toBe(4.4);
   });
 
   it("is zero for zero", () => {

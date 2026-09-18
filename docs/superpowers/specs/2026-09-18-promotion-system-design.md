@@ -26,7 +26,7 @@ campi per chi non è registry editor.
 | # | Decisione | Alternativa scartata |
 | - | --------- | -------------------- |
 | 1 | Alert + promozione registrata + criteri modificabili dall'app | Solo alert; oppure criteri fissati in migrazione |
-| 2 | Le soglie restano le ore-orologio del documento; una costante `SESSION_LENGTH_HOURS = 1.5` converte le presenze | Soglie pre-convertite in presenze; nessuna conversione |
+| 2 | Le soglie restano le ore-orologio del documento; una costante `SESSION_LENGTH_HOURS` converte le presenze | Soglie pre-convertite in presenze; nessuna conversione |
 | 3 | Idoneo = tempo minimo **e** ore minime, entrambi | Solo tempo; oppure tempo *o* ore |
 | 4 | I criteri tecnici e comportamentali sono un promemoria testuale, senza stato salvato | Checklist salvata; checklist vincolante |
 | 5 | L'allievo vede solo fatti sul presente: mai quanto manca, mai l'idoneità | Barra di avanzamento; verdetto visibile |
@@ -175,15 +175,26 @@ Regole:
   `missing-birth-date` — mai idoneo per assenza di dato.
 - `eligible` è vero solo se `blockers` è vuoto.
 
-`SESSION_LENGTH_HOURS = 1.5` sta in `frontend/utils/hours.ts`, accanto a
+`SESSION_LENGTH_HOURS` sta in `frontend/utils/hours.ts`, accanto a
 `HOURS_PER_LESSON`, con il commento che spiega perché esistono entrambe: l'app
 conta presenze e ne chiama «ora» una ciascuna, i criteri parlano di ore di
 lezione reali.
 
-**Costo dichiarato:** la stessa persona compare con due numeri di ore diversi —
-142 nel Registro (presenze) e 213 nell'avanzamento (ore-orologio). Ogni
-schermata di promozione usa **solo** le ore-orologio ed è etichettata «1 lezione
-= 1,5 h», altrimenti la differenza si legge come un bug.
+**Costo dichiarato:** quando `SESSION_LENGTH_HOURS` differisce da 1, la stessa
+persona compare con due numeri di ore diversi — un totale nel Registro
+(presenze) e un altro nell'avanzamento (ore-orologio). Ogni schermata di
+promozione usa **solo** le ore-orologio ed è etichettata con la durata della
+lezione impostata, altrimenti la differenza si legge come un bug.
+
+> **Nota post-approvazione (2026-09-18).** Dopo l'approvazione di questo
+> design la palestra ha comunicato che le lezioni durano **1 ora**, non 1,5 h
+> come assunto sopra e nel documento di riferimento. `SESSION_LENGTH_HOURS` è
+> stato impostato a `1` (invece di `1.5`) e le soglie seminate in
+> `20260918100000_promotion_criteria.sql` sono state divise per 1.5 rispetto
+> ai valori descritti in questo file, così da richiedere lo stesso tempo
+> trascorso — vedi la tabella dei semi più sotto per i valori aggiornati.
+> `min_time_at_rank_days` e `min_age_years` non sono cambiati: sono minimi
+> IBJJF basati sul tempo, non derivati dalla durata della lezione.
 
 ## Scrittura della promozione — `record_promotion()`
 
@@ -280,20 +291,29 @@ Dal documento, a **3 allenamenti a settimana** (la stessa frequenza di
 `LESSONS_PER_WEEK`), prendendo il minimo vincolante: il valore IBJJF dove esiste,
 altrimenti l'estremo inferiore dell'intervallo pratico.
 
-| Grado | `min_hours` | `min_time_at_rank_days` | `min_age_years` | Origine |
-| ----- | ----------- | ----------------------- | --------------- | ------- |
-| `(blue, 0)` | 108 | 183 | — | pratica, 0,5 anni |
-| `(purple, 0)` | 432 | 730 | — | IBJJF, 2 anni |
-| `(brown, 0)` | 324 | 548 | — | IBJJF, 1,5 anni |
-| `(black, 0)` | 216 | 365 | 19 | IBJJF, 1 anno |
-| `(white, 1..4)` | 40 | 61 | — | **inventato** |
-| `(blue, 1..4)` | 40 | 61 | — | **inventato** |
-| `(purple, 1..4)` | 60 | 91 | — | **inventato** |
-| `(brown, 1..4)` | 80 | 122 | — | **inventato** |
+La tabella seguente riporta le ore-orologio come descritte da belt-criteria.md
+(3 allenamenti a settimana da 1,5 h, l'assunzione del documento). Da quando
+`SESSION_LENGTH_HOURS` è stato impostato a 1 (vedi la nota
+post-approvazione più sopra), i valori `min_hours` effettivamente seminati in
+migrazione sono quelli della colonna "min_hours seminato", cioè la colonna
+`min_hours` qui sotto divisa per 1,5 — a parità di tempo trascorso richiesto.
+`min_time_at_rank_days` e `min_age_years` non cambiano.
+
+| Grado | `min_hours` (documento, 1,5 h/lezione) | `min_hours` seminato (1 h/lezione) | `min_time_at_rank_days` | `min_age_years` | Origine |
+| ----- | ----------- | ----------- | ----------------------- | --------------- | ------- |
+| `(blue, 0)` | 108 | 72 | 183 | — | pratica, 0,5 anni |
+| `(purple, 0)` | 432 | 288 | 730 | — | IBJJF, 2 anni |
+| `(brown, 0)` | 324 | 216 | 548 | — | IBJJF, 1,5 anni |
+| `(black, 0)` | 216 | 144 | 365 | 19 | IBJJF, 1 anno |
+| `(white, 1..4)` | 40 | 27 | 61 | — | **inventato** |
+| `(blue, 1..4)` | 40 | 27 | 61 | — | **inventato** |
+| `(purple, 1..4)` | 60 | 40 | 91 | — | **inventato** |
+| `(brown, 1..4)` | 80 | 53 | 122 | — | **inventato** |
 
 **I valori delle tacche non vengono dal documento**, che dà solo l'intervallo di
 2-4 mesi («shorter at white/blue, longer at higher belts») e nessuna ora. Le ore
-sono coerenti con quell'intervallo a 3 lezioni da 1,5 h a settimana. Il commento
+sono coerenti con quell'intervallo a 3 lezioni da 1,5 h a settimana, poi divise
+di nuovo per 1,5 per le lezioni da 1 h di questa palestra. Il commento
 della migrazione lo dirà a chiare lettere, e la pagina criteri esiste anche
 perché la palestra li corregga.
 

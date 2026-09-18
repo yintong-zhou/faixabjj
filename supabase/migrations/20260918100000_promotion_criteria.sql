@@ -21,8 +21,15 @@
 --
 -- min_hours is in CLOCK HOURS, like the document. The app counts attendance
 -- and calls each row an "hour"; frontend/utils/hours.ts converts with
--- SESSION_LENGTH_HOURS = 1.5. Do not "fix" these numbers into attendance
--- counts — the conversion has a single home, and it is not this table.
+-- SESSION_LENGTH_HOURS. Do not "fix" these numbers into attendance counts —
+-- the conversion has a single home, and it is not this table.
+--
+-- belt-criteria.md assumes a 1.5 h lesson; this gym's lessons last 1 h
+-- (SESSION_LENGTH_HOURS = 1). Every min_hours value below is the document's
+-- figure divided by 1.5, so the same elapsed time is still required even
+-- though a counted attendance is now worth fewer clock hours than the
+-- document assumes. min_time_at_rank_days and min_age_years are unaffected:
+-- they are IBJJF's time-based minimums, not derived from lesson length.
 
 alter table public.promotion_criteria
   add column if not exists min_age_years smallint
@@ -45,10 +52,10 @@ comment on column public.promotion_criteria.min_time_at_rank_days is
 insert into public.promotion_criteria
   (belt, stripe, min_hours, min_time_at_rank_days, min_age_years, notes)
 values
-  ('blue',   0, 108, 183, null, 'white_to_blue: practical minimum 0.5 years, 108 h at 3x/week'),
-  ('purple', 0, 432, 730, null, 'blue_to_purple: IBJJF minimum 2 years, 432 h at 3x/week'),
-  ('brown',  0, 324, 548, null, 'purple_to_brown: IBJJF minimum 1.5 years, 324 h at 3x/week'),
-  ('black',  0, 216, 365,   19, 'brown_to_black: IBJJF minimum 1 year and 19 years of age, 216 h at 3x/week')
+  ('blue',   0,  72, 183, null, 'white_to_blue: practical minimum 0.5 years, 108 h at 3x/week of 1.5 h (belt-criteria.md), divided by 1.5 for this gym''s 1 h lessons'),
+  ('purple', 0, 288, 730, null, 'blue_to_purple: IBJJF minimum 2 years, 432 h at 3x/week of 1.5 h (belt-criteria.md), divided by 1.5 for this gym''s 1 h lessons'),
+  ('brown',  0, 216, 548, null, 'purple_to_brown: IBJJF minimum 1.5 years, 324 h at 3x/week of 1.5 h (belt-criteria.md), divided by 1.5 for this gym''s 1 h lessons'),
+  ('black',  0, 144, 365,   19, 'brown_to_black: IBJJF minimum 1 year and 19 years of age, 216 h at 3x/week of 1.5 h (belt-criteria.md), divided by 1.5 for this gym''s 1 h lessons')
 on conflict (belt, stripe) do nothing;
 
 -- ---------------------------------------------------------------------------
@@ -58,8 +65,10 @@ on conflict (belt, stripe) do nothing;
 -- shorter at white/blue, longer at higher belts") and no hours at all. The
 -- numbers below are therefore an informed guess, not a source: 2 months on
 -- white and blue, 3 on purple, 4 on brown, with the hours those intervals
--- imply at three 1.5 h lessons a week. They are seeded so the feature works on
--- day one; the criteria page exists so the gym can correct them.
+-- imply at three 1.5 h lessons a week (the document's assumed lesson length),
+-- then divided by 1.5 again for this gym's 1 h lessons so the same elapsed
+-- time is still required. They are seeded so the feature works on day one;
+-- the criteria page exists so the gym can correct them.
 insert into public.promotion_criteria
   (belt, stripe, min_hours, min_time_at_rank_days, notes)
 select
@@ -69,10 +78,10 @@ select
   b.days,
   'stripe interval: not in belt-criteria.md, seeded as an estimate and meant to be tuned'
 from (values
-  ('white'::belt_rank,  40,  61),
-  ('blue'::belt_rank,   40,  61),
-  ('purple'::belt_rank, 60,  91),
-  ('brown'::belt_rank,  80, 122)
+  ('white'::belt_rank,  27,  61),
+  ('blue'::belt_rank,   27,  61),
+  ('purple'::belt_rank, 40,  91),
+  ('brown'::belt_rank,  53, 122)
 ) as b(belt, hours, days)
 cross join generate_series(1, 4) as s(stripe)
 on conflict (belt, stripe) do nothing;

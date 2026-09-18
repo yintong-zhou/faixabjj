@@ -603,7 +603,7 @@ export const it = {
       "Chi ha raggiunto i minimi di tempo e di ore per il grado successivo. È un suggerimento: la valutazione resta dell'istruttore.",
     queueEmpty: "Nessuno ha raggiunto i minimi al momento.",
     eligibleCount: (n: number) => (n === 1 ? "1 persona" : `${n} persone`),
-    hoursNote: "Ore di lezione, calcolate a 1,5 ore per lezione",
+    hoursNote: "Ore di lezione, calcolate a 1 ora per lezione",
     atCurrentRank: "Ore al grado attuale",
     criteriaTitle: "Criteri",
     criteriaIntro:

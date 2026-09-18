@@ -591,7 +591,7 @@ export const ptBR: Dictionary = {
       "Quem atingiu os mínimos de tempo e de horas para a próxima graduação. É uma sugestão: a avaliação continua sendo do professor.",
     queueEmpty: "Ninguém atingiu os mínimos no momento.",
     eligibleCount: (n: number) => (n === 1 ? "1 pessoa" : `${n} pessoas`),
-    hoursNote: "Horas de aula, calculadas a 1,5 hora por aula",
+    hoursNote: "Horas de aula, calculadas a 1 hora por aula",
     atCurrentRank: "Horas na graduação atual",
     criteriaTitle: "Critérios",
     criteriaIntro:
