@@ -75,14 +75,14 @@ stripe_decision_maker: instructor_only  # no federation rule governs stripe issu
 
 ```yaml
 assumptions:
-  session_length_hours: 1.5
+  session_length_hours: 1        # this gym's actual lesson; the community model this summarises assumes 1.5, and every hours figure below was divided by 1.5 to match
   training_weeks_per_year: 48   # excludes breaks, injury, holidays
 formula: hours_per_year = weekly_frequency * session_length_hours * training_weeks_per_year
 hours_per_year_by_frequency:
-  2x_week: 144
-  3x_week: 216
-  4x_week: 288
-  5x_week: 360
+  2x_week: 96
+  3x_week: 144
+  4x_week: 192
+  5x_week: 240
 ```
 
 ## hours_by_transition
@@ -91,34 +91,34 @@ hours_per_year_by_frequency:
 - id: white_to_blue
   years: [0.5, 1]
   hours:
-    2x_week: [72, 144]
-    3x_week: [108, 216]
-    4x_week: [144, 288]
-    5x_week: [180, 360]
+    2x_week: [48, 96]
+    3x_week: [72, 144]
+    4x_week: [96, 192]
+    5x_week: [120, 240]
 
 - id: blue_to_purple
   years: 2
   hours:
-    2x_week: 288
-    3x_week: 432
-    4x_week: 576
-    5x_week: 720
+    2x_week: 192
+    3x_week: 288
+    4x_week: 384
+    5x_week: 480
 
 - id: purple_to_brown
   years: 1.5
-  hours:
-    2x_week: 216
-    3x_week: 324
-    4x_week: 432
-    5x_week: 540
-
-- id: brown_to_black
-  years: 1
   hours:
     2x_week: 144
     3x_week: 216
     4x_week: 288
     5x_week: 360
+
+- id: brown_to_black
+  years: 1
+  hours:
+    2x_week: 96
+    3x_week: 144
+    4x_week: 192
+    5x_week: 240
 ```
 
 ## cumulative_totals
@@ -127,10 +127,10 @@ hours_per_year_by_frequency:
 - range: blue_to_black_ibjjf_min   # excludes white belt period
   years: 4.5
   hours:
-    2x_week: 648
-    3x_week: 972
-    4x_week: 1296
-    5x_week: 1620
+    2x_week: 432
+    3x_week: 648
+    4x_week: 864
+    5x_week: 1080
 
 - range: white_to_black_practical_observed
   years: [8, 12]

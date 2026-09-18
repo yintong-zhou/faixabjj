@@ -194,7 +194,10 @@ lezione impostata, altrimenti la differenza si legge come un bug.
 > ai valori descritti in questo file, così da richiedere lo stesso tempo
 > trascorso — vedi la tabella dei semi più sotto per i valori aggiornati.
 > `min_time_at_rank_days` e `min_age_years` non sono cambiati: sono minimi
-> IBJJF basati sul tempo, non derivati dalla durata della lezione.
+> IBJJF e non dipendono dalla durata di una lezione. Successivamente anche
+> `belt-criteria.md` è stato portato a una lezione da 1 ora, con le sue tabelle
+> derivate divise per 1,5: il documento non mostra più le cifre a 1,5 h che
+> questo design cita, e la colonna "documento" qui sotto è quindi storica.
 
 ## Scrittura della promozione — `record_promotion()`
 
@@ -291,15 +294,15 @@ Dal documento, a **3 allenamenti a settimana** (la stessa frequenza di
 `LESSONS_PER_WEEK`), prendendo il minimo vincolante: il valore IBJJF dove esiste,
 altrimenti l'estremo inferiore dell'intervallo pratico.
 
-La tabella seguente riporta le ore-orologio come descritte da belt-criteria.md
-(3 allenamenti a settimana da 1,5 h, l'assunzione del documento). Da quando
+La tabella seguente riporta le ore-orologio come `belt-criteria.md` le dava
+nella sua versione originale (3 allenamenti a settimana da 1,5 h). Da quando
 `SESSION_LENGTH_HOURS` è stato impostato a 1 (vedi la nota
 post-approvazione più sopra), i valori `min_hours` effettivamente seminati in
 migrazione sono quelli della colonna "min_hours seminato", cioè la colonna
 `min_hours` qui sotto divisa per 1,5 — a parità di tempo trascorso richiesto.
 `min_time_at_rank_days` e `min_age_years` non cambiano.
 
-| Grado | `min_hours` (documento, 1,5 h/lezione) | `min_hours` seminato (1 h/lezione) | `min_time_at_rank_days` | `min_age_years` | Origine |
+| Grado | `min_hours` (documento, versione originale a 1,5 h) | `min_hours` seminato (1 h/lezione) | `min_time_at_rank_days` | `min_age_years` | Origine |
 | ----- | ----------- | ----------- | ----------------------- | --------------- | ------- |
 | `(blue, 0)` | 108 | 72 | 183 | — | pratica, 0,5 anni |
 | `(purple, 0)` | 432 | 288 | 730 | — | IBJJF, 2 anni |
@@ -312,9 +315,8 @@ migrazione sono quelli della colonna "min_hours seminato", cioè la colonna
 
 **I valori delle tacche non vengono dal documento**, che dà solo l'intervallo di
 2-4 mesi («shorter at white/blue, longer at higher belts») e nessuna ora. Le ore
-sono coerenti con quell'intervallo a 3 lezioni da 1,5 h a settimana, poi divise
-di nuovo per 1,5 per le lezioni da 1 h di questa palestra. Il commento
-della migrazione lo dirà a chiare lettere, e la pagina criteri esiste anche
+sono coerenti con quell'intervallo a 3 lezioni a settimana. Il commento
+della migrazione lo dice a chiare lettere, e la pagina criteri esiste anche
 perché la palestra li corregga.
 
 Nota sulla scala risultante: quattro tacche bianche a 61 giorni fanno 244
