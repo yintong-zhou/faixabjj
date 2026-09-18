@@ -113,3 +113,21 @@ export function estimateNote(estimated: number, t: Dictionary = en): string {
   return t.hours.estimateNote(estimated.toFixed(1), LESSONS_PER_WEEK);
 }
 
+/**
+ * How long one lesson lasts on the mat.
+ *
+ * This app counts attendance and calls each row an hour (HOURS_PER_LESSON), a
+ * rule the database enforces by having no duration column at all. The
+ * promotion criteria in belt-criteria.md are stated in real clock hours,
+ * assuming a 1.5 h lesson. This constant is the only place the two units meet:
+ * change it if the gym's lesson length changes, and nothing else moves.
+ */
+export const SESSION_LENGTH_HOURS = 1.5;
+
+/**
+ * Counted (or estimated) lessons expressed in the clock hours the promotion
+ * criteria use. Rounded to one decimal, like every other hour figure shown.
+ */
+export function clockHours(lessons: number): number {
+  return Math.round(lessons * SESSION_LENGTH_HOURS * 10) / 10;
+}
