@@ -187,6 +187,40 @@ Seven columns cannot shrink below ~34rem and stay legible, so the grid scrolls i
 
 Both `session_overview` and `course_overview` carry `security_invoker = on`. Consequence on `session_overview.present_count`: it respects the caller's own attendance policy, so a student would see only their own row counted — the UI shows that count to staff only.
 
+## Promotions
+
+`/promotions` is the eligibility queue — who has reached the minimums for their next grade — plus the criteria editor behind those minimums. It sits behind `requireRegistryViewer()`, in `PROTECTED_PREFIXES`, with its own nav entry for anyone who sees the Registro; the criteria editor inside the page is further gated on `canEditRegistry`. The queue is a worklist, not a second Registro: it lists only who has something pending and shows nothing when it is empty.
+
+**A `promotion_criteria` row means "what is required to REACH this grade"**: `(blue, 0)` is what it takes to be given the blue belt, `(blue, 3)` is what it takes to earn blue's third stripe. **Two time anchors share one column** (`20260918100000`): `stripe = 0` measures `min_time_at_rank_days` from `person.rank_since` (the belt date); `stripe > 0` measures it from `stripe_since` (the last stripe date). Get this backwards and every stripe reads as overdue or not-yet — the migration comment spells it out for exactly that reason.
+
+**There is no `(black, 1..4)` row.** The black belt has degrees, not stripes — out of scope. No row means no modelled next step, which is exactly the right read for someone already black: `nextStep()` in `frontend/utils/promotion.ts` returns `null`, and the queue and the panel both have nothing further to compute for them.
+
+**`min_hours` is clock hours, like the source document; the app counts attendance.** `SESSION_LENGTH_HOURS = 1.5` in `frontend/utils/hours.ts` is the single place the two units meet — never "fix" the seeded numbers into attendance counts, and never add a second conversion elsewhere. Consequence: the same person can show two different hour figures on two screens, say 142 on the Registro row (attendance) and 213 on a promotion screen (clock hours) — that is correct, not a bug. Every promotion screen is labelled "1 lezione = 1,5 h" so the gap reads as a unit conversion, not an error.
+
+**Hours are counted from the current grade, not from when the person joined** (`person_rank_hours`, `lessons_since_rank` / `lessons_since_stripe`). A lifetime total gets two ordinary cases wrong: someone arriving already graded from another academy would start at zero, and someone who stopped training a year ago would sit just as close to the threshold as the day they stopped, because a total never falls.
+
+**The estimated opening balance is anchored at the later of `joined_at` and the grade date** — `estimatedHours(max(joined_at, anchor))`. The estimate is not attendance, and it must not be credited to a grade the person held before they even joined.
+
+**Eligibility lives in `frontend/utils/promotion.ts`** (`promotionStatus()`), pure and unit-tested like `schedule.ts` and `hours.ts`, and it is never re-implemented in a page. That is also why the Registro has no "only eligible" filter: the database does not know eligibility, only attendance and dates do, so a row's dot is computed over whatever page of members is already loaded, not queried. If a filter is ever genuinely needed, the clean path is moving the hour estimate into SQL — not duplicating the TypeScript rule in a query.
+
+**`promotion_criteria` is readable by registry viewers only** (`can_view_registry()`, `20260918100000`, replacing the old flat "every authenticated user" policy) — a database policy, not a UI decision. Filled in, the table says exactly how far a student is from their next grade; hiding the page would still leave two API calls between a student and that number, so the rule has to live where the data lives.
+
+**The matching product rule: nothing a member can open states a remaining amount, a next-grade name, or a verdict.** This is not a preference — it is the reason for the restricted policy above. The member dashboard adds only "ore al grado attuale" next to the belt and stripe dates it already showed: a fact about the present, never a bar, a "N hours to go", or the name of what comes next.
+
+**`record_promotion()` is `security invoker`, never `definer`** (`20260918130000`). A definer function would run with the owner's privileges and bypass both RLS and `guard_person_auth_link`, the trigger that freezes `current_belt`/`current_stripes`/`rank_since`/`stripe_since` against non-editors — the whole reason promotion is not self-service. The function re-checks `can_edit_registry()` itself, so the refusal is a clear error rather than a policy violation halfway through the write.
+
+The same function rejects a future-dated promotion, a sideways or backward one, and stripes outside `0..4` — but accepts a backdated one freely, because the belt was really given on the mat before somebody got round to recording it. A belt change resets `current_stripes` to the target (0 in the normal case) and moves both `rank_since` and `stripe_since`; a stripe alone moves only `stripe_since`, because "how long at this belt" is what the next belt hangs on and a stripe must not reset it.
+
+**A promotion can be deleted but never updated** — `promotion` (`20260918120000`) has no update policy. A wrong entry is removed and redone; rewriting one in place would erase the only record of what was actually decided and when, the same reasoning that keeps `promoted_by` as `on delete set null` rather than cascading, so the gym's history survives an instructor's account being revoked.
+
+**The seeded stripe numbers are an estimate, not from `belt-criteria.md`.** The document gives only a 2-4 month interval per stripe and no hours at all; the seeded `min_hours`/`min_time_at_rank_days` are derived from that interval at three 1.5 h lessons a week, not sourced from the document itself. The `/promotions` criteria editor exists partly so the gym can correct them once real numbers are known.
+
+**The suggestion follows a ladder — next stripe under four, next belt at four stripes, nothing at black — but the promotion panel still allows any forward grade.** Requiring four stripes before a belt is common academy practice, not a rule in the source document, so it binds only `nextStep()`'s suggestion; `record_promotion()` and the panel's belt/stripe selects accept a direct jump, rejecting only a backward or sideways move.
+
+**The panel's technical and behavioural reminders are text, never a saved checklist.** They come from the `promotions` dictionary section, one list per transition, straight from `belt-criteria.md`. Nothing about them is written anywhere: a tick box would promise a record the app does not keep, and the document is explicit that these minimums are "necessary but not sufficient" — the instructor's judgment on top of them stays undocumented on purpose, exactly as intended.
+
+Surfaced elsewhere: the Registro row carries a dot for whoever is eligible, using the same per-page computation as the queue; the kebab gets a "Promuovi" item for registry editors; the member detail page lists the full promotion history above the panel; and the staff dashboard carries one compact card with the eligible count, linking to `/promotions`.
+
 ## Dashboard
 
 `/dashboard` is two pages behind one route, chosen by `canManageClasses` — the same predicate that opens Corsi and the roll call.
