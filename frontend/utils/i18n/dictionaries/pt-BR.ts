@@ -587,7 +587,6 @@ export const ptBR: Dictionary = {
 
   promotions: {
     title: "Promoções",
-    nav: "Promoções",
     queueTitle: "Mínimos atingidos",
     queueIntro:
       "Quem atingiu os mínimos de tempo e de horas para a próxima graduação. É uma sugestão: a avaliação continua sendo do professor.",

@@ -599,7 +599,6 @@ export const it = {
 
   promotions: {
     title: "Promozioni",
-    nav: "Promozioni",
     queueTitle: "Minimi raggiunti",
     queueIntro:
       "Chi ha raggiunto i minimi di tempo e di ore per il grado successivo. È un suggerimento: la valutazione resta dell'istruttore.",

@@ -586,7 +586,6 @@ export const en: Dictionary = {
 
   promotions: {
     title: "Promotions",
-    nav: "Promotions",
     queueTitle: "Minimums met",
     queueIntro:
       "Who has met the time and hour minimums for their next grade. It is a suggestion: the assessment stays with the instructor.",
