@@ -1,89 +1,72 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) working in this repository.
 
 ## Project status
 
-Early scaffolding stage. The repository follows the 3-tier agent architecture defined in [`AGENT.md`](AGENT.md) (directives / orchestration / execution). The `frontend/` app has been bootstrapped with `create-next-app` (Next.js App Router + Tailwind CSS); it now has a branded, mobile-first shell and IA (see "Frontend UI" below) and a working admin login gate (see "Authentication" below), `/members` (member overview with filters and pagination), `/courses` (recurring course definitions) and `/attendance` (lesson calendar, roll call and student check-in) are wired to real data. `/dashboard` is wired too, as two views behind one route (see "Dashboard" below).
+The repo follows the 3-tier agent architecture in [`AGENT.md`](AGENT.md) (directives / orchestration / execution). `frontend/` is a `create-next-app` scaffold (Next.js App Router + Tailwind) with a branded mobile-first shell and IA, an admin login gate, and real data on `/members` (overview, filters, pagination), `/courses` (recurring definitions), `/attendance` (calendar, roll call, check-in) and `/dashboard` (two views behind one route).
 
-`backend/` (FastAPI) from the `AGENT.md` template has **not** been created. It's marked "se necessario" (if necessary) there, and per the README's architecture Supabase (Postgres + Auth + Row Level Security) is the backend — no separate API layer is needed unless/until logic emerges that can't live in Supabase (RLS policies, Postgres functions/triggers) or client-side. Add `backend/` only when a concrete need for a server-side API shows up.
+`backend/` (FastAPI) from the `AGENT.md` template deliberately does **not** exist: Supabase (Postgres + Auth + RLS) is the backend. Add it only when logic appears that can live neither in Supabase (RLS policies, Postgres functions/triggers) nor client-side.
 
-**Stack discrepancy to be aware of:** the root `README.md` states "React + Vite + Tailwind" for the frontend, but `AGENT.md`'s web-app directive (which this structure follows, per explicit instruction) specifies **Next.js + React + Tailwind CSS**. The actual scaffolded app in `frontend/` is Next.js. Treat `AGENT.md` + this file as authoritative for the frontend framework; the README's tech-stack table is stale on this point and should be updated to match when convenient.
-
-Note: the README also references a full project document at `bjj-progress-tracker-project.md`, which does not exist in this repository (never committed). Rely on `README.md` for the product spec until/unless that file is added.
+- **Stack discrepancy:** root `README.md` says "React + Vite + Tailwind"; `AGENT.md` (which this structure follows, per explicit instruction) says Next.js, and the scaffold is Next.js. `AGENT.md` + this file are authoritative; the README table is stale and should be fixed when convenient.
+- The README references `bjj-progress-tracker-project.md`, never committed. Use `README.md` as the product spec.
 
 ## Repository structure
 
 ```
 faixabjj/
-├── frontend/       # Next.js app (App Router) + Tailwind — npm workspace, run commands from here
+├── frontend/        # Next.js (App Router) + Tailwind — npm workspace, run commands from here
 ├── supabase/
-│   └── migrations/  # SQL migrations (schema, RLS policies) — see "Database" below
-├── directives/     # SOPs in Markdown (Level 1 — see AGENT.md). Empty until real workflows are defined.
-├── execution/       # Deterministic Python scripts (Level 3 — see AGENT.md). Empty until needed.
-├── .tmp/            # Intermediate/scratch files only — gitignored, never committed, safe to delete
-├── AGENT.md         # Operating instructions for the agent (3-tier architecture, web app conventions)
-└── README.md        # Product spec / project overview
+│   └── migrations/  # SQL migrations (schema, RLS) — see "Database"
+├── directives/      # SOPs in Markdown (Level 1, AGENT.md). Empty until real workflows exist.
+├── execution/       # Deterministic Python scripts (Level 3). Empty until needed.
+├── .tmp/            # Scratch only — gitignored, never committed, safe to delete
+├── AGENT.md         # Agent operating instructions (3-tier architecture, web app conventions)
+└── README.md        # Product spec / overview
 ```
 
 ## Database
 
-Schema lives as plain SQL migrations in `supabase/migrations/` (standard Supabase CLI layout).
+Plain SQL migrations in `supabase/migrations/` (standard Supabase CLI layout).
 
-- `20260910000000_init_schema.sql` — the five tables from the planned data model (`person`, `assigned_role`, `role_threshold`, `attendance`, `promotion_criteria`), two enums (`belt_rank`, `person_role`), a `person_hours` view for the automatic hour count, and RLS enabled on every table with zero policies (default-deny).
-- `20260910120000_admin_rls_policies.sql` — the original flat policies: every `authenticated` user got full CRUD on all five tables. **Largely superseded** — see the two migrations below. Kept as history; do not use it as a description of current behaviour.
-- `20260911000000_account_management.sql` — profile provisioning (`on auth.users insert` trigger + backfill), the first `can_manage_users()`, and the anti-self-promotion guards.
-- `20260911120000_role_based_access.sql` — **the current permission model.** Adds the `admin` role to the `person_role` enum and replaces the flat policies with per-role ones. Read this one first when reasoning about who can see or change what.
+- `20260910000000_init_schema.sql` — five tables (`person`, `assigned_role`, `role_threshold`, `attendance`, `promotion_criteria`), enums (`belt_rank`, `person_role`), the `person_hours` view, RLS enabled everywhere with zero policies (default-deny).
+- `20260910120000_admin_rls_policies.sql` — original flat policies (every `authenticated` user = full CRUD). **Superseded**; kept as history, not as a description of current behaviour.
+- `20260911000000_account_management.sql` — profile provisioning (`on auth.users insert` trigger + backfill), first `can_manage_users()`, anti-self-promotion guards.
+- `20260911120000_role_based_access.sql` — **the current permission model** (adds the `admin` role, per-role policies). Read this first when reasoning about access.
 
-**⚠️ Migrations are applied by hand, from the dashboard, and the MCP in this environment cannot do it:** Do not run schema/RLS changes against whatever project the connected MCP happens to show — verify the project ref matches `poksgledkecwviypspmi` first. Until that's sorted out, apply migrations by pasting them into the SQL Editor of the **correct** project's dashboard, or by connecting the right MCP/CLI and re-checking `list_migrations`.
+**⚠️ Migrations are applied by hand from the dashboard; the MCP here cannot do it.** Never run schema/RLS changes against whatever project the connected MCP shows — verify the project ref is `poksgledkecwviypspmi` first. Until that is sorted, paste migrations into the correct project's SQL Editor, or connect the right MCP/CLI and re-check `list_migrations`.
 
 ### Connecting the frontend to Supabase
 
-The frontend talks to Supabase directly via the client library (`@supabase/supabase-js` + `@supabase/ssr`) rather than through a custom API layer — this is what makes the RLS-based permission model above actually work, since the user's JWT has to reach Postgres. Setup:
+The frontend talks to Supabase directly (`@supabase/supabase-js` + `@supabase/ssr`), not through a custom API layer — that is what makes the RLS model work, since the user's JWT must reach Postgres.
 
-- `frontend/utils/supabase/client.ts` — browser client, for Client Components
-- `frontend/utils/supabase/server.ts` — server client (cookie-based), takes `createClient(await cookies())`, for Server Components/Actions/Route Handlers
-- `frontend/utils/supabase/proxy.ts` + `frontend/proxy.ts` — refreshes the auth session cookie on every request **and** gates `/members`, `/attendance`, `/dashboard` behind login (see "Authentication"). Next.js renamed the `middleware.ts` file convention to `proxy.ts`; don't recreate the old filename.
-- `frontend/.env.example` — template; `frontend/.env.local` (gitignored) has this project's real values filled in already. Note: this project uses Supabase's newer **publishable** key (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`), not the legacy `anon` key — don't rename it back.
+- `frontend/utils/supabase/client.ts` — browser client (Client Components).
+- `frontend/utils/supabase/server.ts` — server client, `createClient(await cookies())` (Server Components/Actions/Route Handlers).
+- `frontend/utils/supabase/proxy.ts` + `frontend/proxy.ts` — refreshes the auth cookie on every request and gates protected routes. Next.js renamed `middleware.ts` to `proxy.ts`; don't recreate the old filename.
+- `frontend/.env.example` is the template; `.env.local` (gitignored) already holds real values. This project uses the newer **publishable** key (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`), not the legacy `anon` key — don't rename it back.
 
 ## Authentication
 
-Single-tier admin login — no self-serve signup, no per-role permissions yet. Anyone who can sign in is treated as trusted staff (matches the RLS policies above).
+No self-serve signup, and **no signup page on purpose** (confirmed with the user). Accounts are created in the Supabase Dashboard for `poksgledkecwviypspmi` or through `/members`; a public signup form would hand out access. Don't add one without asking.
 
-- **No signup page exists on purpose** (confirmed explicitly with the user, not just assumed). Admin accounts are created directly in the Supabase Dashboard (Authentication → Users → Add user) for the `poksgledkecwviypspmi` project, not through the app — the RLS policies grant any `authenticated` user full access, so a public signup form would hand out full admin access to anyone who finds the URL. Don't add one without checking with the user first.
-- `frontend/app/login/page.tsx` + `frontend/app/login/actions.ts` — email/password form posting to a `"use server"` action (`supabase.auth.signInWithPassword`). On failure it redirects back to `/login?error=...` with a deliberately generic message ("Email o password non corrette") — never surface the raw Supabase error, it would let someone enumerate registered emails.
-- **Password recovery:** `/forgot-password` (`page.tsx` + `actions.ts`) calls `resetPasswordForEmail(email, { redirectTo: "<origin>/reset-password" })` and always redirects to the same `?sent=1` confirmation regardless of outcome — same anti-enumeration reasoning as login. `/reset-password` is a **Client Component** (not Server) because the recovery link redirects with the session tokens in the URL **hash fragment** (`#access_token=...&type=recovery`), which never reaches the server — only `@supabase/ssr`'s browser client can see it. That client auto-detects the fragment and fires an `onAuthStateChange` `"PASSWORD_RECOVERY"` event; the page listens for that (plus a `getSession()` fallback in case the event fired before the listener attached) before showing the new-password form, and falls back to an "invalid link" state after a 2s timeout if neither fires.
-- `frontend/app/auth/signout/route.ts` — POST route handler, signs out and redirects to `/login`. The "Esci"/"Accedi" control in `frontend/components/nav-shell.tsx` posts here; `isLoggedIn` is computed server-side in `frontend/app/layout.tsx` (via `getClaims()`) and passed down as a prop, not read client-side.
-- `frontend/utils/supabase/proxy.ts` redirects logged-out visitors away from `/members`, `/attendance`, `/dashboard`, `/account` to `/login?next=<path>`, and redirects logged-in visitors away from `/login` to `/dashboard`. `PROTECTED_PREFIXES` in that file is the single source of truth for which routes are gated — update it there, not per-page, when adding a new protected section.
-- Every protected page **also** calls `frontend/utils/supabase/require-admin.ts`'s `requireAdmin()` itself (defense in depth per Supabase's own Next.js SSR auth guide: proxy-only cookie checks are spoofable, so protected pages must verify independently too, not rely solely on the proxy).
-- Uses `supabase.auth.getClaims()`, not the older `getUser()`, to check identity — current Supabase guidance, verifies the JWT locally (WebCrypto/JWKS) instead of a network round-trip when the project uses asymmetric signing keys (the default for new projects).
-- The home page (`/`) is the landing page for **signed-out visitors only**. It stays publicly reachable, but `VISITOR_ONLY` in `frontend/utils/supabase/proxy.ts` redirects an authenticated visitor to `/dashboard`, exactly like `/login` — once there is a session it has nothing left to show. The nav drops the Home item for every signed-in user (staff included) and the header logo points at `/dashboard` instead, so the redirect is a safety net rather than the normal path.
+- `app/login/page.tsx` + `actions.ts` — email/password `"use server"` action (`signInWithPassword`). On failure it redirects to `/login?error=...` with a deliberately generic message; never surface the raw Supabase error, it enables email enumeration.
+- **Password recovery:** `/forgot-password` calls `resetPasswordForEmail(email, { redirectTo: "<origin>/reset-password" })` and always redirects to the same `?sent=1` (same anti-enumeration reasoning). `/reset-password` must be a **Client Component**: the recovery link carries tokens in the URL **hash fragment**, which never reaches the server, so only the browser client sees it. It auto-detects the fragment and fires `onAuthStateChange` `"PASSWORD_RECOVERY"`; the page listens for that plus a `getSession()` fallback (in case the event fired first), and shows "invalid link" after a 2s timeout if neither fires.
+- `app/auth/signout/route.ts` — POST, signs out, redirects to `/login`. The "Esci"/"Accedi" control in `components/nav-shell.tsx` posts here; `isLoggedIn` is computed server-side in `app/layout.tsx` (`getClaims()`) and passed as a prop, never read client-side.
+- `utils/supabase/proxy.ts` redirects logged-out visitors from `/members`, `/attendance`, `/dashboard`, `/account` to `/login?next=<path>`, and logged-in visitors away from `/login` to `/dashboard`. **`PROTECTED_PREFIXES` there is the single source of truth** for gated routes — update it, not individual pages.
+- Every protected page **also** calls `requireAdmin()` from `utils/supabase/require-admin.ts` (defense in depth per Supabase's SSR auth guide: proxy cookie checks are spoofable).
+- Use `supabase.auth.getClaims()`, not `getUser()` — current guidance, verifies the JWT locally via WebCrypto/JWKS.
+- The home page `/` is for **signed-out visitors only**: publicly reachable, but `VISITOR_ONLY` in the proxy redirects an authenticated visitor to `/dashboard`, like `/login`. The nav drops Home for every signed-in user and the header logo points at `/dashboard`, so the redirect is a safety net, not the normal path.
 
 ## Account management
 
 Two areas, both under `/account`, both in `PROTECTED_PREFIXES`.
 
-- **`/account`** — the signed-in user's own profile. There is deliberately **no
-  "delete my account"** action (the user cut it from scope); removing an account
-  happens only from the user management area below. Editable: `full_name`,
-  `email`, `phone`, `birth_date`, `notes`, plus password. `current_belt`,
-  `current_stripes` and `rank_since` are **read-only on purpose** — promotion is
-  an instructor decision, never self-service. Email changes go through
-  `auth.updateUser({ email })` and only take effect after the confirmation link
-  is opened.
-- **`/members`** — where accounts are managed, together with the member
-  overview. There is deliberately no separate user-management page: one list of
-  people, not two showing the same names. See "Members" below.
+- **`/account`** — the signed-in user's own profile. There is deliberately **no "delete my account"** (cut from scope); removal happens only from `/members`. Editable: `full_name`, `email`, `phone`, `birth_date`, `notes`, password. `current_belt`, `current_stripes`, `rank_since` are **read-only on purpose** — promotion is an instructor decision, never self-service. Email changes go through `auth.updateUser({ email })` and apply only after confirmation.
+- **`/members`** — where accounts are managed, alongside the member overview. There is deliberately no separate user-management page: one list of people, not two.
 
-The profile is the `person` row linked by `person.auth_user_id`, not a separate
-table — the unified registry already models "a person who logs in".
-`20260911000000_account_management.sql` adds an `on auth.users insert` trigger
-that creates the row (plus a backfill), and `getOrCreateProfile()` in
-`frontend/utils/supabase/profile.ts` creates it on demand as a fallback.
+The profile is the `person` row linked by `person.auth_user_id`, not a separate table. `20260911000000` adds the `on auth.users insert` trigger (+ backfill); `getOrCreateProfile()` in `utils/supabase/profile.ts` creates it on demand as a fallback.
 
-**Permission model.** This app is **not** flat — the early "every authenticated
-user is trusted staff" design is gone. Roles come from an _active_
-`assigned_role` (`end_date is null`) and map onto four SQL predicates:
+**Permission model.** Not flat — the early "every authenticated user is trusted staff" design is gone. Roles come from an _active_ `assigned_role` (`end_date is null`):
 
 | Role         | Registro    | Corsi / Presenze                 | Write registry | Manage accounts |
 | ------------ | ----------- | -------------------------------- | -------------- | --------------- |
@@ -93,584 +76,184 @@ user is trusted staff" design is gone. Roles come from an _active_
 | `head_coach` | full        | full                             | yes            | yes             |
 | `admin`      | full        | full                             | yes            | yes             |
 
-`assistant` sitting with `student` rather than with the technical staff was an
-explicit decision, not an oversight. `admin` is a role for whoever runs the
-portal without teaching.
+`assistant` sitting with `student` rather than with technical staff was an explicit decision. `admin` is for whoever runs the portal without teaching.
 
-The predicates are `can_view_registry()`, `can_edit_registry()`,
-`can_manage_users()` and `can_manage_classes()`; `current_access()` returns all
-four as JSON in one RPC.
-The frontend calls them (`getAccess()`, `requireRegistryViewer()`,
-`requireUserManager()`, `requireClassManager()` in
-`utils/supabase/require-admin.ts`) rather than
-re-implementing the rules — keep it that way, one definition per privilege.
-`getAccess()` **fails closed**: an RPC error yields no access, never full access.
-Note the consequence — before `20260911120000` is applied to a project the RPC
-does not exist, so _everyone_ is treated as an allievo.
+SQL predicates: `can_view_registry()`, `can_edit_registry()`, `can_manage_users()`, `can_manage_classes()`; `current_access()` returns all four as JSON in one RPC. The frontend calls them (`getAccess()`, `requireRegistryViewer()`, `requireUserManager()`, `requireClassManager()` in `utils/supabase/require-admin.ts`) instead of re-implementing the rules — keep one definition per privilege. `getAccess()` **fails closed**: an RPC error yields no access. Consequence: before `20260911120000` is applied the RPC does not exist, so everyone is treated as an allievo.
 
-A user with no active role is an allievo. Enforcement is layered: the nav hides
-links, the page calls `requireRegistryViewer()` / `requireUserManager()`
-(answering **404**, not 403 — a student should not learn the staff sections
-exist), and RLS enforces it again in the database. **Hiding a nav link is never
-the access control.**
+A user with no active role is an allievo. Enforcement is layered: nav hides links, the page calls the `require*` guard (answering **404**, not 403 — a student should not learn the staff sections exist), and RLS enforces it again. **Hiding a nav link is never the access control.**
 
 Three things that look simplifiable but are not:
 
-- Writes to `assigned_role` are manager-only. Otherwise any authenticated user
-  could insert an active `head_coach` row for themselves and self-promote,
-  making every restriction above decorative.
-- `guard_person_auth_link` (a trigger on `person`) freezes `auth_user_id` against
-  non-managers, and `current_belt` / `current_stripes` / `rank_since` against
-  non-editors. Both are escalation paths RLS alone cannot close, because a
-  member legitimately holds UPDATE on their own row: repointing the head coach's
-  profile at your own account inherits their privileges, and self-editing your
-  belt would make promotion self-service. The trigger skips when `auth.uid()` is
-  null (service role, and the FK's own `ON DELETE SET NULL` cascade — without
-  that escape, deleting a user would fail).
-- The `admin` enum value is never written as a literal in migration SQL
-  (`role::text = any(...)` is used instead). Postgres forbids using a freshly
-  added enum value in the same transaction that adds it, so a literal would
-  break replaying the migration from scratch.
+- Writes to `assigned_role` are manager-only; otherwise anyone could insert an active `head_coach` row for themselves and every restriction above becomes decorative.
+- `guard_person_auth_link` (trigger on `person`) freezes `auth_user_id` against non-managers and `current_belt` / `current_stripes` / `rank_since` against non-editors. RLS alone cannot close these: a member legitimately holds UPDATE on their own row, so repointing the head coach's profile at their account would inherit privileges, and self-editing a belt would make promotion self-service. The trigger skips when `auth.uid()` is null (service role, and the FK's own `ON DELETE SET NULL` cascade — without that escape, deleting a user would fail).
+- The `admin` enum value is never a literal in migration SQL (`role::text = any(...)` instead): Postgres forbids using a freshly added enum value in the transaction that adds it, so a literal breaks a from-scratch replay.
 
-**Bootstrap.** Nobody has a role after the migrations, so everyone is an allievo
-and no one can reach user management. The first `head_coach` must be inserted by
-hand; the statement sits at the bottom of both migrations, commented out on
-purpose — a migration that silently grants privileges is a privilege grant
-hiding in a schema change.
+**Bootstrap.** After the migrations nobody has a role, so nobody can reach user management. The first `head_coach` must be inserted by hand; the statement sits commented out at the bottom of both migrations on purpose — a migration that silently grants privileges is a privilege grant hiding in a schema change.
 
-**Service-role key.** `frontend/utils/supabase/admin.ts` reads
-`SUPABASE_SECRET_KEY` (no `NEXT_PUBLIC_` prefix) and is marked `server-only`, so
-importing it from a Client Component is a build error. This key **bypasses RLS**,
-so every server action in `frontend/app/members/actions.ts` re-checks `requireUserManager()`
-itself — the database will not enforce the privilege on those calls. Without the
-key the page still renders but the destructive controls are disabled.
+**Service-role key.** `utils/supabase/admin.ts` reads `SUPABASE_SECRET_KEY` (no `NEXT_PUBLIC_`) and is `server-only`, so importing it from a Client Component is a build error. It **bypasses RLS**, so every server action in `app/members/actions.ts` re-checks `requireUserManager()` itself. Without the key the page renders but destructive controls are disabled.
 
-Revoking access deletes the `auth` user only. `person.auth_user_id` is
-`ON DELETE SET NULL`, so the registry row and its attendance history survive as
-an account-less person — revoking must not erase the gym's records.
+Revoking access deletes the `auth` user only. `person.auth_user_id` is `ON DELETE SET NULL`, so the registry row and attendance history survive as an account-less person — revoking must not erase the gym's records.
 
 ## Forced password change
 
-Every account `addPerson` creates starts on the same published default
-password, so the app opens nothing else until that password is replaced.
+Every account `addPerson` creates starts on the same published default password, so the app opens nothing else until it is replaced.
 
-- The obligation lives in **`app_metadata.must_change_password`**, not
-  `user_metadata`. That is the whole point: `user_metadata` is writable by the
-  user it describes, so a member could clear their own obligation; `app_metadata`
-  is writable only by the service role and still rides in the verified JWT,
-  where both the proxy and `requireSession()` can read it with no extra query.
-- Enforced in two places, the usual defense in depth: `frontend/utils/supabase/proxy.ts`
-  redirects every path to `/change-password`, and `requireAdmin()` does the same
-  per page. `/auth/*` is exempt, or signing out would be unreachable and the only
-  escape would be clearing cookies.
-- `requireSession()` vs `requireAdmin()`: identical except that `requireAdmin`
-  enforces the pending change. `/change-password` is the one page that must use
-  `requireSession`, or it would redirect to itself forever. Every other protected
-  page uses `requireAdmin`.
-- The action **refuses the default password** as the new one — without that check
-  the whole flow would be theatre — then clears the flag with the admin client
-  and calls `refreshSession()`. That refresh is not optional: the old JWT still
-  carries `must_change_password: true`, so without it the proxy bounces the user
-  straight back to the form.
+- The obligation lives in **`app_metadata.must_change_password`**, not `user_metadata`: the latter is writable by the user it describes (they could clear their own obligation), the former only by the service role, and it still rides in the verified JWT where the proxy and `requireSession()` read it with no extra query.
+- Enforced twice: `utils/supabase/proxy.ts` redirects every path to `/change-password`, and `requireAdmin()` does the same per page. `/auth/*` is exempt, or signing out would be unreachable.
+- `requireSession()` vs `requireAdmin()`: identical except that `requireAdmin` enforces the pending change. `/change-password` is the one page that must use `requireSession` or it redirects to itself forever; every other protected page uses `requireAdmin`.
+- The action **refuses the default password** as the new one (without that the flow is theatre), clears the flag with the admin client, then calls `refreshSession()` — not optional: the old JWT still carries `must_change_password: true` and the proxy would bounce the user back.
 
 ## Members
 
-`/members` is the member overview: every person in the gym with their active
-roles, belt, accumulated hours and join date. It is also where accounts are
-managed — invite, password reset, revoke access — because splitting the two
-would mean two lists of the same people.
+`/members` lists every person with active roles, belt, hours and join date, and is also where accounts are managed (invite, password reset, revoke) — splitting the two would mean two lists of the same people.
 
-Visible to instructors, maestri and admin. An **instructor sees it read-only**:
-the page renders no action controls for them (`access.canEditRegistry`), and RLS
-refuses the writes anyway.
+Visible to instructors, maestri and admin. An **instructor sees it read-only**: no action controls render (`access.canEditRegistry`) and RLS refuses the writes anyway.
 
-- **Data source:** the `member_overview` view
-  (`20260911140000_member_overview.sql`), one row per person with
-  `active_roles` (a text array), `is_active` and `total_hours` pre-joined.
-  Without it, filtering by role could not be paginated or counted correctly —
-  the roles live in another table, so the database has to do the flattening.
-- **Filters and paging live in the URL** (`q`, `ruolo`, `cintura`, `attivi`,
-  `p`), submitted by a plain `method="get"` form. The list is therefore
-  shareable, survives a reload, and the page needs no client JS. Row actions
-  carry the current query back in a `_query` hidden field so acting on a row
-  does not reset the list you were looking at.
-- **A portal-only admin is excluded from the list.** `admin` means "runs the
-  portal without teaching", so such an account is not a member of the gym and
-  appears nowhere the app asks "which of our people is this" — not the Registro
-  list, not a roll call, not an instructor dropdown. The one place it stays
-  selectable is "Aggiungi persona", where an admin account is actually created.
-  **`frontend/utils/members.ts` is the single home for this rule**
-  (`PORTAL_ONLY_ROLE`, `PORTAL_ONLY_ROLES`, `TECHNICAL_ROLES`); import from
-  there rather than redeclaring the strings per page. The filter is array
-  _equality_ (`not active_roles eq {admin}`), not "contains admin": somebody who
-  is both maestro and admin still trains here and stays visible. `active_roles`
-  is coalesced to an empty array and sorted in the view, so `{admin}` matches
-  exactly the admin-only case. The Registro role filter drops its "Admin" option
-  for the same reason — it would always return nothing. Note this is a
-  visibility rule enforced in the queries, not in RLS: the row still exists and
-  a manager can still act on the account.
-- **Search matches the name only**, never the email — an explicit decision.
-  User input is stripped of `%`, `,`, `(`, `)` and backslashes before reaching
-  `ilike`, since those characters break PostgREST's filter syntax.
-- **Adding a person also creates their account.** (This requirement was
-  reversed once mid-development — the two used to be separate. Trust this
-  description, not any older comment.)
-  `addPerson` creates the auth user with the shared default password from
-  `frontend/utils/default-password.ts`, `email_confirm: true` (so **no email is
-  sent** and the account works immediately) and `app_metadata.must_change_password`,
-  then fills in the `person` row the trigger just created and assigns the role.
-  Required: name, email, role, join date and belt — validated in the server
-  action, not only through the form's `required` attributes, which a crafted
-  POST skips. Optional: phone, birth date, stripes, rank date, notes.
-  **Order matters:** the auth user is created _first_, because that is the step
-  that fails on a duplicate email; doing it after the registry write would strand
-  a person row with no account every time the address is already taken. Most people in a gym are records to
-  track, not portal users. It runs on the _user's_ Supabase client, not the
-  service-role one, so RLS does the enforcing; it needs no secret key.
-- **"Reimposta password"** (`setTemporaryPassword`) does _not_ email a recovery link, and shows no password on screen. It is a single confirmed button in the kebab that restores the account to the shared default from `frontend/utils/default-password.ts` — the one `addPerson` starts every account on, and the only one that needs no reading back off the screen because it is already printed in the "Aggiungi persona" panel. The action **re-arms `must_change_password`**; without that flag the account would be left sitting on a password everybody knows.
-- **"Invita al portale"** (`inviteToPortal`) covers the member who has _no_
-  account — in practice someone whose access was revoked. It sends an email and
-  lets them choose their own password, so no default password and no forced
-  change are involved. It is the only action in the app that sends mail.
-- **`rank_since` vs `stripe_since`.** `rank_since` means _belt promotion date_ (label "Cambio cintura da"); `stripe_since`, added in `20260911220000`, means _last stripe awarded_ (label "Ultima tacca"). They move at different rates — a belt lasts years, stripes come every few months — and "how long at this belt" is what promotion eligibility hangs on, so it must not be inferred from the stripe date. `20260911200000` split them the other way round (a `belt_since` column) and `20260911220000` corrects it; that correction is a follow-up rather than an edit because the first one had already been applied. Existing rows were backfilled from `rank_since`, the closest approximation available; outliers need correcting by hand. Both dates are frozen by `guard_person_auth_link`, because backdating either is how you would fake eligibility for the next promotion.
-- **Each row shows two day counters** under the name: days since `joined_at` (how long they have trained at all) and days since `rank_since` (how long at the current belt — the figure promotion eligibility actually hangs on). `daysSince()` in `frontend/utils/dates.ts` normalises **both ends to UTC midnight**: comparing a UTC-parsed `date` column against a local-time `now` drifts by a day depending on the viewer's timezone and the hour of the request. A future date clamps to 0 rather than going negative.
-- **The list row shows no email** — it was removed to keep the row scannable. Everything recorded about a person lives on the detail page, `/members/[id]`, reached from the kebab's **Dettagli** item. That page reads from `person` (plus `person_hours`) rather than from `member_overview`: a single record needs no pre-joined roles array, and the table carries `notes`, which the list view leaves out. It also lists the **full role history**, closed assignments included. The kebab carries the list's current filters in a `from` param so the back link returns to the exact list you opened it from.
-- **Dettagli is available to instructors too**, so the kebab now renders for every viewer; only the account actions inside it are gated on `canEditRegistry`.
-- **Every row action sits behind a kebab menu** (`frontend/components/row-menu.tsx`), pinned to the right of the row, so a destructive control is never one stray tap away while scrolling. The menu is a Client Component; the action forms are server-rendered and passed in as `children`, which is what keeps the server actions working inside it. It closes on Escape and on an outside pointer press, and needs no explicit close-on-submit because every action navigates and remounts the row. Rows with no available action render no kebab at all.
-- A member with `auth_user_id = null` shows as **"senza account"**: either
-  someone never invited, or someone whose access was revoked. Revocation keeps
-  the registry row and the attendance history on purpose.
-- `20260911160000_link_invited_person.sql` makes the `auth.users` trigger **link**
-  a new account to an existing account-less registry row with the same email
-  (case-insensitive) instead of inserting a second row. Without it, inviting
-  someone already in the registry would duplicate them. The fix lives in the
-  trigger rather than in the server action so that every path that creates an
-  auth user — the invite button, the Supabase Dashboard, anything added later —
-  is covered.
+- **Data source:** the `member_overview` view (`20260911140000`), one row per person with `active_roles` (text array), `is_active`, `total_hours` pre-joined. Without it, filtering by role could not be paginated or counted correctly, since roles live in another table.
+- **Filters and paging live in the URL** (`q`, `ruolo`, `cintura`, `attivi`, `p`), submitted by a plain `method="get"` form — shareable, reload-proof, no client JS. Row actions carry the query back in a `_query` hidden field so acting on a row does not reset the list.
+- **A portal-only admin is excluded from the list.** `admin` means "runs the portal without teaching", so such an account appears nowhere the app asks "which of our people is this" — not the Registro list, roll calls, or instructor dropdowns. It stays selectable only in "Aggiungi persona". **`frontend/utils/members.ts` is the single home for this rule** (`PORTAL_ONLY_ROLE`, `PORTAL_ONLY_ROLES`, `TECHNICAL_ROLES`) — import, don't redeclare. The filter is array _equality_ (`not active_roles eq {admin}`), not "contains admin": someone who is both maestro and admin still trains here. `active_roles` is coalesced to an empty array and sorted in the view so `{admin}` matches exactly the admin-only case. The role filter drops its "Admin" option for the same reason. This is a query-level visibility rule, not RLS: the row exists and a manager can still act on it.
+- **Search matches the name only**, never the email — explicit decision. Input is stripped of `%`, `,`, `(`, `)` and backslashes before `ilike`, since those break PostgREST filter syntax.
+- **Adding a person also creates their account.** (This requirement was reversed once mid-development; trust this, not older comments.) `addPerson` creates the auth user with the shared default password from `utils/default-password.ts`, `email_confirm: true` (**no email sent**, account works immediately) and `app_metadata.must_change_password`, then fills the `person` row the trigger just created and assigns the role. Required (validated in the server action, not only via the form's `required`, which a crafted POST skips): name, email, role, join date, belt. Optional: phone, birth date, stripes, rank date, notes. **Order matters:** the auth user is created _first_, because that is the step that fails on a duplicate email; otherwise a duplicate strands a person row with no account. It runs on the _user's_ client, not the service-role one, so RLS enforces it and no secret key is needed.
+- **"Reimposta password"** (`setTemporaryPassword`) does not email a link and shows no password on screen: one confirmed kebab button restoring the shared default from `utils/default-password.ts` — already printed in the "Aggiungi persona" panel, so nothing must be read off the screen. It **re-arms `must_change_password`**; without that the account sits on a password everybody knows.
+- **"Invita al portale"** (`inviteToPortal`) covers a member with no account (in practice, revoked access). It emails them and lets them choose their own password — no default password, no forced change. It is the only action in the app that sends mail.
+- **`rank_since` vs `stripe_since`.** `rank_since` = belt promotion date (label "Cambio cintura da"); `stripe_since` (added in `20260911220000`) = last stripe awarded (label "Ultima tacca"). They move at different rates, and "how long at this belt" is what promotion eligibility hangs on, so it must not be inferred from the stripe date. `20260911200000` did it the other way round (a `belt_since` column) and `20260911220000` corrects it as a follow-up because the first had already been applied. Rows were backfilled from `rank_since`; outliers need fixing by hand. Both dates are frozen by `guard_person_auth_link` — backdating either is how you fake eligibility.
+- **Each row shows two day counters** under the name: days since `joined_at` and days since `rank_since` (the figure eligibility hangs on). `daysSince()` in `utils/dates.ts` normalises **both ends to UTC midnight** — comparing a UTC-parsed `date` against a local-time `now` drifts by a day depending on timezone and hour. A future date clamps to 0.
+- **The list row shows no email**, removed to keep rows scannable. Everything recorded about a person lives on `/members/[id]`, reached from the kebab's **Dettagli**. That page reads `person` (+ `person_hours`) rather than `member_overview`: one record needs no pre-joined roles array, and the table carries `notes`, which the list omits. It also lists the **full role history**, closed assignments included. The kebab carries the list's filters in a `from` param so the back link returns to the exact list.
+- **Dettagli is available to instructors too**, so the kebab renders for every viewer; only the account actions inside it are gated on `canEditRegistry`.
+- **Every row action sits behind a kebab menu** (`components/row-menu.tsx`), pinned right, so a destructive control is never one stray tap away while scrolling. The menu is a Client Component; the action forms are server-rendered and passed in as `children`, which keeps the server actions working. It closes on Escape and outside pointer press, and needs no close-on-submit since every action navigates and remounts the row. Rows with no available action render no kebab.
+- A member with `auth_user_id = null` shows as **"senza account"** (never invited, or revoked). Revocation keeps the registry row and attendance history on purpose.
+- `20260911160000_link_invited_person.sql` makes the `auth.users` trigger **link** a new account to an existing account-less row with the same email (case-insensitive) instead of inserting a duplicate. The fix lives in the trigger, not the server action, so every path that creates an auth user is covered.
 
-**Views bypass RLS unless you say otherwise.** A Postgres view runs with its
-owner's privileges, so `security_invoker = on` is mandatory on every view in
-this project — without it an allievo could read the whole gym through the view
-even though the table policies forbid it. `person_hours` was created in
-`20260910000000` without the option and was readable by everyone; the Registro
-migration fixes it. Check this on any new view.
+**Views bypass RLS unless you say otherwise.** A Postgres view runs with its owner's privileges, so `security_invoker = on` is mandatory on **every** view here — without it an allievo reads the whole gym through the view. `person_hours` was created without it in `20260910000000` and the Registro migration fixes it. Check this on any new view.
 
 ## Attendance and courses
 
-Two sections, one data model. `/courses` is where staff describe the recurring
-classes; `/attendance` is the calendar those definitions generate, the roll call
-behind each lesson, and the place a member checks themselves in.
+`/courses` describes the recurring classes; `/attendance` is the calendar they generate, the roll call, and where a member checks in.
 
 **Three tables** (`20260912000000_class_schedule.sql`):
 
-- `course` — the recurring _rule_, not a lesson: `weekdays` (an ISO
-  `smallint[]`, 1 = Monday), one `start_time`/`end_time` pair, an optional
-  `starts_on`/`ends_on` range, and the two check-in margins. A course that runs
-  at different times on different days is modelled as **two courses** — that
-  trade buys one table instead of a `course_slot` join table. It also carries
-  `instructor_id`, the course's **default** instructor: `sync_course_sessions()`
-  copies it onto the sessions it creates, and **fills it in on future sessions
-  that have none** (`20260913000000_session_instructor_backfill.sql`). A
-  non-null per-lesson instructor is a deliberate substitution and is never
-  overwritten. Before that migration the function only ever set the instructor
-  at insert time, so a course whose calendar had already been generated showed
-  "nessun istruttore" in Presenze no matter what the course said — which was
-  the usual case, since the calendar is generated the moment a course is
-  created. The consequence of the fix: null now means "not set", not
-  "explicitly nobody", so clearing one lesson's instructor from the roll call
-  is re-filled the next time the course is saved. (Commit `2da3e44` dropped
-  this field from the form and moved the instructor to the lesson only; that was
-  reversed — the default belongs on the course. Do not remove it again.) The
-  instructor dropdown offers `instructor` and `head_coach` only — **not**
-  `admin`, which means "runs the portal", not "teaches", exactly as in the
-  Registro list. A course already pointing at someone who has since lost their
-  technical role keeps them as a selectable option, or the browser would fall
-  back to the first entry and silently reassign the course on the next save.
-- `class_session` — the lesson that actually happens. Its times are **copied**
-  from the course at generation rather than joined through it, so editing a
-  course never silently rewrites lessons that already took place.
-- `attendance` — rewired onto `session_id`. `class_date`, `led_by`,
-  `duration_hours` and `unique (person_id, class_date)` are gone; the key is
-  now `unique (person_id, session_id)`.
+- `course` — the recurring _rule_: `weekdays` (ISO `smallint[]`, 1 = Monday), one `start_time`/`end_time` pair, optional `starts_on`/`ends_on`, and two check-in margins. A course running at different times on different days is modelled as **two courses** — that trade buys one table instead of a `course_slot` join table. It also carries `instructor_id`, the **default** instructor: `sync_course_sessions()` copies it onto sessions it creates and **fills it in on future sessions that have none** (`20260913000000_session_instructor_backfill.sql`). A non-null per-lesson instructor is a deliberate substitution and is never overwritten. Before that migration the instructor was only set at insert time, so an already-generated calendar showed "nessun istruttore" forever — the usual case, since the calendar is generated the moment a course is created. Consequence of the fix: null means "not set", not "explicitly nobody", so clearing one lesson's instructor is re-filled next time the course is saved. (Commit `2da3e44` dropped this field and moved the instructor to the lesson only; that was reversed — the default belongs on the course. **Do not remove it again.**) The dropdown offers `instructor` and `head_coach` only, **not** `admin`. A course pointing at someone who has since lost their technical role keeps them as a selectable option, or the browser falls back to the first entry and silently reassigns the course on save.
+- `class_session` — the lesson that actually happens. Times are **copied** from the course at generation, not joined, so editing a course never rewrites lessons that already took place.
+- `attendance` — rewired onto `session_id`. `class_date`, `led_by`, `duration_hours` and `unique (person_id, class_date)` are gone; the key is `unique (person_id, session_id)`.
 
-**Hours are an opening balance plus what was recorded.** The estimate is not
-an ongoing calculation: it exists only to give each member a starting figure on
-the day tracking was switched on, and it is **frozen** from that day (a unit
-test asserts exactly this). Every hour after go-live can arrive only through a
-member's own check-in or an instructor's roll call — which the `attendance` RLS
-policies already enforce, accepting an insert from a class manager or from the
-member themselves with `checked_in_by = 'self'` inside the check-in window.
-This module must never become a second way of adding an hour.
+**Hours are an opening balance plus what was recorded.** The estimate exists only to give each member a starting figure on go-live day and is **frozen** from that date (a unit test asserts this). Every hour after go-live arrives only through a member's check-in or an instructor's roll call, which the `attendance` RLS policies enforce (accepting an insert from a class manager, or from the member with `checked_in_by = 'self'` inside the window). **This module must never become a second way of adding an hour.**
 
-**Hours before the app existed are estimated, not counted.** `person_hours`
-only knows about attendance recorded in FAIXABJJ, so a member who has trained
-for three years would read as zero — worse than useless for the one thing the
-figure exists to inform. `frontend/utils/hours.ts` is the single definition:
-hours before `TRACKING_STARTED_ON` are assumed at `LESSONS_PER_WEEK` (3) a
-week since `joined_at`, hours from that date on are counted, and the total is
-the sum.
+**Hours before the app existed are estimated, not counted.** `person_hours` only knows FAIXABJJ attendance, so a three-year member would read as zero. `frontend/utils/hours.ts` is the single definition: hours before `TRACKING_STARTED_ON` are assumed at `LESSONS_PER_WEEK` (3) a week since `joined_at`, hours from that date on are counted, total is the sum.
 
-- **`TRACKING_STARTED_ON` is the whole point of the design and must be set to
-  the real go-live date.** Without a cutoff, estimating "three a week since
-  joining" while also counting real attendance counts every week from now on
-  twice. A date left in the future inflates every total; the code clamps the
-  estimate at today so it cannot run into weeks that have not happened, but
-  that is a guard, not a substitute for setting it.
-- The average is **one constant for everybody**, an explicit decision. It is a
-  declared estimate, not data — a per-person figure would dress an assumption
-  up as a measurement.
-- **Anywhere an estimated total is shown it must say so.** The Registro row
-  appends "(stima)" with the explanation in its `title`; the member detail
-  page breaks the total into _Ore totali / Ore registrate / Ore stimate_ with
-  the method spelled out, because that record is what decides a promotion;
-  `/account` shows the member their own total with the same caveat.
-- Partial weeks count pro rata rather than rounding up, or somebody who joined
-  yesterday would be handed a free lesson.
+- **`TRACKING_STARTED_ON` must be set to the real go-live date** — the whole point of the design. Without a cutoff, estimating while also counting real attendance double-counts every week from now on. A future date inflates every total; the code clamps the estimate at today, but that is a guard, not a substitute.
+- The average is **one constant for everybody**, explicitly: it is a declared estimate, and a per-person figure would dress an assumption up as a measurement.
+- **Anywhere an estimated total is shown it must say so.** The Registro row appends "(stima)" with the explanation in `title`; the member detail page splits _Ore totali / Ore registrate / Ore stimate_ with the method spelled out (that record decides promotions); `/account` shows the member their own total with the same caveat.
+- Partial weeks count pro rata, or someone who joined yesterday gets a free lesson.
 
-**One attendance is one hour**, and `duration_hours` was _removed_ rather than
-defaulted to 1: with a default, a crafted write can still store 2 and the rule
-becomes a convention. The cost is that a four-hour seminar cannot be one row.
-`person_hours` is therefore `count(*) filter (where present)`, not a sum — and
-because `member_overview` reads it, that view has to be dropped and recreated
-in the same migration or the `drop view` is refused.
+**One attendance is one hour**, and `duration_hours` was _removed_ rather than defaulted to 1: with a default, a crafted write stores 2 and the rule becomes a convention. Cost: a four-hour seminar cannot be one row. `person_hours` is therefore `count(*) filter (where present)`, not a sum — and because `member_overview` reads it, that view must be dropped and recreated in the same migration or the `drop view` is refused.
 
-**Permissions** (`20260912010000_class_schedule_access.sql`) add a fourth
-predicate, `can_manage_classes()` = instructor + head_coach + admin, exposed by
-`current_access()` as `canManageClasses` and guarded in the app by
-`requireClassManager()`. It is deliberately **not** `can_edit_registry()`: an
-instructor runs the classes but must never change anybody's belt. Two
-privileges, two predicates — do not collapse them.
+**Permissions** (`20260912010000_class_schedule_access.sql`): `can_manage_classes()` = instructor + head_coach + admin, exposed as `canManageClasses`, guarded by `requireClassManager()`. It is deliberately **not** `can_edit_registry()`: an instructor runs classes but must never change a belt. Two privileges, two predicates — do not collapse them.
 
-**`/attendance` is open to every signed-in member**, unlike `/members`. This is
-the one previously staff-only section a student reaches, and it has to be:
-check-in must live where the lessons are listed, and there is only one such
-list. The page calls `requireAdmin()` and branches on `canManageClasses` —
-staff get the roll call link and the presence count, a member gets a check-in
-button for themselves.
+**`/attendance` is open to every signed-in member**, unlike `/members`: check-in must live where the lessons are listed, and there is only one such list. The page calls `requireAdmin()` and branches on `canManageClasses` — staff get the roll call link and presence count, a member gets a check-in button for themselves.
 
-**Two views, one page.** `/attendance` renders either the weekly list (default)
-or a month grid, switched by a segmented control. Both are server-rendered and
-need no client JS, because the whole view state is in the URL — `v=griglia`
-selects the grid, `da` is the anchor date, `g` is the day opened under the
-grid. Three things worth knowing before changing it:
+**Two views, one page.** `/attendance` renders the weekly list (default) or a month grid, switched by a segmented control. Both are server-rendered, with all view state in the URL — `v=griglia` selects the grid, `da` is the anchor date, `g` is the day opened under the grid.
 
-- **`da` is one anchor read two ways**: the week it falls in, or the month.
-  That is what makes toggling keep your place instead of jumping back to today,
-  and it is why there is no second "month" parameter.
-- **The grid queries `monthGridRange()`, not the month.** The range covers
-  whole Monday-to-Sunday weeks, so lessons on the days spilling in from the
-  neighbouring months are drawn rather than left as empty cells. The month
-  helpers (`monthStart`, `shiftMonth`, `monthGridRange`, `formatMonthHeading`)
-  live in `frontend/utils/schedule.ts` with the rest of the calendar
-  arithmetic, and are unit-tested — including the 31-January trap that plain
-  date maths falls into.
-- **The check-in button is deliberately absent from the grid** (an explicit
-  decision): a grid cell has no room for it. The grid shows where you stand —
-  a tick, "presente" — and the action stays in the list view. Staff keep their
-  roll-call link in both, since that is navigation rather than check-in.
-- **Where a cell leads depends on what is behind it.** For staff, a day with a
-  single lesson links straight to that lesson's roll call; going through the
-  day panel to click the only thing in it is a step that does nothing. A day
-  with several lessons — and any day for a member — opens the panel, which
-  carries an `#giorno` anchor because on a phone it sits below the fold and
-  without the jump the tap looks like it did nothing. The whole cell is the
-  link, not the entries inside it: the entries are a few pixels tall on a
-  phone, and an anchor inside an anchor is invalid HTML.
+- **`da` is one anchor read two ways**: the week it falls in, or the month. That is what makes toggling keep your place, and why there is no second "month" parameter.
+- **The grid queries `monthGridRange()`, not the month**: the range covers whole Monday–Sunday weeks so spill-in days are drawn rather than left empty. The month helpers (`monthStart`, `shiftMonth`, `monthGridRange`, `formatMonthHeading`) live in `utils/schedule.ts` with the rest of the calendar arithmetic and are unit-tested, including the 31-January trap.
+- **The check-in button is deliberately absent from the grid** (explicit decision): a cell has no room. The grid shows where you stand (a tick, "presente"); the action stays in the list view. Staff keep the roll-call link in both, since that is navigation.
+- **Where a cell leads depends on what is behind it.** For staff, a day with one lesson links straight to its roll call. A day with several — and any day for a member — opens the panel, which carries a `#giorno` anchor because on a phone it sits below the fold. The whole cell is the link, not the entries inside it: entries are a few pixels tall, and an anchor inside an anchor is invalid HTML.
 
-Seven columns cannot shrink below about 34rem and stay legible, so the grid
-scrolls inside its own container; the page itself must never scroll sideways.
+Seven columns cannot shrink below ~34rem and stay legible, so the grid scrolls inside its own container; the page itself must never scroll sideways.
 
-**The roll call is ordered present-first, then by belt** from white to black,
-fewer stripes first, then by name — the order a class lines up in.
-`beltRank()` in `frontend/utils/supabase/profile.ts` is the single definition
-of that order (the dashboard's belt chart uses it too); an unrecognised belt
-sorts last, because it is a data problem and does not belong at the top of
-every roll call. The order is computed on load, so tapping a state never
-makes a row jump under the finger; the list settles into the new order after
-"Salva appello".
+**The roll call is ordered present-first, then by belt** white→black, fewer stripes first, then by name — the order a class lines up in. `beltRank()` in `utils/supabase/profile.ts` is the single definition of that order (the dashboard's belt chart uses it too); an unrecognised belt sorts last, because it is a data problem. The order is computed on load so tapping a state never makes a row jump under the finger; it settles after "Salva appello".
 
-**The lesson's instructor starts ticked present.** Whoever is teaching is on
-the mat. It is a _default_, not a forced value: the state can still be
-changed, and nothing is written until the roll call is submitted — so the
-rule that an hour is only ever recorded by a check-in or an instructor's
-confirmation still holds. The instructor here is the one on the session
-(`class_session.instructor_id`), not the course default, and the row carries
-an "istruttore" tag so the pre-selection does not look arbitrary.
-**Student check-in** is an RLS `insert` policy requiring four things together:
-the row is theirs, `present` is true, `checked_in_by = 'self'`, and
-`session_checkin_open(session_id)`. Undo is allowed only on their own `'self'`
-row and only while the window is open. `checked_in_by` is what makes a row the
-staff created un-undoable by the member it describes.
+**The lesson's instructor starts ticked present** — whoever is teaching is on the mat. It is a _default_, not a forced value: the state can be changed, and nothing is written until submit, so "an hour is only ever recorded by a check-in or an instructor's confirmation" still holds. The instructor here is `class_session.instructor_id`, not the course default, and the row carries an "istruttore" tag so the pre-selection does not look arbitrary.
 
-**The roll call is a snapshot, and must not delete what it never saw.** The
-form carries a hidden `loaded_at`; on save, a member left "non registrato"
-whose `self` row was created _after_ that instant is kept rather than deleted,
-and the confirmation says how many. Without it the ordinary case destroys data:
-the instructor opens the roll call at 19:00, members check in at 19:05, the
-save at 19:20 wipes them, silently.
+**Student check-in** is an RLS `insert` policy requiring four things together: the row is theirs, `present` is true, `checked_in_by = 'self'`, and `session_checkin_open(session_id)`. Undo is allowed only on their own `'self'` row and only while the window is open. `checked_in_by` is what makes a staff-created row un-undoable by the member.
 
-**A confirmed check-in keeps its provenance.** `saveRollCall` writes only the
-rows whose state actually changed, so a `self` row the instructor leaves
-present stays `self`. Rewriting it to `staff` would erase the only record of
-who claimed that hour — which is the question the tag exists to answer — and
-would take away the member's own undo.
+**The roll call is a snapshot, and must not delete what it never saw.** The form carries a hidden `loaded_at`; on save, a member left "non registrato" whose `self` row was created _after_ that instant is kept rather than deleted, and the confirmation says how many. Without it the ordinary case destroys data: roll call opened at 19:00, check-ins at 19:05, save at 19:20 wipes them silently.
 
-**Suspending a course stops it** (`20260918010000_suspended_course_checkin.sql`).
-`is_active` used to describe only the course row: the lessons it had already
-generated stayed `scheduled`, kept appearing in the calendar and kept accepting
-check-in, so suspending changed nothing a member could see.
-`session_checkin_open()` now requires `c.is_active`, and `session_overview`
-carries `course_active` so the calendar can drop a suspended course **from
-today on** while keeping its past lessons. Three consequences worth knowing:
-the flag is authoritative rather than destructive, so reactivating brings the
-whole calendar back and a suspension never loses a schedule; past lessons are
-untouched, because they happened; and `/attendance/[id]` stays reachable for
-them, with a notice, since correcting the record of a lesson already taught is
-exactly what an instructor needs after putting a course on hold. The view
-exposes the flag instead of filtering on it itself — a view that decided this
-would leave no way to reach those past lessons at all.
+**A confirmed check-in keeps its provenance.** `saveRollCall` writes only rows whose state changed, so a `self` row left present stays `self`. Rewriting it to `staff` would erase who claimed that hour and remove the member's undo.
 
-**An error is not a closed window.** `checkIn` maps only `23505` to "already
-present" and `42501` to "check-in closed"; anything else — the network, a
-missing migration, a mangled session id — gets a generic message and the real
-reason goes to the server log through `logDbError()`. The old code reported
-every failure as "closed", which sent the member and the instructor to check
-the clock for a problem that was never about time: with a migration missing,
-*every* check-in reads as closed. `undoCheckIn` splits the same two cases — a
-refusal deletes zero rows and raises nothing, an error is a different event.
-The database's own text never reaches the screen: codes and constraint names
-describe the schema.
+**Suspending a course stops it** (`20260918010000_suspended_course_checkin.sql`). `is_active` used to describe only the course row, so already-generated lessons kept appearing and accepting check-in. `session_checkin_open()` now requires `c.is_active`, and `session_overview` carries `course_active` so the calendar drops a suspended course **from today on** while keeping past lessons. Consequences: the flag is authoritative rather than destructive (reactivating brings the calendar back, a suspension never loses a schedule); past lessons are untouched because they happened; and `/attendance/[id]` stays reachable for them, with a notice, since correcting a lesson already taught is exactly what an instructor needs. The view exposes the flag instead of filtering on it, or those past lessons would be unreachable.
 
-**The check-in window is deliberately narrow**: 15 minutes before the start, 0
-after the end (`20260918000000_checkin_window_defaults.sql`; the app's form
-defaults match). The original 60/30 left consecutive lessons open at the same
-time, and one attendance is one hour — a member could collect three by tapping
-three buttons. A member who forgot has to ask the instructor, which is the
-right escalation: the roll call is the authoritative record, the check-in is a
-convenience on top of it.
+**An error is not a closed window.** `checkIn` maps only `23505` to "already present" and `42501` to "check-in closed"; anything else gets a generic message and the real reason goes to the server log via `logDbError()`. The old code reported every failure as "closed", sending people to check the clock — with a migration missing, *every* check-in read as closed. `undoCheckIn` splits the same two cases: a refusal deletes zero rows and raises nothing; an error is a different event. The database's own text never reaches the screen — codes and constraint names describe the schema.
+
+**The check-in window is deliberately narrow**: 15 minutes before the start, 0 after the end (`20260918000000_checkin_window_defaults.sql`; the form defaults match). The original 60/30 left consecutive lessons open simultaneously, and one attendance is one hour — a member could collect three by tapping three buttons. A member who forgot asks the instructor: the roll call is the authoritative record, check-in is a convenience on top.
 
 **Two things that look like duplication but are not:**
 
-- The **weekday expansion** lives in TypeScript (`frontend/utils/schedule.ts`,
-  covered by `schedule.test.ts`) and Postgres only receives the resulting list
-  of dates, through `sync_course_sessions(course_id, dates[])`. SQL does the
-  part only SQL can do atomically: drop the future sessions the new schedule
-  supersedes **but only where no attendance exists**, then insert the rest.
-  Past sessions are never touched.
-- The **timezone maths** lives only in SQL. `session_date + start_time` is
-  wall-clock and `now()` is `timestamptz`; comparing them directly opens
-  check-in an hour early under DST. `gym_timezone()` (`Europe/Rome`) is applied
-  once, and `session_overview` exposes `checkin_opens_at`/`checkin_closes_at` as
-  instants so `checkinState()` in TypeScript only ever compares two timestamps.
+- **Weekday expansion** lives in TypeScript (`utils/schedule.ts`, covered by `schedule.test.ts`); Postgres only receives the resulting dates through `sync_course_sessions(course_id, dates[])`. SQL does the part only SQL can do atomically: drop the future sessions the new schedule supersedes **but only where no attendance exists**, then insert the rest. Past sessions are never touched.
+- **Timezone maths** lives only in SQL. `session_date + start_time` is wall-clock and `now()` is `timestamptz`; comparing them directly opens check-in an hour early under DST. `gym_timezone()` (`Europe/Rome`) is applied once, and `session_overview` exposes `checkin_opens_at`/`checkin_closes_at` as instants, so `checkinState()` in TypeScript only compares two timestamps.
 
-**A course with attendance can only be suspended, never deleted.** The rule is
-a `before delete` trigger (`guard_course_delete`), not a check in the server
-action, because the service-role key bypasses RLS — and because `class_session`
-cascades from `course` and `attendance` cascades from `class_session`, a plain
-delete would take the gym's hours with it. Same reasoning as "revoca accesso"
-in the Registro.
+**A course with attendance can only be suspended, never deleted.** The rule is a `before delete` trigger (`guard_course_delete`), not a check in the server action, because the service-role key bypasses RLS — and because `class_session` cascades from `course` and `attendance` from `class_session`, a plain delete would take the gym's hours with it. Same reasoning as "revoca accesso".
 
-**Cancelling a lesson** sets `status = 'cancelled'`: check-in closes, the row
-shows struck through, and attendance already recorded survives.
+**Cancelling a lesson** sets `status = 'cancelled'`: check-in closes, the row shows struck through, recorded attendance survives.
 
-Both views here — `session_overview` and `course_overview` — carry
-`security_invoker = on`, like every view in this project. Note the consequence
-on `session_overview.present_count`: it respects the caller's own attendance
-policy, so a student would see only their own row counted. The UI shows that
-count to staff only.
+Both `session_overview` and `course_overview` carry `security_invoker = on`. Consequence on `session_overview.present_count`: it respects the caller's own attendance policy, so a student would see only their own row counted — the UI shows that count to staff only.
 
 ## Dashboard
 
-`/dashboard` is two different pages behind one route, chosen by
-`canManageClasses` — the same predicate that opens Corsi and the roll call,
-so instructors, maestri and admin get the gym-wide view and everybody else
-gets their own figures.
+`/dashboard` is two pages behind one route, chosen by `canManageClasses` — the same predicate that opens Corsi and the roll call.
 
-- **`app/dashboard/staff-dashboard.tsx`** — members (active, new in the last
-  30 days, without an account, total gym hours), the month's lessons (in the
-  calendar, held, cancelled, attendances, average turnout, plus today's
-  lessons with a link straight to each roll call) and the belt distribution,
-  drawn with the `Belt` component and a plain CSS bar rather than a chart
-  dependency.
-- **`app/dashboard/member-dashboard.tsx`** — the member's own belt, hours,
-  lessons in the last 28 days, weekly average and next lessons. Nothing about
-  anybody else.
+- **`app/dashboard/staff-dashboard.tsx`** — members (active, new in 30 days, without an account, total gym hours), the month's lessons (scheduled, held, cancelled, attendances, average turnout, today's lessons linking to each roll call) and the belt distribution, drawn with the `Belt` component and a plain CSS bar rather than a chart dependency.
+- **`app/dashboard/member-dashboard.tsx`** — the member's own belt, hours, lessons in the last 28 days, weekly average, next lessons. Nothing about anybody else.
 
 Three things worth knowing:
 
-- **The split is in which queries run, not in which cards render.** A student
-  never triggers the gym-wide queries at all, and RLS would refuse them
-  anyway — an allievo cannot read `member_overview` or another member's
-  attendance. Hiding cards would not have been access control.
-- **Staff counts exclude a portal-only admin** (`PORTAL_ONLY_ROLES`), who is
-  not a student and would skew every figure.
-- **The member view is bounded to 90 days.** A member who has trained for
-  years would otherwise pull their whole history into a page that only wants
-  to say how the last few weeks went; "last time" reads "—" beyond that
-  window rather than scanning further back.
-- Gym-wide hours go through `hoursFor()` like everywhere else, so the total
-  is not "zero" for a school that has trained for years.
+- **The split is in which queries run, not which cards render.** A student never triggers the gym-wide queries, and RLS would refuse them anyway (an allievo cannot read `member_overview` or another member's attendance). Hiding cards would not have been access control.
+- **Staff counts exclude a portal-only admin** (`PORTAL_ONLY_ROLES`), who is not a student and would skew every figure.
+- **The member view is bounded to 90 days**; "last time" reads "—" beyond that window rather than scanning further back.
+- Gym-wide hours go through `hoursFor()` like everywhere else, so the total is not zero for a school that has trained for years.
 
 ## Languages
 
-The app speaks English, Italian and Brazilian Portuguese. **English is the
-default language** (`DEFAULT_LOCALE` in `utils/i18n/locales.ts`) — it is what a
-visitor with no saved choice and no matching `Accept-Language` gets, and what
-the pure helpers fall back to when a caller passes no dictionary.
+English, Italian and Brazilian Portuguese. **English is the default** (`DEFAULT_LOCALE` in `utils/i18n/locales.ts`) — what a visitor with no saved choice and no matching `Accept-Language` gets, and what the pure helpers fall back to. Italian is still the language dictionaries are _authored_ in: `it.ts` defines the `Dictionary` type and the other two must match its shape. Authoring language and default language are two different things — do not collapse them.
 
-Italian is still the language the dictionaries are _authored_ in: `it.ts`
-defines the `Dictionary` type and the other two must match its shape. Authoring
-language and default language are two different things — do not collapse them.
-
-- **`frontend/utils/i18n/dictionaries/it.ts` defines the `Dictionary` type**
-  and `en.ts` / `pt-BR.ts` are _typed as_ it, so a key that Italian has and a
-  translation lacks is a compile error rather than a blank string in the UI.
-  Note the deliberate absence of `as const` on the Italian object: it would
-  turn every value into a string _literal_ type, and English would then have
-  to contain the Italian words to satisfy the type.
-- **Pages read the dictionary by property, not through a `t("a.b.c")` lookup.**
-  `const { t } = await getDictionary()` then `t.registro.title` — checked by
-  the compiler, autocompleted, and no runtime path resolution. Values that
-  interpolate or pluralise are **functions** (`t.dashboard.ofTotal(12)`), so
-  each language pluralises its own way instead of sharing one format string.
-- **The locale lives in a cookie, not in the URL** (an explicit decision).
-  Almost every page sits behind a login, where a per-language URL buys
-  nothing, and the alternative meant moving every route under
-  `app/[locale]/` and rewriting every link and the proxy for the benefit of
-  one public page. The trade-off to know: the landing page has a single URL
-  in three languages, so search engines index whichever language they are
-  served — if that ever matters, the landing page is the one route worth
-  giving real per-language URLs.
-- `getLocale()` prefers the saved choice, falls back to the closest match on
-  `Accept-Language`, then Italian. The header is consulted **only** when no
-  cookie exists: once somebody has chosen, the choice wins even if their
-  browser disagrees.
-- **Client Components receive their words as props.** They cannot read the
-  cookie, so `NavShell`, `ThemeToggle`, `PasswordInput` and the reset-password
-  form take strings from the server. `/reset-password` was split into a
-  Server page and a `reset-form.tsx` Client Component for exactly this — the
-  form itself must stay on the client because the recovery link carries its
-  tokens in the URL fragment.
-- **`Belt` is an async Server Component** and reads the dictionary itself,
-  rather than taking the belt name as a prop at a dozen call sites.
-- **The pure utils take the dictionary as a parameter with an English
-  default** (`formatDays`, `formatHours`, `formatWeekdays`,
-  `formatDayHeading`, `beltLabel`, `roleLabel`). They are covered by unit
-  tests, and a function that reaches for a cookie is neither pure nor
-  testable. `formatMonthHeading` takes a `Locale` instead, because month
-  names come from `Intl`.
-- **Weekday names come from the dictionary, month names from `Intl`.** The
-  weekdays are needed as a list anyway — the course form's checkboxes, the
-  month grid's header — and two sources for one list is how they drift apart.
-  Twelve month names in three languages is exactly what a platform already
-  has.
-- **URL paths are English**, all of them — `/members`, `/attendance`,
-  `/courses`, `/change-password`, the `#how-it-works` anchor. The dictionary
-  _keys_ keep their Italian names (`t.registro`, `t.presenze`, `t.corsi`), which
-  is internal and deliberate.
-- **Dates stay dd/mm/yyyy in every language**, per the explicit instruction;
-  the locale changes the words around them, not the number format.
-- **Server actions look their own messages up** (`t.msg.*`). An error that
-  travels back through a redirect is still copy.
-- The language names in the switcher are **never translated**: a Brazilian
-  scans for "Português", not for "Portuguese". Since the switcher shows only a
-  flag and a code, those names are now each option's `aria-label` and `title`
-  rather than visible text — they are still what a screen reader announces, so
-  `LOCALE_LABELS` stays untranslated.
+- **`utils/i18n/dictionaries/it.ts` defines the `Dictionary` type**; `en.ts` / `pt-BR.ts` are typed as it, so a missing key is a compile error rather than a blank string. The Italian object deliberately has no `as const`: that would make every value a string literal type, forcing English to contain the Italian words.
+- **Pages read the dictionary by property, not via `t("a.b.c")`**: `const { t } = await getDictionary()` then `t.registro.title` — compiler-checked, autocompleted, no runtime path resolution. Interpolating or pluralising values are **functions** (`t.dashboard.ofTotal(12)`), so each language pluralises its own way.
+- **The locale lives in a cookie, not the URL** (explicit decision): almost every page is behind a login where per-language URLs buy nothing, and the alternative meant moving every route under `app/[locale]/` and rewriting every link and the proxy for one public page. Trade-off: the landing page has one URL in three languages, so crawlers index whichever they are served — if that ever matters, it is the one route worth real per-language URLs.
+- `getLocale()` prefers the saved choice, then the closest `Accept-Language` match, then Italian. The header is consulted **only** when no cookie exists: once somebody has chosen, the choice wins even if their browser disagrees.
+- **Client Components receive their words as props** (they cannot read the cookie): `NavShell`, `ThemeToggle`, `PasswordInput`, the reset-password form. `/reset-password` was split into a Server page and `reset-form.tsx` for exactly this — the form must stay on the client because the recovery link carries tokens in the URL fragment.
+- **`Belt` is an async Server Component** and reads the dictionary itself rather than taking the belt name as a prop at a dozen call sites.
+- **Pure utils take the dictionary as a parameter with an English default** (`formatDays`, `formatHours`, `formatWeekdays`, `formatDayHeading`, `beltLabel`, `roleLabel`): they are unit-tested, and a function that reaches for a cookie is neither pure nor testable. `formatMonthHeading` takes a `Locale` instead, because month names come from `Intl`.
+- **Weekday names come from the dictionary, month names from `Intl`.** The weekdays are needed as a list anyway (course form checkboxes, grid header), and two sources for one list is how they drift. Twelve month names in three languages is what a platform already has.
+- **URL paths are English**, all of them — `/members`, `/attendance`, `/courses`, `/change-password`, `#how-it-works`. Dictionary _keys_ keep Italian names (`t.registro`, `t.presenze`, `t.corsi`), which is internal and deliberate.
+- **Dates stay dd/mm/yyyy in every language** (explicit instruction); the locale changes the words around them, not the number format.
+- **Server actions look their own messages up** (`t.msg.*`): an error travelling back through a redirect is still copy.
+- Language names in the switcher are **never translated** — a Brazilian scans for "Português". Since the switcher shows only a flag and a code, those names are each option's `aria-label`/`title`, so `LOCALE_LABELS` stays untranslated.
 
 ## Privacy and cookies
 
-`/privacy` is the privacy notice and the cookie policy in one public page, in
-all three languages, linked from the footer of every page.
+`/privacy` is the privacy notice and cookie policy in one public page, in all three languages, linked from every footer.
 
-- **The banner informs, it does not ask.** The app sets only the Supabase
-  session cookie and the language cookie, plus `theme` and the notice
-  acknowledgement in `localStorage` — all of them technical or a preference the
-  user asked for, and therefore exempt from prior consent under the ePrivacy
-  Directive. So `components/cookie-notice.tsx` has **one button**. A
-  "reject" that switches nothing off would be theatre, and a fake choice is
-  worse than no choice: it invites the reader to believe a decision was made.
-  **The day an analytics script is added, this component has to become a real
-  consent gate** — storing a decision, loading nothing before it.
-- It stores the acknowledgement in `localStorage` under a version string, so
-  bumping `NOTICE_VERSION` shows the new text once to everybody. It reads that
-  state through `useSyncExternalStore` like `ThemeToggle`, returning `null` on
-  the server: rendering the banner into the HTML would flash it at every
-  visitor who already dismissed it.
-- **The notice is a draft and says so on the page.** The app has no data
-  controller yet, so the document carries placeholders (`[NOME DELLA
-  PALESTRA]`, `[EMAIL DI CONTATTO]`, the retention period) and a visible
-  warning. A notice with placeholder names and no warning reads as finished to
-  anybody who does not look closely — which is the failure mode worth avoiding
-  in a legal document.
-- **`/privacy` is public and stays reachable in every state**: it is in
-  `PUBLIC_PATHS` (so the sitemap lists it), absent from `PROTECTED_PREFIXES`
-  and from `VISITOR_ONLY`, and **exempt from the forced-password-change
-  redirect** in `utils/supabase/proxy.ts`. A legal notice nobody can open is
-  not a notice.
-- The text lives in the dictionaries (`privacy`, `cookieNotice`) like every
-  other string, as an array of sections. `UPDATED_ON` in the page is hardcoded
-  on purpose: "last updated" must mean the day somebody rewrote the text, not
-  the day of the last deploy.
+- **The banner informs, it does not ask.** The app sets only the Supabase session cookie and the language cookie, plus `theme` and the acknowledgement in `localStorage` — all technical or user-requested preferences, exempt from prior consent under the ePrivacy Directive. So `components/cookie-notice.tsx` has **one button**: a "reject" that switches nothing off would be theatre, and a fake choice is worse than no choice — it invites the reader to believe a decision was made. **The day an analytics script is added, this must become a real consent gate** — storing a decision, loading nothing before it.
+- It stores the acknowledgement in `localStorage` under a version string, so bumping `NOTICE_VERSION` shows new text once to everybody. It reads that state through `useSyncExternalStore` like `ThemeToggle`, returning `null` on the server: rendering the banner into the HTML would flash it at every visitor who already dismissed it.
+- **The notice is a draft and says so on the page.** There is no data controller yet, so it carries placeholders (`[NOME DELLA PALESTRA]`, `[EMAIL DI CONTATTO]`, the retention period) and a visible warning — a notice with placeholders and no warning reads as finished to anybody who does not look closely.
+- **`/privacy` is public and reachable in every state**: in `PUBLIC_PATHS` (so the sitemap lists it), absent from `PROTECTED_PREFIXES` and `VISITOR_ONLY`, and **exempt from the forced-password-change redirect** in `utils/supabase/proxy.ts`. A legal notice nobody can open is not a notice.
+- The text lives in the dictionaries (`privacy`, `cookieNotice`) as an array of sections. `UPDATED_ON` is hardcoded on purpose: "last updated" must mean the day somebody rewrote the text, not the day of the last deploy.
 
 ## Frontend UI
 
-- **Brand colours are not semantic tokens.** The five values from
-  `brand-guidelines.md` stay fixed; what changes with the theme is
-  `--background`, `--foreground`, `--surface`, `--border` and `--muted`. Use
-  those, not the brand names, for anything that has to read in both themes.
-  Three dark-theme values are deliberately their own rather than reused brand
-  colours: `--surface` is lifted just off `--background` (it used to be
-  `--color-neutral-dark`, four steps away, so every card read as a pale block),
-  `--border` is distinct from `--surface` (they were identical, so a bordered
-  card had no visible edge against its own fill), and `--color-accent` is
-  lightened to `#7d97ee` because `#3457d5` on `#16181d` is about 2.3:1, far
-  under the 4.5:1 body text needs. `bg-muted` is the hover wash — never a fixed
-  grey, which flashes bright on the dark theme. The one deliberate exception is
-  the logo plate: the logo is black artwork on transparency, so it sits on
-  `bg-secondary` (fixed light) in both themes or it disappears.
-- **`--success` and `--danger` are the only colours in the app that mean
-  something** rather than belonging to the brand: present and absent in the
-  roll call. They flip per theme like every other semantic token — a green
-  dark enough to read on white is nearly black on the dark theme. The roll
-  call's three-state control uses them on the icon and a 10% tint, not as a
-  filled button: three saturated circles on each of thirty rows is a wall of
-  colour. "Non registrato" stays neutral grey on purpose — it is an empty
-  state, not an outcome, and a third colour would imply it were one. The
-  control also carries a visible legend, because the icons replaced letters
-  and a `title` tooltip never appears on the phone where this page is used.
-- **SEO lives in three places.** `frontend/utils/site.ts` holds `SITE_URL`
-  (from `NEXT_PUBLIC_SITE_URL`) and the list of public paths;
-  `frontend/app/layout.tsx` sets `metadataBase`, the title template, Open
-  Graph and per-theme `themeColor`; `app/robots.ts` and `app/sitemap.ts`
-  publish only the landing page, because every other route answers with a
-  redirect to the login and a search result pointing at a login form helps
-  nobody. `metadataBase` is required — without an absolute base, canonical and
-  Open Graph URLs resolve to nothing and crawlers drop them.
-- **The landing page links to `/login`, never into the app.** Its buttons used
-  to point at `/members` and `/dashboard`, which sent every visitor straight
-  through the proxy to a login form. The page is only ever seen by somebody who
-  is not signed in, so signing in is the only action that makes sense on it.
-- Design tokens (colors, fonts) come from `brand-guidelines.md` at the repo root — implemented as CSS variables in `frontend/app/globals.css` (Tailwind v4 `@theme inline`, not a `tailwind.config.js`). Headings use Sora (`font-heading`), body text uses Work Sans (`font-body`), both loaded via `next/font/google` in `frontend/app/layout.tsx`.
-- `frontend/components/nav-shell.tsx` is the app shell: a sticky header with horizontal nav on `sm:` and up, a fixed bottom tab bar below `sm:`. It wraps `{children}` in the root layout — don't duplicate navigation inside individual pages.
-- The nav is **role-aware**: `navItemsFor()` in that file renders only Home for a visitor, Dashboard + Account for an allievo, and the full set for staff. `canViewRegistry` is computed server-side in `frontend/app/layout.tsx` (via `getAccess()`) and passed down as a prop, like `isLoggedIn`. This only hides links — see the permission model above for the real enforcement.
-- **Dates read dd/mm/yyyy everywhere.** `formatDate()` in `frontend/utils/dates.ts` is the single place that turns a Postgres `date` column ("YYYY-MM-DD") into what the app shows; `formatDayHeading()` in `utils/schedule.ts` builds on it, so the Presenze calendar reads "lunedì 14/09/2026". Both format in **UTC**, for the same reason `daysSince()` does — formatting a UTC-parsed date in local time shows the previous day to a viewer east of Greenwich. Never render a raw date column. The one thing that must stay ISO is the `value`/`defaultValue` of an `<input type="date">`: that is what the element accepts and posts back, and its on-screen format is the browser's business, not ours.
-- `frontend/components/icons.tsx` — small hand-rolled inline SVG icons (no icon library dependency). Add new icons here rather than pulling in a package.
-- **The language switcher is a flag and a two-letter code**, nothing else — `frontend/components/language-switcher.tsx`, with the three flags hand-drawn in `frontend/components/flags.tsx`. Three things are deliberate:
-  - **The flags are SVG, never the flag emoji.** Windows ships no glyphs for the regional-indicator pairs, so `🇮🇹` renders there as the bare letters "IT" — and the gym's front desk is exactly that machine. They go in their own file rather than in `icons.tsx` because they are flat multi-colour artwork, not `currentColor` line icons.
-  - Each flag sits on a `ring-1 ring-border` plate, for the reason the `Belt` images do: Italy's centre band is white and would bleed into the light theme's header.
-  - It is built on `<details>`/`<summary>` rather than React open/closed state, so it still opens **and still switches language with no JavaScript** — each option is a real submit button carrying its own `locale` value. The effect in the component adds only what the element lacks, closing on Escape and on an outside press; it needs no close-on-submit, because switching language navigates and remounts it. Don't replace it with a `useState` popover.
-- **Belts are drawn, not spelled out.** `frontend/components/belt.tsx` renders the belt graphic wherever a person's rank is shown — the Registro list and detail page, `/account`, the roll call. Use it instead of printing the colour and a stripe count; the two are one thing on a belt. Three things about it are deliberate:
-  - The artwork lives in `frontend/public/belts/<colour>-<n>-stripe.png` (1000×300, transparent). The `belt_rank` enum says `purple` but the files say `violet`, so `BELT_FILE_COLOR` maps between them — don't rename the enum to match the assets.
-  - The images are transparent, so a white belt would vanish on the light theme and a black one on the dark theme. The component puts them on a bordered, faintly tinted plate; that border is what makes them visible, not decoration.
-  - The colour and stripe count survive as the `alt` text, which is what a screen reader reads and what the removed text node used to say. `BELT_LABELS` is still needed for the filter chips and `<select>` options, which cannot hold an image.
+- **Brand colours are not semantic tokens.** The five values from `brand-guidelines.md` stay fixed; what changes with the theme is `--background`, `--foreground`, `--surface`, `--border`, `--muted`. Use those, not brand names, for anything that must read in both themes. Three dark values are deliberately their own: `--surface` is lifted just off `--background` (as `--color-neutral-dark` it read as a pale block), `--border` is distinct from `--surface` (identical meant bordered cards had no edge), and `--color-accent` is lightened to `#7d97ee` because `#3457d5` on `#16181d` is ~2.3:1, far under the 4.5:1 body text needs. `bg-muted` is the hover wash — never a fixed grey, which flashes bright on dark. The one exception is the logo plate: black artwork on transparency, so it sits on `bg-secondary` (fixed light) in both themes or it disappears.
+- **`--success` and `--danger` are the only colours that mean something** rather than belonging to the brand: present and absent in the roll call. They flip per theme like every semantic token — a green dark enough to read on white is nearly black on dark. The three-state control uses them on the icon and a 10% tint, not as a filled button: three saturated circles on thirty rows is a wall of colour. "Non registrato" stays neutral grey: it is an empty state, not an outcome, and a third colour would imply it were one. The control carries a visible legend, because icons replaced letters and a `title` tooltip never appears on the phone where this page is used.
+- **SEO lives in three places.** `utils/site.ts` holds `SITE_URL` (from `NEXT_PUBLIC_SITE_URL`) and the public paths; `app/layout.tsx` sets `metadataBase`, the title template, Open Graph and per-theme `themeColor`; `app/robots.ts` and `app/sitemap.ts` publish only the landing page, because every other route answers with a redirect to login and a search result pointing at a login form helps nobody. `metadataBase` is required — without an absolute base, canonical and OG URLs resolve to nothing and crawlers drop them.
+- **The landing page links to `/login`, never into the app.** Its buttons used to point at `/members` and `/dashboard`, sending every visitor through the proxy to a login form. It is only ever seen signed out, so signing in is the only action that makes sense.
+- Design tokens come from `brand-guidelines.md` at the repo root, implemented as CSS variables in `app/globals.css` (Tailwind v4 `@theme inline`, not a `tailwind.config.js`). Headings use Sora (`font-heading`), body Work Sans (`font-body`), both via `next/font/google` in `app/layout.tsx`.
+- `components/nav-shell.tsx` is the app shell: sticky header with horizontal nav at `sm:` and up, fixed bottom tab bar below. It wraps `{children}` in the root layout — don't duplicate navigation inside pages.
+- The nav is **role-aware**: `navItemsFor()` renders Home only for a visitor, Dashboard + Account for an allievo, the full set for staff. `canViewRegistry` is computed server-side in `app/layout.tsx` (`getAccess()`) and passed as a prop, like `isLoggedIn`. This only hides links — see the permission model for the real enforcement.
+- **Dates read dd/mm/yyyy everywhere.** `formatDate()` in `utils/dates.ts` is the single place that turns a Postgres `date` ("YYYY-MM-DD") into what the app shows; `formatDayHeading()` in `utils/schedule.ts` builds on it, so the calendar reads "lunedì 14/09/2026". Both format in **UTC**, for the same reason as `daysSince()`: formatting a UTC-parsed date in local time shows the previous day east of Greenwich. Never render a raw date column. The one thing that must stay ISO is the `value`/`defaultValue` of an `<input type="date">` — that is what the element accepts and posts back.
+- `components/icons.tsx` — hand-rolled inline SVG icons, no icon library. Add new icons there rather than pulling in a package.
+- **The language switcher is a flag and a two-letter code** — `components/language-switcher.tsx`, flags hand-drawn in `components/flags.tsx`. Three deliberate points:
+  - **The flags are SVG, never the flag emoji**: Windows ships no glyphs for regional-indicator pairs, so `🇮🇹` renders there as the bare letters "IT" — and the gym's front desk is exactly that machine. They live in their own file because they are flat multi-colour artwork, not `currentColor` line icons.
+  - Each flag sits on a `ring-1 ring-border` plate, like the `Belt` images: Italy's white centre band would bleed into the light theme's header.
+  - It is built on `<details>`/`<summary>`, not React open/closed state, so it opens **and switches language with no JavaScript** — each option is a real submit button carrying its own `locale`. The effect only adds what the element lacks (close on Escape and outside press); no close-on-submit is needed, since switching language navigates and remounts it. Don't replace it with a `useState` popover.
+- **Belts are drawn, not spelled out.** `components/belt.tsx` renders the belt graphic wherever a rank is shown — Registro list and detail, `/account`, the roll call. Use it instead of printing the colour and a stripe count; the two are one thing on a belt. Three deliberate points:
+  - Artwork lives in `frontend/public/belts/<colour>-<n>-stripe.png` (1000×300, transparent). The `belt_rank` enum says `purple` but the files say `violet`, so `BELT_FILE_COLOR` maps between them — don't rename the enum to match the assets.
+  - The images are transparent, so a white belt would vanish on light and a black one on dark. The component puts them on a bordered, faintly tinted plate; that border is what makes them visible, not decoration.
+  - The colour and stripe count survive as the `alt` text, which is what a screen reader reads. `BELT_LABELS` is still needed for filter chips and `<select>` options, which cannot hold an image.
 - Logos live in `frontend/public/logo/`, belts in `frontend/public/belts/` — not at the root of `public/`.
-- `frontend/components/coming-soon.tsx` — shared placeholder. **Nothing uses it any more** now that `/dashboard` is wired to real data; it is kept for the next unfinished section. Replace a route's `ComingSoon` usage with real content rather than adding a parallel page.
-- All copy in the UI is translated — see "Languages" above. Never hardcode a user-facing string in a component.
-- **Theme (light/dark):** manual toggle in the header (`frontend/components/theme-toggle.tsx`), not just OS `prefers-color-scheme`. State is `localStorage["theme"]` (`"light"` \| `"dark"`, absent = follow system) applied as `data-theme` on `<html>`. Three pieces make this work together — keep them in sync if you touch theming:
-  - `frontend/app/globals.css` defines light tokens on `:root`, a `prefers-color-scheme: dark` override guarded by `:not([data-theme="light"])`, and unconditional `:root[data-theme="dark"]` / `:root[data-theme="light"]` blocks so an explicit choice always wins over system preference in both directions.
-  - A blocking inline script in `frontend/app/layout.tsx`'s `<head>` applies any stored theme before first paint (prevents a flash of the wrong theme). Don't move theme-reading logic into a React effect — that runs after paint.
-  - `theme-toggle.tsx` reads state via `useSyncExternalStore` (not `useEffect` + `useState`) so it renders `null` on the server without triggering the `react-hooks/set-state-in-effect` lint rule; a custom `faixabjj-theme-change` event re-syncs other instances of the toggle after a click.
+- `components/coming-soon.tsx` — shared placeholder, currently unused now that `/dashboard` is wired; kept for the next unfinished section. Replace a route's `ComingSoon` with real content rather than adding a parallel page.
+- All UI copy is translated (see "Languages"). Never hardcode a user-facing string in a component.
+- **Theme (light/dark):** manual toggle in the header (`components/theme-toggle.tsx`), not just OS `prefers-color-scheme`. State is `localStorage["theme"]` (`"light"` | `"dark"`, absent = follow system) applied as `data-theme` on `<html>`. Three pieces must stay in sync:
+  - `app/globals.css` defines light tokens on `:root`, a `prefers-color-scheme: dark` override guarded by `:not([data-theme="light"])`, and unconditional `:root[data-theme="dark"]` / `:root[data-theme="light"]` blocks so an explicit choice always wins over system preference in both directions.
+  - A blocking inline script in `app/layout.tsx`'s `<head>` applies any stored theme before first paint (prevents a flash of the wrong theme). Don't move theme-reading into a React effect — that runs after paint.
+  - `theme-toggle.tsx` reads state via `useSyncExternalStore` (not `useEffect` + `useState`) so it renders `null` on the server without tripping `react-hooks/set-state-in-effect`; a custom `faixabjj-theme-change` event re-syncs other instances of the toggle.
 
 ## Commands
 
@@ -678,47 +261,44 @@ All frontend commands run from `frontend/`:
 
 ```bash
 cd frontend
-npm run dev      # start dev server (Turbopack) at http://localhost:3000
+npm run dev      # dev server (Turbopack) at http://localhost:3000
 npm run build    # production build
 npm run start    # serve the production build
 npm run lint     # ESLint (eslint-config-next)
-```
-
-Vitest covers the pure functions in `frontend/utils/` and nothing else — no jsdom, no component tests, no end-to-end. Anything needing a browser or a database is verified by running the app.
-
-```bash
 npm test         # Vitest, single run
 npm run test:watch
 ```
 
-There are no Python dependencies yet in `execution/` — add a `requirements.txt` there when the first script is written.
+Vitest covers the pure functions in `frontend/utils/` and nothing else — no jsdom, no component tests, no end-to-end. Anything needing a browser or a database is verified by running the app.
+
+No Python dependencies yet in `execution/` — add a `requirements.txt` there when the first script is written.
 
 To preview the app in this environment, use the `frontend` launch configuration in `.claude/launch.json` (drives the Browser pane) rather than running `npm run dev` manually in a shell.
 
 ## What this project is
 
-FAIXABJJ is a lightweight web app for tracking class hours, stripes, and belt promotions in a Brazilian Jiu-Jitsu school, with a unified registry for students and instructors.
+FAIXABJJ is a lightweight web app for tracking class hours, stripes and belt promotions in a Brazilian Jiu-Jitsu school, with a unified registry for students and instructors.
 
-It deliberately is **not** a full gym management system — no payments, no online enrollment, no competition management. It's meant to sit alongside existing gym management software and cover one thing well: tracking technical progression toward stripes/belts, with minimal added workload for instructors. Promotion eligibility is always surfaced as a suggestion/alert — the actual promotion decision always stays with the instructor, never automated.
+It deliberately is **not** a full gym management system — no payments, no online enrollment, no competition management. It sits alongside existing gym management software and covers one thing well: technical progression toward stripes/belts, with minimal added workload for instructors. Promotion eligibility is always surfaced as a suggestion/alert — the decision always stays with the instructor, never automated.
 
 ## Planned architecture
 
-| Layer              | Choice                                                                 |
-| ------------------ | ---------------------------------------------------------------------- |
-| Frontend           | Next.js (App Router) + Tailwind CSS — see stack discrepancy note above |
-| Backend / Database | Supabase (Postgres + Auth)                                             |
-| Permissions        | Row Level Security on Supabase, based on the person's active role      |
-| Hosting            | Vercel                                                                 |
+| Layer              | Choice                                                            |
+| ------------------ | ----------------------------------------------------------------- |
+| Frontend           | Next.js (App Router) + Tailwind CSS — see stack discrepancy above |
+| Backend / Database | Supabase (Postgres + Auth)                                        |
+| Permissions        | Row Level Security, based on the person's active role             |
+| Hosting            | Vercel                                                            |
 
 ### Data model (planned)
 
-- `Person` — single unified registry for both students and instructors (a person's role can change over time, e.g. a student becomes an assistant instructor)
+- `Person` — single unified registry for both students and instructors
 - `AssignedRole` — role history per person (student / assistant / instructor / head coach), with start/end dates
 - `RoleThreshold` — configured suggested belt thresholds per role
 - `Attendance` — present/absent per person/date, with a reference to who led the session
 - `PromotionCriteria` — configurable hour thresholds and minimum time-at-rank per belt/stripe
 
-Key design point: `Person` is intentionally a single entity for both students and instructors rather than separate tables, since the same individual can hold both roles simultaneously as their rank grows. Role assignment is always manual — suggested belt thresholds inform instructors but never trigger automatic promotions.
+`Person` is intentionally one entity for both students and instructors rather than separate tables, since the same individual can hold both roles simultaneously as their rank grows. Role assignment is always manual — suggested thresholds inform instructors but never trigger automatic promotions.
 
 ### Planned roadmap
 
