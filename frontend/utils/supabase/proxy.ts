@@ -47,7 +47,9 @@ export const updateSession = async (request: NextRequest) => {
   // An account created from the Registro starts on a shared default password,
   // so nothing else in the app opens until it has been replaced. Checked before
   // the redirects below so there is only ever one hop. Signing out stays
-  // reachable — otherwise the only way out would be clearing cookies.
+  // reachable — otherwise the only way out would be clearing cookies — and so
+  // does the privacy notice: a legal notice nobody can open is not a notice,
+  // and holding it hostage to a password change buys nothing.
   const appMetadata = claimsData?.claims?.app_metadata as
     | { must_change_password?: boolean }
     | undefined;
@@ -56,6 +58,7 @@ export const updateSession = async (request: NextRequest) => {
     isLoggedIn &&
     appMetadata?.must_change_password === true &&
     pathname !== PASSWORD_CHANGE_PATH &&
+    pathname !== "/privacy" &&
     !pathname.startsWith("/auth/")
   ) {
     const url = request.nextUrl.clone();

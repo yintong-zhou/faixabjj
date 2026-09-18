@@ -37,6 +37,7 @@ export const it = {
     menu: "Menu",
     theme: { toLight: "Passa al tema chiaro", toDark: "Passa al tema scuro" },
     language: "Lingua",
+    privacy: "Privacy e cookie",
   },
 
   belts: {
@@ -588,6 +589,122 @@ export const it = {
     hours: (n: string) => `${n} ore`,
     estimateNote: (estimated: string, perWeek: number) =>
       `Include ${estimated} ore iniziali, stimate a ${perWeek} lezioni a settimana dall'iscrizione per il periodo prima del tracciamento. Da allora le ore aumentano solo con il check-in o l'appello.`,
+  },
+
+  cookieNotice: {
+    text: "Questo sito usa solo cookie tecnici, necessari per tenere la sessione aperta e ricordare la lingua scelta. Nessun cookie di profilazione, nessun servizio di statistiche.",
+    more: "Privacy e cookie",
+    accept: "Ho capito",
+  },
+
+  privacy: {
+    title: "Privacy e cookie",
+    updated: (date: string) => `Ultimo aggiornamento: ${date}`,
+    lead:
+      "Questa pagina spiega quali dati personali FAIXABJJ raccoglie, perché, per quanto tempo li conserva e quali diritti hai su di essi.",
+    draftTitle: "Documento in bozza",
+    draftBody:
+      "L'applicazione è in fase di test e il titolare del trattamento non è ancora stato designato. Prima di qualsiasi uso con dati di persone reali vanno compilati nome, sede e contatto del titolare, e vanno verificati i tempi di conservazione indicati qui sotto.",
+    sections: [
+      {
+        heading: "1. Titolare del trattamento",
+        paragraphs: [
+          "Titolare del trattamento è [NOME DELLA PALESTRA], con sede in [INDIRIZZO COMPLETO], contattabile all'indirizzo [EMAIL DI CONTATTO].",
+          "Non è stato nominato un Responsabile della protezione dei dati (DPO): il trattamento non rientra fra i casi in cui l'articolo 37 del GDPR lo rende obbligatorio. Se la palestra decide di nominarlo, i suoi contatti vanno aggiunti qui.",
+        ],
+      },
+      {
+        heading: "2. Quali dati trattiamo",
+        paragraphs: [
+          "Dati di contatto e anagrafici: nome e cognome, email, numero di telefono, data di nascita. Email e nome sono obbligatori per creare un account; telefono e data di nascita sono facoltativi.",
+          "Dati di progressione tecnica: cintura, numero di gradi, data dell'ultimo cambio cintura, data dell'ultimo grado, data di iscrizione, ruolo ricoperto in palestra e relativo storico.",
+          "Dati di frequenza: presenza o assenza a ciascuna lezione, con l'indicazione se la presenza è stata registrata dall'interessato (check-in) o dall'istruttore (appello).",
+          "Note libere: un campo di annotazioni che lo staff può compilare. Non va usato per dati particolari ai sensi dell'articolo 9 del GDPR — in particolare informazioni su salute o infortuni — perché questa informativa non copre quel tipo di trattamento.",
+          "Dati di accesso: credenziali gestite dal fornitore di autenticazione (la password è conservata solo come hash, mai in chiaro) e log tecnici del servizio.",
+        ],
+      },
+      {
+        heading: "3. Perché trattiamo questi dati e su quale base giuridica",
+        paragraphs: [
+          "Gestire l'iscrizione e il rapporto con la palestra, registrare le presenze e calcolare le ore di allenamento: esecuzione del contratto o del rapporto associativo di cui l'interessato è parte (art. 6.1.b GDPR).",
+          "Valutare l'idoneità a gradi e cinture e tenere lo storico della progressione tecnica: legittimo interesse della palestra a documentare il percorso tecnico dei propri iscritti (art. 6.1.f GDPR). La decisione sulla promozione resta sempre dell'istruttore: l'applicazione non promuove nessuno automaticamente.",
+          "Garantire la sicurezza dell'accesso al portale: legittimo interesse a proteggere account e dati (art. 6.1.f GDPR).",
+          "Non svolgiamo profilazione né processi decisionali automatizzati che producano effetti giuridici sull'interessato.",
+        ],
+      },
+      {
+        heading: "4. Chi può vedere i dati",
+        paragraphs: [
+          "L'accesso è limitato in base al ruolo, e il limite è applicato dal database stesso, non soltanto dall'interfaccia. Un allievo vede solo i propri dati e il calendario delle lezioni. Un istruttore vede l'elenco dei membri in sola lettura e gestisce corsi e presenze. Maestro e amministratore hanno accesso completo e possono gestire gli account.",
+          "Nessun dato viene ceduto o venduto a terzi per finalità di marketing.",
+        ],
+      },
+      {
+        heading: "5. Per quanto tempo li conserviamo",
+        paragraphs: [
+          "I dati di iscrizione e la storia di frequenza sono conservati per tutta la durata del rapporto con la palestra e per [NUMERO] anni successivi, termine da definire in base agli obblighi civilistici e fiscali applicabili.",
+          "La revoca dell'accesso al portale cancella le credenziali di accesso ma conserva la scheda della persona e il suo storico di frequenza: sono il registro tecnico della palestra. La cancellazione completa va richiesta secondo il punto 7.",
+        ],
+      },
+      {
+        heading: "6. Dove sono i dati e a chi li comunichiamo",
+        paragraphs: [
+          "I dati sono conservati su Supabase (database, autenticazione e archiviazione) e il sito è pubblicato su Vercel. Entrambi agiscono come responsabili del trattamento ai sensi dell'articolo 28 del GDPR.",
+          "Il progetto è configurato su infrastruttura nell'Unione Europea. Qualora un fornitore tratti dati al di fuori dello Spazio Economico Europeo, il trasferimento avviene sulla base delle Clausole Contrattuali Standard adottate dalla Commissione europea.",
+        ],
+      },
+      {
+        heading: "7. I tuoi diritti",
+        paragraphs: [
+          "Puoi chiedere in ogni momento l'accesso ai tuoi dati, la loro rettifica o cancellazione, la limitazione del trattamento, la portabilità, e puoi opporti ai trattamenti fondati sul legittimo interesse (articoli da 15 a 22 del GDPR).",
+          "Alcune correzioni sono immediate: dalla pagina Account puoi modificare da solo nome, email, telefono, data di nascita e note. Cintura, gradi e date di promozione sono invece in sola lettura di proposito, perché la promozione è una decisione dell'istruttore: per correggerle scrivi al titolare.",
+          "Per esercitare i tuoi diritti scrivi a [EMAIL DI CONTATTO]. Se ritieni che il trattamento violi la normativa puoi proporre reclamo al Garante per la protezione dei dati personali (www.garanteprivacy.it).",
+        ],
+      },
+      {
+        heading: "8. Sicurezza",
+        paragraphs: [
+          "L'accesso avviene tramite account personale con password. Le password sono conservate solo come hash. La separazione fra ciò che ciascun ruolo può leggere e scrivere è applicata dal database attraverso politiche di Row Level Security, quindi vale anche per una richiesta che non passi dall'interfaccia.",
+        ],
+      },
+    ],
+    cookieHeading: "9. Cookie e archiviazione locale",
+    cookieIntro:
+      "FAIXABJJ usa esclusivamente cookie tecnici e archiviazione locale necessari al funzionamento del servizio o a ricordare una preferenza espressa dall'utente. Non usiamo cookie di profilazione, né strumenti di statistica o pubblicità, né cookie di terze parti. Per questi strumenti l'articolo 122 del Codice privacy non richiede il consenso preventivo: per questo il banner informa e non chiede un'autorizzazione.",
+    cookieTable: {
+      name: "Nome",
+      type: "Tipo",
+      purpose: "Finalità",
+      duration: "Durata",
+    },
+    cookies: [
+      {
+        name: "sb-<progetto>-auth-token",
+        type: "Cookie tecnico",
+        purpose: "Mantiene la sessione di accesso. Senza, non è possibile restare autenticati.",
+        duration: "Fino alla scadenza della sessione o alla disconnessione",
+      },
+      {
+        name: "faixabjj-locale",
+        type: "Cookie tecnico (preferenza)",
+        purpose: "Ricorda la lingua scelta.",
+        duration: "1 anno",
+      },
+      {
+        name: "theme",
+        type: "Archiviazione locale",
+        purpose: "Ricorda la scelta fra tema chiaro e scuro.",
+        duration: "Fino alla cancellazione dei dati del sito",
+      },
+      {
+        name: "faixabjj-cookie-notice",
+        type: "Archiviazione locale",
+        purpose: "Ricorda che questa informativa è già stata mostrata.",
+        duration: "Fino alla cancellazione dei dati del sito",
+      },
+    ],
+    cookieRemoval:
+      "Puoi cancellare cookie e archiviazione locale dalle impostazioni del browser. Cancellando il cookie di sessione verrai disconnesso; cancellando gli altri l'applicazione continua a funzionare e torna alle impostazioni predefinite.",
   },
 };
 

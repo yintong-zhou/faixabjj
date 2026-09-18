@@ -578,6 +578,41 @@ language and default language are two different things — do not collapse them.
   rather than visible text — they are still what a screen reader announces, so
   `LOCALE_LABELS` stays untranslated.
 
+## Privacy and cookies
+
+`/privacy` is the privacy notice and the cookie policy in one public page, in
+all three languages, linked from the footer of every page.
+
+- **The banner informs, it does not ask.** The app sets only the Supabase
+  session cookie and the language cookie, plus `theme` and the notice
+  acknowledgement in `localStorage` — all of them technical or a preference the
+  user asked for, and therefore exempt from prior consent under the ePrivacy
+  Directive. So `components/cookie-notice.tsx` has **one button**. A
+  "reject" that switches nothing off would be theatre, and a fake choice is
+  worse than no choice: it invites the reader to believe a decision was made.
+  **The day an analytics script is added, this component has to become a real
+  consent gate** — storing a decision, loading nothing before it.
+- It stores the acknowledgement in `localStorage` under a version string, so
+  bumping `NOTICE_VERSION` shows the new text once to everybody. It reads that
+  state through `useSyncExternalStore` like `ThemeToggle`, returning `null` on
+  the server: rendering the banner into the HTML would flash it at every
+  visitor who already dismissed it.
+- **The notice is a draft and says so on the page.** The app has no data
+  controller yet, so the document carries placeholders (`[NOME DELLA
+  PALESTRA]`, `[EMAIL DI CONTATTO]`, the retention period) and a visible
+  warning. A notice with placeholder names and no warning reads as finished to
+  anybody who does not look closely — which is the failure mode worth avoiding
+  in a legal document.
+- **`/privacy` is public and stays reachable in every state**: it is in
+  `PUBLIC_PATHS` (so the sitemap lists it), absent from `PROTECTED_PREFIXES`
+  and from `VISITOR_ONLY`, and **exempt from the forced-password-change
+  redirect** in `utils/supabase/proxy.ts`. A legal notice nobody can open is
+  not a notice.
+- The text lives in the dictionaries (`privacy`, `cookieNotice`) like every
+  other string, as an array of sections. `UPDATED_ON` in the page is hardcoded
+  on purpose: "last updated" must mean the day somebody rewrote the text, not
+  the day of the last deploy.
+
 ## Frontend UI
 
 - **Brand colours are not semantic tokens.** The five values from

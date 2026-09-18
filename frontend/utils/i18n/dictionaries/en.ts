@@ -32,6 +32,7 @@ export const en: Dictionary = {
     menu: "Menu",
     theme: { toLight: "Switch to light theme", toDark: "Switch to dark theme" },
     language: "Language",
+    privacy: "Privacy and cookies",
   },
 
   belts: {
@@ -575,5 +576,121 @@ export const en: Dictionary = {
     hours: (n: string) => `${n} hours`,
     estimateNote: (estimated: string, perWeek: number) =>
       `Includes ${estimated} opening hours, estimated at ${perWeek} classes a week since joining, for the period before attendance was tracked. From then on hours only grow through check-in or the roll call.`,
+  },
+
+  cookieNotice: {
+    text: "This site uses only technical cookies, needed to keep your session open and remember the language you chose. No profiling cookies, no analytics services.",
+    more: "Privacy and cookies",
+    accept: "Got it",
+  },
+
+  privacy: {
+    title: "Privacy and cookies",
+    updated: (date: string) => `Last updated: ${date}`,
+    lead:
+      "This page explains which personal data FAIXABJJ collects, why, how long it is kept and what rights you have over it.",
+    draftTitle: "Draft document",
+    draftBody:
+      "The application is in testing and no data controller has been designated yet. Before any use with real people's data, the controller's name, address and contact must be filled in, and the retention periods below must be reviewed.",
+    sections: [
+      {
+        heading: "1. Data controller",
+        paragraphs: [
+          "The data controller is [GYM NAME], with registered office at [FULL ADDRESS], reachable at [CONTACT EMAIL].",
+          "No Data Protection Officer has been appointed: the processing does not fall within the cases where Article 37 GDPR makes one mandatory. If the gym appoints one, their contact details belong here.",
+        ],
+      },
+      {
+        heading: "2. What data we process",
+        paragraphs: [
+          "Contact and identity data: name, email, phone number, date of birth. Name and email are required to create an account; phone and date of birth are optional.",
+          "Technical progression data: belt, number of stripes, date of the last belt promotion, date of the last stripe, join date, role held at the gym and its history.",
+          "Attendance data: present or absent for each lesson, recording whether the presence was entered by the member (check-in) or by the instructor (roll call).",
+          "Free-text notes: a field staff can fill in. It must not be used for special categories of data under Article 9 GDPR — health or injuries in particular — because this notice does not cover that kind of processing.",
+          "Access data: credentials handled by the authentication provider (passwords are stored only as hashes, never in clear text) and the service's technical logs.",
+        ],
+      },
+      {
+        heading: "3. Why we process it, and on what legal basis",
+        paragraphs: [
+          "Managing membership and the relationship with the gym, recording attendance and counting training hours: performance of the contract or membership relationship to which the person is party (Art. 6(1)(b) GDPR).",
+          "Assessing eligibility for stripes and belts and keeping the history of technical progression: the gym's legitimate interest in documenting its members' technical path (Art. 6(1)(f) GDPR). The promotion decision always remains the instructor's: the application promotes nobody automatically.",
+          "Keeping access to the portal secure: legitimate interest in protecting accounts and data (Art. 6(1)(f) GDPR).",
+          "We carry out no profiling and no automated decision-making producing legal effects on the person.",
+        ],
+      },
+      {
+        heading: "4. Who can see the data",
+        paragraphs: [
+          "Access is limited by role, and the limit is enforced by the database itself, not only by the interface. A student sees their own data and the lesson calendar. An instructor sees the member list read-only and manages courses and attendance. Head coach and admin have full access and can manage accounts.",
+          "No data is sold or handed to third parties for marketing purposes.",
+        ],
+      },
+      {
+        heading: "5. How long we keep it",
+        paragraphs: [
+          "Membership data and attendance history are kept for the whole duration of the relationship with the gym and for [NUMBER] years afterwards, a period to be set according to the applicable civil and tax obligations.",
+          "Revoking portal access deletes the sign-in credentials but keeps the person's record and their attendance history: they are the gym's technical register. Full deletion can be requested as described in point 7.",
+        ],
+      },
+      {
+        heading: "6. Where the data is and who it is shared with",
+        paragraphs: [
+          "Data is stored on Supabase (database, authentication and storage) and the site is published on Vercel. Both act as processors under Article 28 GDPR.",
+          "The project is configured on infrastructure within the European Union. Where a provider processes data outside the European Economic Area, the transfer relies on the Standard Contractual Clauses adopted by the European Commission.",
+        ],
+      },
+      {
+        heading: "7. Your rights",
+        paragraphs: [
+          "You may at any time request access to your data, its rectification or erasure, restriction of processing, portability, and you may object to processing based on legitimate interest (Articles 15 to 22 GDPR).",
+          "Some corrections are immediate: from the Account page you can change your own name, email, phone, date of birth and notes. Belt, stripes and promotion dates are deliberately read-only, because promotion is the instructor's decision: to correct them, write to the controller.",
+          "To exercise your rights write to [CONTACT EMAIL]. If you believe the processing breaches the rules you may lodge a complaint with your national supervisory authority — in Italy, the Garante per la protezione dei dati personali (www.garanteprivacy.it).",
+        ],
+      },
+      {
+        heading: "8. Security",
+        paragraphs: [
+          "Access is through a personal account with a password. Passwords are stored only as hashes. The separation between what each role may read and write is enforced by the database through Row Level Security policies, so it holds for any request, including one that never goes through the interface.",
+        ],
+      },
+    ],
+    cookieHeading: "9. Cookies and local storage",
+    cookieIntro:
+      "FAIXABJJ uses only technical cookies and local storage, needed either to run the service or to remember a preference the user expressed. We use no profiling cookies, no analytics or advertising tools, and no third-party cookies. Such tools require no prior consent under the ePrivacy Directive: that is why the banner informs you rather than asking for permission.",
+    cookieTable: {
+      name: "Name",
+      type: "Type",
+      purpose: "Purpose",
+      duration: "Duration",
+    },
+    cookies: [
+      {
+        name: "sb-<project>-auth-token",
+        type: "Technical cookie",
+        purpose: "Keeps you signed in. Without it, staying authenticated is impossible.",
+        duration: "Until the session expires or you sign out",
+      },
+      {
+        name: "faixabjj-locale",
+        type: "Technical cookie (preference)",
+        purpose: "Remembers the language you chose.",
+        duration: "1 year",
+      },
+      {
+        name: "theme",
+        type: "Local storage",
+        purpose: "Remembers your choice between the light and the dark theme.",
+        duration: "Until you clear the site's data",
+      },
+      {
+        name: "faixabjj-cookie-notice",
+        type: "Local storage",
+        purpose: "Remembers that this notice has already been shown.",
+        duration: "Until you clear the site's data",
+      },
+    ],
+    cookieRemoval:
+      "You can delete cookies and local storage from your browser settings. Deleting the session cookie signs you out; deleting the others leaves the application working and back on its defaults.",
   },
 };

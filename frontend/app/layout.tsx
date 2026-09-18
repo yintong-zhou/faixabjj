@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Sora, Work_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import { InlineScript } from "@/components/inline-script";
+import { CookieNotice } from "@/components/cookie-notice";
 import { NavShell } from "@/components/nav-shell";
 import { createClient } from "@/utils/supabase/server";
 import { getAccess } from "@/utils/supabase/require-admin";
@@ -129,12 +130,22 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             signIn: t.nav.signIn,
             signOut: t.nav.signOut,
             language: t.nav.language,
+            privacy: t.nav.privacy,
             themeToLight: t.nav.theme.toLight,
             themeToDark: t.nav.theme.toDark,
           }}
         >
           {children}
         </NavShell>
+
+        {/* Informative, not a consent gate: this app sets only cookies it
+            cannot work without, plus the chosen language. It blocks nothing
+            and takes no focus — see components/cookie-notice.tsx. */}
+        <CookieNotice
+          text={t.cookieNotice.text}
+          more={t.cookieNotice.more}
+          accept={t.cookieNotice.accept}
+        />
       </body>
     </html>
   );

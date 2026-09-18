@@ -33,6 +33,7 @@ export const ptBR: Dictionary = {
     menu: "Menu",
     theme: { toLight: "Mudar para o tema claro", toDark: "Mudar para o tema escuro" },
     language: "Idioma",
+    privacy: "Privacidade e cookies",
   },
 
   belts: {
@@ -576,5 +577,121 @@ export const ptBR: Dictionary = {
     hours: (n: string) => `${n} horas`,
     estimateNote: (estimated: string, perWeek: number) =>
       `Inclui ${estimated} horas iniciais, estimadas em ${perWeek} aulas por semana desde a matrícula, referentes ao período anterior ao registro de presenças. A partir daí as horas só aumentam com o check-in ou a chamada.`,
+  },
+
+  cookieNotice: {
+    text: "Este site usa apenas cookies técnicos, necessários para manter a sessão aberta e lembrar o idioma escolhido. Nenhum cookie de perfilamento, nenhum serviço de estatísticas.",
+    more: "Privacidade e cookies",
+    accept: "Entendi",
+  },
+
+  privacy: {
+    title: "Privacidade e cookies",
+    updated: (date: string) => `Última atualização: ${date}`,
+    lead:
+      "Esta página explica quais dados pessoais o FAIXABJJ coleta, por quê, por quanto tempo os conserva e quais direitos você tem sobre eles.",
+    draftTitle: "Documento provisório",
+    draftBody:
+      "O aplicativo está em fase de teste e o controlador dos dados ainda não foi designado. Antes de qualquer uso com dados de pessoas reais, é preciso preencher nome, endereço e contato do controlador e revisar os prazos de conservação indicados abaixo.",
+    sections: [
+      {
+        heading: "1. Controlador dos dados",
+        paragraphs: [
+          "O controlador dos dados é [NOME DA ACADEMIA], com sede em [ENDEREÇO COMPLETO], contactável em [E-MAIL DE CONTATO].",
+          "Não foi nomeado um Encarregado da proteção de dados (DPO): o tratamento não se enquadra nos casos em que o artigo 37 do GDPR o torna obrigatório. Se a academia nomear um, os contatos dele entram aqui.",
+        ],
+      },
+      {
+        heading: "2. Quais dados tratamos",
+        paragraphs: [
+          "Dados de contato e identificação: nome, e-mail, telefone, data de nascimento. Nome e e-mail são obrigatórios para criar uma conta; telefone e data de nascimento são opcionais.",
+          "Dados de progressão técnica: faixa, número de graus, data da última troca de faixa, data do último grau, data de matrícula, função na academia e seu histórico.",
+          "Dados de frequência: presença ou ausência em cada aula, registrando se a presença foi lançada pelo próprio aluno (check-in) ou pelo instrutor (chamada).",
+          "Observações livres: um campo que a equipe pode preencher. Não deve ser usado para categorias especiais de dados nos termos do artigo 9 do GDPR — saúde ou lesões em particular — porque este aviso não cobre esse tipo de tratamento.",
+          "Dados de acesso: credenciais geridas pelo provedor de autenticação (as senhas são guardadas apenas como hash, nunca em texto claro) e registros técnicos do serviço.",
+        ],
+      },
+      {
+        heading: "3. Por que tratamos e com que base legal",
+        paragraphs: [
+          "Gerir a matrícula e a relação com a academia, registrar presenças e contar as horas de treino: execução do contrato ou da relação associativa de que a pessoa é parte (art. 6.1.b do GDPR).",
+          "Avaliar a elegibilidade a graus e faixas e manter o histórico da progressão técnica: legítimo interesse da academia em documentar o percurso técnico de seus alunos (art. 6.1.f do GDPR). A decisão sobre a graduação permanece sempre do instrutor: o aplicativo não promove ninguém automaticamente.",
+          "Manter seguro o acesso ao portal: legítimo interesse em proteger contas e dados (art. 6.1.f do GDPR).",
+          "Não realizamos perfilamento nem decisões automatizadas que produzam efeitos jurídicos sobre a pessoa.",
+        ],
+      },
+      {
+        heading: "4. Quem pode ver os dados",
+        paragraphs: [
+          "O acesso é limitado por função, e o limite é aplicado pelo próprio banco de dados, não apenas pela interface. Um aluno vê os próprios dados e o calendário das aulas. Um instrutor vê a lista de membros somente leitura e gere cursos e presenças. Mestre e administrador têm acesso completo e podem gerir as contas.",
+          "Nenhum dado é vendido ou repassado a terceiros para fins de marketing.",
+        ],
+      },
+      {
+        heading: "5. Por quanto tempo conservamos",
+        paragraphs: [
+          "Os dados de matrícula e o histórico de frequência são conservados durante toda a relação com a academia e por [NÚMERO] anos depois, prazo a definir conforme as obrigações civis e fiscais aplicáveis.",
+          "Revogar o acesso ao portal apaga as credenciais de acesso, mas mantém a ficha da pessoa e seu histórico de frequência: são o registro técnico da academia. A exclusão completa pode ser pedida conforme o ponto 7.",
+        ],
+      },
+      {
+        heading: "6. Onde estão os dados e com quem são compartilhados",
+        paragraphs: [
+          "Os dados são armazenados no Supabase (banco de dados, autenticação e armazenamento) e o site é publicado na Vercel. Ambos atuam como operadores nos termos do artigo 28 do GDPR.",
+          "O projeto está configurado em infraestrutura na União Europeia. Caso um fornecedor trate dados fora do Espaço Econômico Europeu, a transferência apoia-se nas Cláusulas Contratuais-Tipo adotadas pela Comissão Europeia.",
+        ],
+      },
+      {
+        heading: "7. Seus direitos",
+        paragraphs: [
+          "Você pode a qualquer momento pedir acesso aos seus dados, sua retificação ou exclusão, a limitação do tratamento, a portabilidade, e pode opor-se aos tratamentos baseados no legítimo interesse (artigos 15 a 22 do GDPR).",
+          "Algumas correções são imediatas: na página Conta você mesmo altera nome, e-mail, telefone, data de nascimento e observações. Faixa, graus e datas de graduação são somente leitura de propósito, porque a graduação é decisão do instrutor: para corrigi-las, escreva ao controlador.",
+          "Para exercer seus direitos escreva para [E-MAIL DE CONTATO]. Se considerar que o tratamento infringe as regras, pode apresentar reclamação à autoridade de controle competente — na Itália, o Garante per la protezione dei dati personali (www.garanteprivacy.it).",
+        ],
+      },
+      {
+        heading: "8. Segurança",
+        paragraphs: [
+          "O acesso é feito por conta pessoal com senha. As senhas são guardadas apenas como hash. A separação entre o que cada função pode ler e escrever é aplicada pelo banco de dados através de políticas de Row Level Security, valendo portanto para qualquer requisição, inclusive uma que não passe pela interface.",
+        ],
+      },
+    ],
+    cookieHeading: "9. Cookies e armazenamento local",
+    cookieIntro:
+      "O FAIXABJJ usa exclusivamente cookies técnicos e armazenamento local necessários ao funcionamento do serviço ou para lembrar uma preferência expressa pelo usuário. Não usamos cookies de perfilamento, nem ferramentas de estatística ou publicidade, nem cookies de terceiros. Para essas ferramentas não é exigido consentimento prévio: por isso o banner informa em vez de pedir autorização.",
+    cookieTable: {
+      name: "Nome",
+      type: "Tipo",
+      purpose: "Finalidade",
+      duration: "Duração",
+    },
+    cookies: [
+      {
+        name: "sb-<projeto>-auth-token",
+        type: "Cookie técnico",
+        purpose: "Mantém a sessão de acesso. Sem ele, não é possível permanecer autenticado.",
+        duration: "Até o fim da sessão ou a saída da conta",
+      },
+      {
+        name: "faixabjj-locale",
+        type: "Cookie técnico (preferência)",
+        purpose: "Lembra o idioma escolhido.",
+        duration: "1 ano",
+      },
+      {
+        name: "theme",
+        type: "Armazenamento local",
+        purpose: "Lembra a escolha entre tema claro e escuro.",
+        duration: "Até a limpeza dos dados do site",
+      },
+      {
+        name: "faixabjj-cookie-notice",
+        type: "Armazenamento local",
+        purpose: "Lembra que este aviso já foi exibido.",
+        duration: "Até a limpeza dos dados do site",
+      },
+    ],
+    cookieRemoval:
+      "Você pode apagar cookies e armazenamento local nas configurações do navegador. Apagar o cookie de sessão desconecta você; apagar os demais mantém o aplicativo funcionando e de volta às configurações padrão.",
   },
 };

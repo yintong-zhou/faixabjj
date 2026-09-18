@@ -29,6 +29,7 @@ export type NavLabels = {
   signIn: string;
   signOut: string;
   language: string;
+  privacy: string;
   themeToLight: string;
   themeToDark: string;
 };
@@ -178,6 +179,18 @@ export function NavShell({
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-20 pt-4 sm:px-8 sm:pb-10 sm:pt-8">
         {children}
       </main>
+
+      {/* One link, on every page: the privacy notice has to be reachable from
+          anywhere, signed in or not, and a footer is where people look for it.
+          Extra bottom padding on small screens so the mobile tab bar does not
+          cover it. */}
+      <footer className="mx-auto w-full max-w-5xl px-4 pb-24 sm:px-8 sm:pb-8">
+        <div className="border-t border-border pt-4 text-xs text-foreground/55">
+          <Link href="/privacy" className="hover:text-foreground">
+            {labels.privacy}
+          </Link>
+        </div>
+      </footer>
 
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 backdrop-blur sm:hidden">
         <div className="flex items-stretch justify-around pb-[env(safe-area-inset-bottom)]">

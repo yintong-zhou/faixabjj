@@ -8,6 +8,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return PUBLIC_PATHS.map((path) => ({
     url: `${SITE_URL}${path}`,
     changeFrequency: "monthly" as const,
-    priority: 1,
+    // The landing page is what a search result should point at; the privacy
+    // notice is required to exist, not to rank.
+    priority: path === "/" ? 1 : 0.3,
   }));
 }

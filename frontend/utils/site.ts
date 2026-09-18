@@ -11,7 +11,8 @@ export const SITE_NAME = "FAIXABJJ";
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
 
-// Everything except the landing page sits behind a login, so there is nothing
-// for a crawler to index there — and a search result pointing at a login form
-// helps nobody.
-export const PUBLIC_PATHS = ["/"];
+// The only two pages a crawler can reach: everything else sits behind a login,
+// and a search result pointing at a login form helps nobody. The privacy
+// notice belongs here because it has to be readable before signing up — a
+// legal notice behind a login is not a notice.
+export const PUBLIC_PATHS = ["/", "/privacy"];
