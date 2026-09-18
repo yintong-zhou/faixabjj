@@ -44,6 +44,13 @@ const text = (formData: FormData, key: string) => {
   return value ? value : null;
 };
 
+const number = (formData: FormData, key: string): number | null => {
+  const raw = (formData.get(key) as string | null)?.trim();
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 // Adds a member to the registry *and* creates their login account in one act.
 //
 // The account is created with the shared default password, its address marked
@@ -378,6 +385,64 @@ export async function recordPromotion(formData: FormData) {
   }
 
   revalidatePath(`/members/${personId}`);
-  revalidatePath("/promotions");
+  // The Registro carries the eligibility count and the `idonei` filter, so a
+  // promotion changes what that list shows.
+  revalidatePath(PATH);
   redirect(`/members/${personId}?ok=${encodeURIComponent(t.msg.promotionRecorded)}`);
+}
+
+// Tunes one row of promotion_criteria. The grade itself is never editable:
+// the ladder is fixed, only its numbers are the gym's business — so belt and
+// stripe arrive as hidden fields and are used to address the row, never to
+// create one.
+//
+// It lives here, next to the Registro's other actions, because the criteria
+// editor is a panel on the Registro rather than a page of its own — and it
+// uses the same `back()` helper, so saving a criterion returns to the list
+// you were filtering.
+export async function updateCriterion(formData: FormData) {
+  const { t } = await getDictionary();
+  const { supabase } = await requireRegistryEditor(PATH);
+
+  const query = (formData.get("_query") as string | null) ?? "";
+
+  const belt = text(formData, "belt");
+  const stripe = number(formData, "stripe");
+  if (!belt || stripe === null) {
+    back({ error: t.msg.criterionFailed }, query);
+    return;
+  }
+
+  const minHours = number(formData, "min_hours");
+  const minDays = number(formData, "min_time_at_rank_days");
+  if (minHours === null || minHours < 0 || minDays === null || minDays < 0) {
+    back({ error: t.msg.criterionFailed }, query);
+    return;
+  }
+
+  const minAge = number(formData, "min_age_years");
+
+  const { error } = await supabase
+    .from("promotion_criteria")
+    .update({
+      min_hours: minHours,
+      min_time_at_rank_days: Math.round(minDays),
+      min_age_years: minAge === null ? null : Math.round(minAge),
+      notes: text(formData, "notes"),
+    })
+    .eq("belt", belt)
+    .eq("stripe", stripe);
+
+  if (error) {
+    // The database's own text never reaches the screen: codes and constraint
+    // names describe the schema, which is not the reader's business.
+    console.error(
+      `[members] updateCriterion failed: ${error.code ?? "no code"} ${error.message ?? ""}`.trim(),
+    );
+    back({ error: t.msg.criterionFailed }, query);
+    return;
+  }
+
+  revalidatePath(PATH);
+  back({ ok: t.msg.criterionSaved }, query);
 }

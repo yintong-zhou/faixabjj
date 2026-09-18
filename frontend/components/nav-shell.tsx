@@ -9,7 +9,6 @@ import {
   CalendarPlusIcon,
   DashboardIcon,
   HomeIcon,
-  TrendingUpIcon,
   UserIcon,
   UsersIcon,
 } from "@/components/icons";
@@ -26,7 +25,6 @@ export type NavLabels = {
   presenze: string;
   corsi: string;
   registro: string;
-  promotions: string;
   account: string;
   signIn: string;
   signOut: string;
@@ -44,11 +42,6 @@ const PRESENZE_ITEM = {
 } as const;
 const CORSI_ITEM = { href: "/courses", key: "corsi", icon: CalendarPlusIcon } as const;
 const REGISTRO_ITEM = { href: "/members", key: "registro", icon: UsersIcon } as const;
-const PROMOZIONI_ITEM = {
-  href: "/promotions",
-  key: "promotions",
-  icon: TrendingUpIcon,
-} as const;
 const DASHBOARD_ITEM = {
   href: "/dashboard",
   key: "dashboard",
@@ -64,7 +57,6 @@ type NavItem =
   | typeof PRESENZE_ITEM
   | typeof CORSI_ITEM
   | typeof REGISTRO_ITEM
-  | typeof PROMOZIONI_ITEM
   | typeof ACCOUNT_ITEM;
 
 // Hiding a link is a convenience, never the access control: /members, /courses
@@ -93,8 +85,9 @@ function navItemsFor(
     items.push(CORSI_ITEM);
   }
   if (canViewRegistry) {
+    // The eligibility queue is a summary line and a filter inside the
+    // Registro, not a tab of its own: one list of people, not two.
     items.push(REGISTRO_ITEM);
-    items.push(PROMOZIONI_ITEM);
   }
   items.push(ACCOUNT_ITEM);
   return items;

@@ -13,7 +13,6 @@ const PROTECTED_PREFIXES = [
   "/dashboard",
   "/account",
   "/change-password",
-  "/promotions",
 ];
 
 const PASSWORD_CHANGE_PATH = "/change-password";

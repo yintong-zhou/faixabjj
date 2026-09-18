@@ -126,7 +126,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             presenze: t.nav.presenze,
             corsi: t.nav.corsi,
             registro: t.nav.registro,
-            promotions: t.promotions.nav,
             account: t.nav.account,
             signIn: t.nav.signIn,
             signOut: t.nav.signOut,

@@ -107,9 +107,9 @@ export async function StaffDashboard({
   const withoutAccount = members.filter((m) => !m.auth_user_id);
   const recent = members.filter((m) => (daysSince(m.joined_at) ?? 999) <= NEW_MEMBER_DAYS);
 
-  // Same computation the /promotions queue runs, over the same rows (active
-  // members only, like the queue) — the dashboard count and the queue must
-  // always agree.
+  // Same computation the Registro's summary line runs, over the same rows
+  // (active members only) — this count and the one on the Registro must
+  // always agree, because the card links straight at it.
   const criteria = ((criteriaRows ?? []) as Criterion[]).map((row) => ({
     ...row,
     min_hours: Number(row.min_hours),
@@ -203,7 +203,9 @@ export async function StaffDashboard({
           />
         </div>
 
-        <Link href="/promotions" className="block">
+        {/* The queue lives inside the Registro as a filter, so the card links
+            to that filtered list rather than to a page of its own. */}
+        <Link href="/members?idonei=1" className="block">
           <Stat
             label={t.promotions.queueTitle}
             value={t.promotions.eligibleCount(eligibleCount)}

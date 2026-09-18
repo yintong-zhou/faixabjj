@@ -134,7 +134,7 @@ export default async function MemberDetailPage({
   const roles = (roleRows ?? []) as RoleRow[];
 
   // Counted lessons since the current belt/stripe, and the configured
-  // thresholds — the same two queries /promotions runs, just for one person
+  // thresholds — the same two queries the Registro runs, just for one person
   // rather than the whole gym, so the panel can default to the next grade
   // instead of making the coach type it from scratch.
   const [{ data: rankHours }, { data: criteriaRows }, { data: promotionRows }] =
@@ -160,7 +160,7 @@ export default async function MemberDetailPage({
 
   // numeric/bigint columns can come back from PostgREST as strings, which
   // would let a string silently win a `<` comparison in promotionStatus() —
-  // same coercion as /promotions, the one place criteria rows enter the app.
+  // same coercion as the Registro, the one place criteria rows enter the app.
   const criteria = ((criteriaRows ?? []) as Criterion[]).map((row) => ({
     ...row,
     min_hours: Number(row.min_hours),
