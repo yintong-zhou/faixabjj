@@ -521,6 +521,11 @@ export const ptBR: Dictionary = {
     lessonCancelled: "Aula cancelada.",
     lessonRestored: "Aula restaurada.",
     cancelFailed: "O cancelamento não foi concluído.",
+
+    promotionRecorded: "Promoção registrada",
+    promotionFailed: "Não foi possível registrar a promoção",
+    promotionNotForward: "Uma promoção precisa avançar, não retroceder",
+    criterionSaved: "Critério atualizado",
   },
 
   corsi: {
@@ -577,6 +582,75 @@ export const ptBR: Dictionary = {
     hours: (n: string) => `${n} horas`,
     estimateNote: (estimated: string, perWeek: number) =>
       `Inclui ${estimated} horas iniciais, estimadas em ${perWeek} aulas por semana desde a matrícula, referentes ao período anterior ao registro de presenças. A partir daí as horas só aumentam com o check-in ou a chamada.`,
+  },
+
+  promotions: {
+    title: "Promoções",
+    nav: "Promoções",
+    queueTitle: "Mínimos atingidos",
+    queueIntro:
+      "Quem atingiu os mínimos de tempo e de horas para a próxima graduação. É uma sugestão: a avaliação continua sendo do professor.",
+    queueEmpty: "Ninguém atingiu os mínimos no momento.",
+    eligibleCount: (n: number) => (n === 1 ? "1 pessoa" : `${n} pessoas`),
+    proposedStep: "Próximo passo",
+    stripeStep: (n: number) => `${n}º grau`,
+    beltStep: (belt: string) => `Faixa ${belt}`,
+    hoursNote: "Horas de aula, calculadas a 1,5 hora por aula",
+    atCurrentRank: "Horas na graduação atual",
+    criteriaTitle: "Critérios",
+    criteriaIntro:
+      "Horas e tempo mínimos para cada graduação. Os valores das faixas vêm dos mínimos da IBJJF e da prática comum; os dos graus são uma estimativa inicial, para ajustar à academia.",
+    grade: "Graduação",
+    minHours: "Horas mínimas",
+    minDays: "Dias mínimos",
+    minAge: "Idade mínima",
+    criterionNotes: "Observações",
+    save: "Salvar",
+    promote: "Promover",
+    promoteTitle: (name: string) => `Promover ${name}`,
+    targetBelt: "Nova faixa",
+    targetStripes: "Graus",
+    promotedOn: "Data da promoção",
+    promotionNotes: "Observações",
+    confirm: "Registrar promoção",
+    history: "Histórico de promoções",
+    historyEmpty: "Nenhuma promoção registrada.",
+    historyEntry: (from: string, to: string) => `De ${from} para ${to}`,
+    promotedBy: (name: string) => `Registrada por ${name}`,
+    remindersTitle: "Para avaliar no tatame",
+    remindersNote: "Um lembrete, não uma checklist: nada disso é salvo.",
+    reminders: {
+      blue: [
+        "Ataque e defesa básicos na guarda, montada, cem quilos e controle das costas",
+        "Sobrevive no sparring sem ser finalizado com facilidade",
+        "Segue as regras de segurança: bate a tempo, controla as finalizações",
+        "Etiqueta básica no tatame",
+        "Respeito pelos companheiros de treino",
+      ],
+      purple: [
+        "Jogo pessoal reconhecível, com posições e sequências preferidas",
+        "Passagens de guarda, finalizações e transições sólidas",
+        "Se mantém contra faixas iguais e superiores",
+        "Constância nos treinos",
+        "Confiabilidade na academia",
+      ],
+      brown: [
+        "Jogo técnico maduro",
+        "Encadeia técnicas com fluidez",
+        "Controle posicional avançado",
+        "Sabe corrigir e ajudar as faixas menores",
+        "Contribui ativamente com a academia",
+        "Orienta ou auxilia no ensino",
+      ],
+      black: [
+        "Adapta o jogo a estilos de oponente diferentes",
+        "Capaz de ensinar o programa completo",
+        "Maturidade marcial geral",
+        "Liderança sustentada ao longo do tempo",
+        "Humildade e respeito pela tradição",
+        "Dedicação de longo prazo à arte e à academia",
+      ],
+    },
   },
 
   cookieNotice: {

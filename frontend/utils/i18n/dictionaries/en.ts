@@ -520,6 +520,11 @@ export const en: Dictionary = {
     lessonCancelled: "Lesson cancelled.",
     lessonRestored: "Lesson restored.",
     cancelFailed: "The cancellation did not go through.",
+
+    promotionRecorded: "Promotion recorded",
+    promotionFailed: "The promotion could not be recorded",
+    promotionNotForward: "A promotion has to move forward, not back",
+    criterionSaved: "Criterion updated",
   },
 
   corsi: {
@@ -576,6 +581,75 @@ export const en: Dictionary = {
     hours: (n: string) => `${n} hours`,
     estimateNote: (estimated: string, perWeek: number) =>
       `Includes ${estimated} opening hours, estimated at ${perWeek} classes a week since joining, for the period before attendance was tracked. From then on hours only grow through check-in or the roll call.`,
+  },
+
+  promotions: {
+    title: "Promotions",
+    nav: "Promotions",
+    queueTitle: "Minimums met",
+    queueIntro:
+      "Who has met the time and hour minimums for their next grade. It is a suggestion: the assessment stays with the instructor.",
+    queueEmpty: "Nobody has met the minimums right now.",
+    eligibleCount: (n: number) => (n === 1 ? "1 person" : `${n} people`),
+    proposedStep: "Proposed step",
+    stripeStep: (n: number) => `Stripe ${n}`,
+    beltStep: (belt: string) => `${belt} belt`,
+    hoursNote: "Mat hours, counted at 1.5 hours a lesson",
+    atCurrentRank: "Hours at the current grade",
+    criteriaTitle: "Criteria",
+    criteriaIntro:
+      "Minimum hours and time for each grade. The belt figures come from the IBJJF minimums and common practice; the stripe figures are a starting estimate, meant to be tuned for this gym.",
+    grade: "Grade",
+    minHours: "Minimum hours",
+    minDays: "Minimum days",
+    minAge: "Minimum age",
+    criterionNotes: "Notes",
+    save: "Save",
+    promote: "Promote",
+    promoteTitle: (name: string) => `Promote ${name}`,
+    targetBelt: "New belt",
+    targetStripes: "Stripes",
+    promotedOn: "Promotion date",
+    promotionNotes: "Notes",
+    confirm: "Record promotion",
+    history: "Promotion history",
+    historyEmpty: "No promotion recorded.",
+    historyEntry: (from: string, to: string) => `From ${from} to ${to}`,
+    promotedBy: (name: string) => `Recorded by ${name}`,
+    remindersTitle: "To assess on the mat",
+    remindersNote: "A reminder, not a checklist: none of this is saved.",
+    reminders: {
+      blue: [
+        "Basic offence and defence from guard, mount, side control and back control",
+        "Survives sparring without being submitted easily",
+        "Follows the safety rules: taps in time, controls submissions",
+        "Basic mat etiquette",
+        "Respect for training partners",
+      ],
+      purple: [
+        "A recognisable personal game, with preferred positions and sequences",
+        "Solid guard passing, submissions and transitions",
+        "Holds their own against equal and higher belts",
+        "Consistent training",
+        "Reliable around the academy",
+      ],
+      brown: [
+        "A mature technical game",
+        "Chains techniques fluidly",
+        "Advanced positional control",
+        "Can correct and help lower belts",
+        "Contributes actively to the academy",
+        "Mentors or assists with teaching",
+      ],
+      black: [
+        "Adapts their game to different opponent styles",
+        "Able to teach the full curriculum",
+        "Overall martial maturity",
+        "Leadership sustained over time",
+        "Humility and respect for the tradition",
+        "Long-term dedication to the art and the academy",
+      ],
+    },
   },
 
   cookieNotice: {

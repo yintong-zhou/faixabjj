@@ -533,6 +533,11 @@ export const it = {
     lessonCancelled: "Lezione annullata.",
     lessonRestored: "Lezione ripristinata.",
     cancelFailed: "Annullamento non riuscito.",
+
+    promotionRecorded: "Promozione registrata",
+    promotionFailed: "Non è stato possibile registrare la promozione",
+    promotionNotForward: "Una promozione deve andare avanti, non indietro",
+    criterionSaved: "Criterio aggiornato",
   },
 
   corsi: {
@@ -589,6 +594,76 @@ export const it = {
     hours: (n: string) => `${n} ore`,
     estimateNote: (estimated: string, perWeek: number) =>
       `Include ${estimated} ore iniziali, stimate a ${perWeek} lezioni a settimana dall'iscrizione per il periodo prima del tracciamento. Da allora le ore aumentano solo con il check-in o l'appello.`,
+  },
+
+  promotions: {
+    title: "Promozioni",
+    nav: "Promozioni",
+    queueTitle: "Minimi raggiunti",
+    queueIntro:
+      "Chi ha raggiunto i minimi di tempo e di ore per il grado successivo. È un suggerimento: la valutazione resta dell'istruttore.",
+    queueEmpty: "Nessuno ha raggiunto i minimi al momento.",
+    eligibleCount: (n: number) => (n === 1 ? "1 persona" : `${n} persone`),
+    proposedStep: "Passo proposto",
+    stripeStep: (n: number) => `${n}ª tacca`,
+    beltStep: (belt: string) => `Cintura ${belt}`,
+    hoursNote: "Ore di lezione, calcolate a 1,5 ore per lezione",
+    atCurrentRank: "Ore al grado attuale",
+    criteriaTitle: "Criteri",
+    criteriaIntro:
+      "Ore e tempo minimi per ogni grado. I valori delle cinture vengono dai minimi IBJJF e dalla pratica comune; quelli delle tacche sono una stima iniziale, da tarare sulla palestra.",
+    grade: "Grado",
+    minHours: "Ore minime",
+    minDays: "Giorni minimi",
+    minAge: "Età minima",
+    criterionNotes: "Note",
+    save: "Salva",
+    promote: "Promuovi",
+    promoteTitle: (name: string) => `Promuovi ${name}`,
+    targetBelt: "Nuova cintura",
+    targetStripes: "Tacche",
+    promotedOn: "Data della promozione",
+    promotionNotes: "Note",
+    confirm: "Registra promozione",
+    history: "Storico promozioni",
+    historyEmpty: "Nessuna promozione registrata.",
+    historyEntry: (from: string, to: string) => `Da ${from} a ${to}`,
+    promotedBy: (name: string) => `Registrata da ${name}`,
+    remindersTitle: "Da valutare sul tappeto",
+    remindersNote:
+      "Promemoria, non una checklist: niente di quanto segue viene salvato.",
+    reminders: {
+      blue: [
+        "Attacco e difesa di base in guardia, montata, cento chili e controllo della schiena",
+        "Sopravvive nello sparring senza farsi sottomettere facilmente",
+        "Rispetta le regole di sicurezza: batte in tempo, controlla le sottomissioni",
+        "Etichetta di base sul tappeto",
+        "Rispetto per i compagni di allenamento",
+      ],
+      purple: [
+        "Gioco personale riconoscibile, con posizioni e sequenze preferite",
+        "Passaggi di guardia, sottomissioni e transizioni solide",
+        "Tiene il confronto con pari grado e con cinture superiori",
+        "Costanza negli allenamenti",
+        "Affidabilità in palestra",
+      ],
+      brown: [
+        "Gioco tecnico maturo",
+        "Concatena le tecniche in modo fluido",
+        "Controllo posizionale avanzato",
+        "Sa correggere e aiutare le cinture più basse",
+        "Contributo attivo alla vita della palestra",
+        "Fa da mentore o assiste nell'insegnamento",
+      ],
+      black: [
+        "Adatta il proprio gioco a stili di avversario diversi",
+        "È in grado di insegnare l'intero programma",
+        "Maturità marziale complessiva",
+        "Capacità di guida dimostrata nel tempo",
+        "Umiltà e rispetto per la tradizione",
+        "Dedizione di lungo periodo all'arte e alla palestra",
+      ],
+    },
   },
 
   cookieNotice: {
