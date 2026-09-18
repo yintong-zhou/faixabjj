@@ -334,3 +334,50 @@ export async function revokeAccess(formData: FormData) {
   revalidatePath(PATH);
   back({ ok: t.msg.accessRevoked }, query);
 }
+
+// Recording a promotion is one RPC, not two writes: updating the person row
+// and inserting the history row have to happen together, and record_promotion()
+// does both in one transaction. The function is security *invoker*, so RLS and
+// the guard trigger still apply — requireRegistryEditor here is the early, clear
+// refusal, not the security boundary.
+export async function recordPromotion(formData: FormData) {
+  const { t } = await getDictionary();
+  const { supabase } = await requireRegistryEditor(PATH);
+
+  const personId = text(formData, "person_id");
+  const toBelt = text(formData, "to_belt");
+  const promotedOn = text(formData, "promoted_on");
+  const toStripes = Number.parseInt(
+    (formData.get("to_stripes") as string) ?? "0",
+    10,
+  );
+
+  if (!personId || !toBelt || !BELTS.includes(toBelt as (typeof BELTS)[number])) {
+    redirect(`/members/${personId ?? ""}?error=${encodeURIComponent(t.msg.promotionFailed)}`);
+  }
+
+  const { error } = await supabase.rpc("record_promotion", {
+    p_person_id: personId,
+    p_to_belt: toBelt,
+    p_to_stripes: Number.isFinite(toStripes) ? toStripes : 0,
+    p_promoted_on: promotedOn ?? undefined,
+    p_notes: text(formData, "notes"),
+  });
+
+  if (error) {
+    // 23514 is the function's own check violations — forward-only, stripes out
+    // of range, stripes on a black belt. They are the one case the user can act
+    // on, so they get their own message; everything else is generic and the
+    // real reason goes to the server log.
+    const message =
+      error.code === "23514" ? t.msg.promotionNotForward : t.msg.promotionFailed;
+    console.error(
+      `[members] recordPromotion failed: ${error.code ?? "no code"} ${error.message ?? ""}`.trim(),
+    );
+    redirect(`/members/${personId}?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath(`/members/${personId}`);
+  revalidatePath("/promotions");
+  redirect(`/members/${personId}?ok=${encodeURIComponent(t.msg.promotionRecorded)}`);
+}

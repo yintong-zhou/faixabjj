@@ -2,12 +2,16 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Belt } from "@/components/belt";
-import { roleLabel } from "@/utils/supabase/profile";
+import { beltLabel, roleLabel } from "@/utils/supabase/profile";
 import { getDictionary } from "@/utils/i18n/server";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
 import { LESSONS_PER_WEEK, TRACKING_STARTED_ON, formatHours, hoursFor } from "@/utils/hours";
+import { promotionStatus, type Criterion } from "@/utils/promotion";
+import { PromotePanel } from "./promote-panel";
 import {
+  AlertCircleIcon,
+  CheckCircleIcon,
   ChevronLeftIcon,
   FileTextIcon,
   TrendingUpIcon,
@@ -36,6 +40,16 @@ type RoleRow = {
   end_date: string | null;
 };
 
+type PromotionRow = {
+  id: string;
+  from_belt: string;
+  from_stripes: number;
+  to_belt: string;
+  to_stripes: number;
+  promoted_on: string;
+  notes: string | null;
+};
+
 function Field({
   label,
   value,
@@ -58,10 +72,10 @@ export default async function MemberDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; ok?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { from } = await searchParams;
+  const { from, ok, error } = await searchParams;
   const { t } = await getDictionary();
   // Same gate as the list: staff only, 404 for everyone else.
   const { supabase, access } = await requireRegistryViewer(`/members/${id}`);
@@ -103,6 +117,56 @@ export default async function MemberDetailPage({
     .order("start_date", { ascending: false });
 
   const roles = (roleRows ?? []) as RoleRow[];
+
+  // Counted lessons since the current belt/stripe, and the configured
+  // thresholds — the same two queries /promotions runs, just for one person
+  // rather than the whole gym, so the panel can default to the next grade
+  // instead of making the coach type it from scratch.
+  const [{ data: rankHours }, { data: criteriaRows }, { data: promotionRows }] =
+    await Promise.all([
+      supabase
+        .from("person_rank_hours")
+        .select("lessons_since_rank, lessons_since_stripe")
+        .eq("person_id", member.id)
+        .maybeSingle(),
+      supabase
+        .from("promotion_criteria")
+        .select("belt, stripe, min_hours, min_time_at_rank_days, min_age_years")
+        .order("belt")
+        .order("stripe"),
+      supabase
+        .from("promotion")
+        .select("id, from_belt, from_stripes, to_belt, to_stripes, promoted_on, notes")
+        .eq("person_id", id)
+        .order("promoted_on", { ascending: false }),
+    ]);
+
+  // numeric/bigint columns can come back from PostgREST as strings, which
+  // would let a string silently win a `<` comparison in promotionStatus() —
+  // same coercion as /promotions, the one place criteria rows enter the app.
+  const criteria = ((criteriaRows ?? []) as Criterion[]).map((row) => ({
+    ...row,
+    min_hours: Number(row.min_hours),
+    min_time_at_rank_days: Number(row.min_time_at_rank_days),
+  }));
+
+  const status = promotionStatus(
+    {
+      current_belt: member.current_belt,
+      current_stripes: member.current_stripes,
+      rank_since: member.rank_since,
+      stripe_since: member.stripe_since ?? member.rank_since,
+      joined_at: member.joined_at,
+      birth_date: member.birth_date,
+      lessons_since_rank: Number(rankHours?.lessons_since_rank ?? 0),
+      lessons_since_stripe: Number(rankHours?.lessons_since_stripe ?? 0),
+    },
+    criteria,
+  );
+
+  const promotions = (promotionRows ?? []) as PromotionRow[];
+  const today = new Date().toISOString().slice(0, 10);
+
   // Carries the list's filters and page back, so closing the detail view
   // returns to exactly the list you opened it from.
   const backHref = from ? `/members?${from}` : "/members";
@@ -141,6 +205,19 @@ export default async function MemberDetailPage({
           </p>
         )}
       </header>
+
+      {ok ? (
+        <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
+          <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {ok}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {error}
+        </p>
+      ) : null}
 
       <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
@@ -205,6 +282,46 @@ export default async function MemberDetailPage({
             )}
           </p>
         ) : null}
+      </section>
+
+      {access.canEditRegistry ? (
+        <PromotePanel
+          personId={member.id}
+          personName={member.full_name}
+          status={status}
+          today={today}
+          t={t}
+        />
+      ) : null}
+
+      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+          <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          {t.promotions.history}
+        </h2>
+
+        {promotions.length === 0 ? (
+          <p className="text-sm text-foreground/60">{t.promotions.historyEmpty}</p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-border">
+            {promotions.map((row) => (
+              <li
+                key={row.id}
+                className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+              >
+                <span className="text-sm font-medium">
+                  {t.promotions.historyEntry(
+                    t.belts.label(beltLabel(row.from_belt, t), row.from_stripes),
+                    t.belts.label(beltLabel(row.to_belt, t), row.to_stripes),
+                  )}
+                </span>
+                <span className="text-xs text-foreground/55">
+                  {formatDate(row.promoted_on)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="flex flex-col gap-2 rounded-xl border border-border p-4 sm:gap-3 sm:p-5">
