@@ -224,15 +224,10 @@ chiamata, quindi passa il trigger senza eccezioni per la funzione stessa.
    persone.
 2. **Editor dei criteri**, solo per i registry editor (`canEditRegistry`): una
    riga per grado, con ore minime, giorni minimi, età minima e note. Una form
-   `method="post"` per riga, server action con guardia di modifica registro.
+   `method="post"` per riga, server action con guardia `requireRegistryEditor()`
+   — che esiste già in `utils/supabase/require-admin.ts` accanto alle altre.
    Nessuna creazione né cancellazione di righe: la scala dei gradi è fissa, si
    tarano solo i numeri.
-
-   Nota: in `utils/supabase/require-admin.ts` oggi esistono
-   `requireRegistryViewer()`, `requireUserManager()` e `requireClassManager()`,
-   ma **non** un equivalente per `canEditRegistry`. Va aggiunto lì accanto agli
-   altri — una definizione per privilegio, non un controllo scritto a mano nella
-   pagina.
 
 La pagina va in `PROTECTED_PREFIXES` e chiama la propria guardia (404, non 403).
 La coda si calcola caricando i membri attivi — poche centinaia di righe, colonne
