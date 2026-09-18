@@ -26,7 +26,7 @@ export function PromotePanel({
   const reminderKey = REMINDER_KEYS.find((k) => k === proposed?.belt);
 
   return (
-    <details className="rounded-xl border border-border">
+    <details id="promote" className="rounded-xl border border-border">
       <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
         {t.promotions.promoteTitle(personName)}
       </summary>

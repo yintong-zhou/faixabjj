@@ -15,6 +15,7 @@ import {
   FilterIcon,
   KeyIcon,
   MailIcon,
+  TrendingUpIcon,
   UserMinusIcon,
   UserPlusIcon,
 } from "@/components/icons";
@@ -22,6 +23,10 @@ import { daysSince, formatDate, formatDays } from "@/utils/dates";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { estimateNote, formatHours, hoursFor } from "@/utils/hours";
 import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
+import {
+  promotionStatus,
+  type Criterion,
+} from "@/utils/promotion";
 import {
   addPerson,
   inviteToPortal,
@@ -49,6 +54,7 @@ type Member = {
   current_stripes: number;
   rank_since: string;
   stripe_since: string | null;
+  birth_date: string | null;
   active_roles: string[];
   is_active: boolean;
   total_hours: number;
@@ -121,6 +127,57 @@ export default async function RegistroPage({
   );
 
   const members = (data ?? []) as Member[];
+
+  // Eligibility for the dot next to each row: computed only for the rows on
+  // this page, not the whole gym, because the list is paginated.
+  const ids = members.map((m) => m.id);
+  const [{ data: rankRows }, { data: criteriaRows }] = await Promise.all([
+    ids.length
+      ? supabase
+          .from("person_rank_hours")
+          .select("person_id, lessons_since_rank, lessons_since_stripe")
+          .in("person_id", ids)
+      : Promise.resolve({ data: [] as never[] }),
+    supabase
+      .from("promotion_criteria")
+      .select("belt, stripe, min_hours, min_time_at_rank_days, min_age_years"),
+  ]);
+
+  // numeric/bigint columns can come back from PostgREST as strings — coerce
+  // here, same as /promotions, so a string never wins a `<` comparison.
+  const criteria = ((criteriaRows ?? []) as Criterion[]).map((row) => ({
+    ...row,
+    min_hours: Number(row.min_hours),
+    min_time_at_rank_days: Number(row.min_time_at_rank_days),
+  }));
+  const rankById = new Map(
+    (
+      (rankRows ?? []) as {
+        person_id: string;
+        lessons_since_rank: number;
+        lessons_since_stripe: number;
+      }[]
+    ).map((row) => [row.person_id, row]),
+  );
+  const eligibleById = new Map(
+    members.map((m) => {
+      const counted = rankById.get(m.id);
+      const status = promotionStatus(
+        {
+          current_belt: m.current_belt,
+          current_stripes: m.current_stripes,
+          rank_since: m.rank_since,
+          stripe_since: m.stripe_since ?? m.rank_since,
+          joined_at: m.joined_at,
+          birth_date: m.birth_date,
+          lessons_since_rank: Number(counted?.lessons_since_rank ?? 0),
+          lessons_since_stripe: Number(counted?.lessons_since_stripe ?? 0),
+        },
+        criteria,
+      );
+      return [m.id, status.eligible] as const;
+    }),
+  );
   const total = count ?? 0;
   const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentQuery = queryString(search);
@@ -478,6 +535,13 @@ export default async function RegistroPage({
                     belt={member.current_belt}
                     stripes={member.current_stripes}
                   />
+                  {eligibleById.get(member.id) ? (
+                    <span
+                      className="inline-block h-2 w-2 rounded-full bg-[var(--success)]"
+                      title={t.promotions.queueTitle}
+                      aria-label={t.promotions.queueTitle}
+                    />
+                  ) : null}
                   {member.auth_user_id ? null : (
                     <span className="rounded-full border border-border px-2 py-0.5 text-xs font-normal text-foreground/55">
                       {t.registro.noAccount}
@@ -528,6 +592,16 @@ export default async function RegistroPage({
                   <FileTextIcon className={menuIconClass} />
                   {t.registro.details}
                 </Link>
+
+                {access.canEditRegistry ? (
+                  <Link
+                    href={`/members/${member.id}?from=${encodeURIComponent(currentQuery)}#promote`}
+                    className={menuItemClass}
+                  >
+                    <TrendingUpIcon className={menuIconClass} />
+                    {t.promotions.promote}
+                  </Link>
+                ) : null}
 
                 {access.canEditRegistry && canInvite ? (
                     <form action={inviteToPortal}>

@@ -12,6 +12,7 @@ import {
 import { daysSince } from "@/utils/dates";
 import { hoursFor } from "@/utils/hours";
 import { PORTAL_ONLY_ROLES } from "@/utils/members";
+import { promotionStatus, type Criterion } from "@/utils/promotion";
 import { BELT_ORDER, beltLabel } from "@/utils/supabase/profile";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { addDays, formatTime, monthStart, shiftMonth } from "@/utils/schedule";
@@ -27,9 +28,17 @@ type Member = {
   current_belt: string;
   current_stripes: number;
   rank_since: string;
+  stripe_since: string | null;
+  birth_date: string | null;
   active_roles: string[];
   is_active: boolean;
   total_hours: number;
+};
+
+type RankHours = {
+  person_id: string;
+  lessons_since_rank: number;
+  lessons_since_stripe: number;
 };
 
 type Session = {
@@ -55,12 +64,17 @@ export async function StaffDashboard({
   const from = monthStart(today);
   const until = addDays(shiftMonth(from, 1), -1);
 
-  const [{ data: memberRows }, { data: sessionRows }, { count: activeCourses }] =
-    await Promise.all([
+  const [
+    { data: memberRows },
+    { data: sessionRows },
+    { count: activeCourses },
+    { data: rankRows },
+    { data: criteriaRows },
+  ] = await Promise.all([
       supabase
         .from("member_overview")
         .select(
-          "id, full_name, auth_user_id, joined_at, current_belt, current_stripes, rank_since, active_roles, is_active, total_hours",
+          "id, full_name, auth_user_id, joined_at, current_belt, current_stripes, rank_since, stripe_since, birth_date, active_roles, is_active, total_hours",
         )
         // Whoever only runs the portal is not a student of the gym and would
         // skew every count on this page.
@@ -78,6 +92,12 @@ export async function StaffDashboard({
         .from("course")
         .select("id", { count: "exact", head: true })
         .eq("is_active", true),
+      supabase
+        .from("person_rank_hours")
+        .select("person_id, lessons_since_rank, lessons_since_stripe"),
+      supabase
+        .from("promotion_criteria")
+        .select("belt, stripe, min_hours, min_time_at_rank_days, min_age_years"),
     ]);
 
   const members = (memberRows ?? []) as Member[];
@@ -86,6 +106,35 @@ export async function StaffDashboard({
   const active = members.filter((m) => m.is_active);
   const withoutAccount = members.filter((m) => !m.auth_user_id);
   const recent = members.filter((m) => (daysSince(m.joined_at) ?? 999) <= NEW_MEMBER_DAYS);
+
+  // Same computation the /promotions queue runs, over the same rows (active
+  // members only, like the queue) — the dashboard count and the queue must
+  // always agree.
+  const criteria = ((criteriaRows ?? []) as Criterion[]).map((row) => ({
+    ...row,
+    min_hours: Number(row.min_hours),
+    min_time_at_rank_days: Number(row.min_time_at_rank_days),
+  }));
+  const rankById = new Map(
+    ((rankRows ?? []) as RankHours[]).map((row) => [row.person_id, row]),
+  );
+  const eligibleCount = active.filter((m) => {
+    const counted = rankById.get(m.id);
+    const status = promotionStatus(
+      {
+        current_belt: m.current_belt,
+        current_stripes: m.current_stripes,
+        rank_since: m.rank_since,
+        stripe_since: m.stripe_since ?? m.rank_since,
+        joined_at: m.joined_at,
+        birth_date: m.birth_date,
+        lessons_since_rank: Number(counted?.lessons_since_rank ?? 0),
+        lessons_since_stripe: Number(counted?.lessons_since_stripe ?? 0),
+      },
+      criteria,
+    );
+    return status.eligible;
+  }).length;
 
   // "Held" means the day has passed and the lesson was not called off — the
   // only sessions whose attendance says anything about turnout.
@@ -153,6 +202,13 @@ export async function StaffDashboard({
             hint={t.dashboard.openingBalancesIncluded}
           />
         </div>
+
+        <Link href="/promotions" className="block">
+          <Stat
+            label={t.promotions.queueTitle}
+            value={t.promotions.eligibleCount(eligibleCount)}
+          />
+        </Link>
       </Section>
 
       <Section
