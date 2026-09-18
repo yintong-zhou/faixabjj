@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Belt } from "@/components/belt";
-import { TrendingUpIcon } from "@/components/icons";
+import { AlertCircleIcon, CheckCircleIcon, TrendingUpIcon } from "@/components/icons";
 import { beltLabel } from "@/utils/supabase/profile";
 import { formatDays } from "@/utils/dates";
 import { formatHours } from "@/utils/hours";
@@ -14,6 +14,8 @@ import {
   type PromotionStatus,
 } from "@/utils/promotion";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
+
+import { updateCriterion } from "./actions";
 
 const PATH = "/promotions";
 
@@ -28,7 +30,12 @@ type RankHours = {
   lessons_since_stripe: number;
 };
 
-export default async function PromotionsPage() {
+export default async function PromotionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ok?: string; error?: string }>;
+}) {
+  const params = await searchParams;
   const { t } = await getDictionary();
   const { supabase, access } = await requireRegistryViewer(PATH);
 
@@ -56,7 +63,16 @@ export default async function PromotionsPage() {
         .order("stripe"),
     ]);
 
-  const criteria = (criteriaRows ?? []) as (Criterion & { notes: string | null })[];
+  // numeric and bigint columns can come back from PostgREST as strings, which
+  // would let a string silently win a `<` comparison in promotionStatus() —
+  // coerce here, the one place criteria rows enter the app.
+  const criteria = (
+    (criteriaRows ?? []) as (Criterion & { notes: string | null })[]
+  ).map((row) => ({
+    ...row,
+    min_hours: Number(row.min_hours),
+    min_time_at_rank_days: Number(row.min_time_at_rank_days),
+  }));
   const hoursById = new Map(
     ((rankRows ?? []) as RankHours[]).map((row) => [row.person_id, row]),
   );
@@ -85,6 +101,19 @@ export default async function PromotionsPage() {
         <h1 className="font-heading text-2xl font-semibold">{t.promotions.title}</h1>
         <p className="text-sm text-foreground/65">{t.promotions.queueIntro}</p>
       </header>
+
+      {params.ok ? (
+        <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
+          <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {params.ok}
+        </p>
+      ) : null}
+      {params.error ? (
+        <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {params.error}
+        </p>
+      ) : null}
 
       <section className="flex flex-col gap-3">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
@@ -129,6 +158,89 @@ export default async function PromotionsPage() {
           </ul>
         )}
       </section>
+
+      {access.canEditRegistry ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-heading text-lg font-semibold">
+            {t.promotions.criteriaTitle}
+          </h2>
+          <p className="text-sm text-foreground/65">{t.promotions.criteriaIntro}</p>
+
+          <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+            {criteria.map((criterion) => (
+              <li key={`${criterion.belt}-${criterion.stripe}`} className="p-3 sm:p-4">
+                <form
+                  action={updateCriterion}
+                  className="flex flex-wrap items-end gap-3"
+                >
+                  <input type="hidden" name="belt" value={criterion.belt} />
+                  <input type="hidden" name="stripe" value={criterion.stripe} />
+
+                  <span className="flex min-w-[9rem] items-center gap-2 text-sm font-medium">
+                    <Belt belt={criterion.belt} stripes={criterion.stripe} />
+                  </span>
+
+                  <label className="flex flex-col gap-1 text-xs text-foreground/65">
+                    {t.promotions.minHours}
+                    <input
+                      type="number"
+                      name="min_hours"
+                      min={0}
+                      step="0.5"
+                      defaultValue={criterion.min_hours}
+                      required
+                      className="w-24 rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1 text-xs text-foreground/65">
+                    {t.promotions.minDays}
+                    <input
+                      type="number"
+                      name="min_time_at_rank_days"
+                      min={0}
+                      step="1"
+                      defaultValue={criterion.min_time_at_rank_days}
+                      required
+                      className="w-24 rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1 text-xs text-foreground/65">
+                    {t.promotions.minAge}
+                    <input
+                      type="number"
+                      name="min_age_years"
+                      min={0}
+                      max={99}
+                      step="1"
+                      defaultValue={criterion.min_age_years ?? ""}
+                      className="w-20 rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
+                    />
+                  </label>
+
+                  <label className="flex min-w-[12rem] flex-1 flex-col gap-1 text-xs text-foreground/65">
+                    {t.promotions.criterionNotes}
+                    <input
+                      type="text"
+                      name="notes"
+                      defaultValue={criterion.notes ?? ""}
+                      className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
+                    />
+                  </label>
+
+                  <button
+                    type="submit"
+                    className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+                  >
+                    {t.promotions.save}
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </main>
   );
 }
