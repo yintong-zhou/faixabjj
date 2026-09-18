@@ -48,7 +48,22 @@ type PromotionRow = {
   to_stripes: number;
   promoted_on: string;
   notes: string | null;
+  // The signer, embedded in the same round trip rather than fetched after.
+  // `promotion` has two foreign keys into `person`, so the relationship has to
+  // be named by its constraint or PostgREST cannot tell them apart. Null when
+  // the signer's registry row has since been removed (`on delete set null`).
+  //
+  // Typed as either shape: PostgREST returns a single object for this to-one
+  // embed, but without generated database types supabase-js cannot know the
+  // cardinality and infers an array. `promoterName()` collapses the two rather
+  // than casting through `unknown`, which would silence a real mismatch too.
+  promoted_by: { full_name: string } | { full_name: string }[] | null;
 };
+
+function promoterName(row: PromotionRow): string | null {
+  const promoter = Array.isArray(row.promoted_by) ? row.promoted_by[0] : row.promoted_by;
+  return promoter?.full_name ?? null;
+}
 
 function Field({
   label,
@@ -136,7 +151,9 @@ export default async function MemberDetailPage({
         .order("stripe"),
       supabase
         .from("promotion")
-        .select("id, from_belt, from_stripes, to_belt, to_stripes, promoted_on, notes")
+        .select(
+          "id, from_belt, from_stripes, to_belt, to_stripes, promoted_on, notes, promoted_by:person!promotion_promoted_by_fkey(full_name)",
+        )
         .eq("person_id", id)
         .order("promoted_on", { ascending: false }),
     ]);
@@ -187,11 +204,7 @@ export default async function MemberDetailPage({
         </h1>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Belt
-            belt={member.current_belt}
-            stripes={member.current_stripes}
-            size="md"
-          />
+          <Belt belt={member.current_belt} stripes={member.current_stripes} size="md" />
           {member.auth_user_id ? null : (
             <span className="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground/55">
               {t.registro.noAccount}
@@ -200,9 +213,7 @@ export default async function MemberDetailPage({
         </div>
 
         {access.canEditRegistry ? null : (
-          <p className="text-sm text-foreground/60">
-            {t.registro.detailReadOnly}
-          </p>
+          <p className="text-sm text-foreground/60">{t.registro.detailReadOnly}</p>
         )}
       </header>
 
@@ -304,22 +315,40 @@ export default async function MemberDetailPage({
           <p className="text-sm text-foreground/60">{t.promotions.historyEmpty}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-border">
-            {promotions.map((row) => (
-              <li
-                key={row.id}
-                className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
-              >
-                <span className="text-sm font-medium">
-                  {t.promotions.historyEntry(
-                    t.belts.label(beltLabel(row.from_belt, t), row.from_stripes),
-                    t.belts.label(beltLabel(row.to_belt, t), row.to_stripes),
-                  )}
-                </span>
-                <span className="text-xs text-foreground/55">
-                  {formatDate(row.promoted_on)}
-                </span>
-              </li>
-            ))}
+            {promotions.map((row) => {
+              const promoter = promoterName(row);
+              return (
+                <li
+                  key={row.id}
+                  className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                >
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-sm font-medium">
+                      {t.promotions.historyEntry(
+                        t.belts.label(beltLabel(row.from_belt, t), row.from_stripes),
+                        t.belts.label(beltLabel(row.to_belt, t), row.to_stripes),
+                      )}
+                    </span>
+                    {promoter ? (
+                      <span className="text-xs text-foreground/55">
+                        {t.promotions.promotedBy(promoter)}
+                      </span>
+                    ) : null}
+                    {/* The note was stored and never shown. A promotion the
+                      instructor explained is exactly the entry somebody
+                      re-reads years later. */}
+                    {row.notes ? (
+                      <span className="text-xs leading-relaxed text-foreground/70">
+                        {row.notes}
+                      </span>
+                    ) : null}
+                  </div>
+                  <span className="shrink-0 text-xs text-foreground/55">
+                    {formatDate(row.promoted_on)}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -349,9 +378,7 @@ export default async function MemberDetailPage({
                 key={`${role.role}-${role.start_date}`}
                 className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
               >
-                <span className="text-sm font-medium">
-                  {roleLabel(role.role, t)}
-                </span>
+                <span className="text-sm font-medium">{roleLabel(role.role, t)}</span>
                 <span className="text-xs text-foreground/55">
                   {role.end_date
                     ? t.registro.roleRange(

@@ -526,6 +526,7 @@ export const ptBR: Dictionary = {
     promotionFailed: "Não foi possível registrar a promoção",
     promotionNotForward: "Uma promoção precisa avançar, não retroceder",
     criterionSaved: "Critério atualizado",
+    criterionFailed: "Não foi possível salvar o critério",
   },
 
   corsi: {

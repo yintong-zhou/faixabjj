@@ -42,14 +42,14 @@ export async function updateCriterion(formData: FormData) {
   const belt = (formData.get("belt") as string | null)?.trim();
   const stripe = number(formData, "stripe");
   if (!belt || stripe === null) {
-    back({ error: t.msg.promotionFailed });
+    back({ error: t.msg.criterionFailed });
     return;
   }
 
   const minHours = number(formData, "min_hours");
   const minDays = number(formData, "min_time_at_rank_days");
   if (minHours === null || minHours < 0 || minDays === null || minDays < 0) {
-    back({ error: t.msg.promotionFailed });
+    back({ error: t.msg.criterionFailed });
     return;
   }
 
@@ -71,7 +71,7 @@ export async function updateCriterion(formData: FormData) {
     // The database's own text never reaches the screen: codes and constraint
     // names describe the schema, which is not the reader's business.
     logDbError("updateCriterion", error);
-    back({ error: t.msg.promotionFailed });
+    back({ error: t.msg.criterionFailed });
     return;
   }
 

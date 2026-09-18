@@ -162,9 +162,12 @@ Regole:
   pratica comune, non regola del documento. Il pannello di promozione lascia
   comunque scegliere il grado di destinazione, quindi un salto diretto resta
   possibile: è la *proposta* a seguire la scala, non il permesso.
-- **Ore**: `currentHours = (presenze dal grado × SESSION_LENGTH_HOURS) +
-  estimatedHours(max(joined_at, ancora))`, dove l'ancora è `rank_since` per un
-  passo di cintura e `stripe_since` per una tacca.
+- **Ore**: `currentHours = clockHours(presenze dal grado +
+  estimatedHours(max(joined_at, ancora)))`, dove l'ancora è `rank_since` per un
+  passo di cintura e `stripe_since` per una tacca. La conversione con
+  `SESSION_LENGTH_HOURS` si applica alla **somma**, non alle sole presenze:
+  `estimatedHours()` restituisce un conteggio di lezioni, non ore-orologio, e
+  convertire solo un addendo lascerebbe l'altro nell'unità sbagliata.
 - **Confronti al limite**: `>=`, non `>`. Chi è esattamente alla soglia è
   idoneo.
 - **Età**: controllata solo dove `min_age_years` è valorizzato. Se manca

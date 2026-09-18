@@ -161,6 +161,13 @@ export default async function RegistroPage({
   );
   const eligibleById = new Map(
     members.map((m) => {
+      // Same population as the queue on /promotions and the dashboard's count:
+      // `is_active` means "still holds an open role", i.e. still a member of
+      // this gym. A former member carrying a dot here while being absent from
+      // the work list the dashboard advertises reads as a bug, and the queue's
+      // filter is the intentional one — so the derived signal follows it.
+      if (!m.is_active) return [m.id, false] as const;
+
       const counted = rankById.get(m.id);
       const status = promotionStatus(
         {

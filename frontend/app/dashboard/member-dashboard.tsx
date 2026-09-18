@@ -9,7 +9,13 @@ import {
   TrendingUpIcon,
 } from "@/components/icons";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
-import { LESSONS_PER_WEEK, clockHours, formatHours, hoursFor } from "@/utils/hours";
+import {
+  LESSONS_PER_WEEK,
+  clockHours,
+  estimatedHours,
+  formatHours,
+  hoursFor,
+} from "@/utils/hours";
 import type { Profile } from "@/utils/supabase/profile";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { addDays, formatDayHeading, formatTime } from "@/utils/schedule";
@@ -102,6 +108,20 @@ export async function MemberDashboard({
   const hours = hoursFor(profile.joined_at, hoursRow?.total_hours);
   const perWeek = recentCount / (RECENT_DAYS / 7);
 
+  // Hours at the current belt, composed exactly as promotionStatus() composes
+  // them: the counted lessons plus the estimated opening balance, anchored at
+  // the later of the join date and the belt date — the estimate is not
+  // attendance and must not be credited to a grade held before they joined.
+  // Showing only the counted part here would put two different meanings under
+  // one label, since the figure eligibility is judged on includes the estimate.
+  // This page still says nothing about thresholds, distance or eligibility:
+  // only the composition of this one number changes.
+  const rankAnchor =
+    profile.joined_at > profile.rank_since ? profile.joined_at : profile.rank_since;
+  const hoursAtRank = clockHours(
+    Number(rankRow?.lessons_since_rank ?? 0) + estimatedHours(rankAnchor, { today }),
+  );
+
   return (
     <>
       <Section title={t.dashboard.yourRank} icon={TrendingUpIcon}>
@@ -133,7 +153,7 @@ export async function MemberDashboard({
                 {t.promotions.atCurrentRank}
               </dt>
               <dd className="text-sm font-medium" title={t.promotions.hoursNote}>
-                {formatHours(clockHours(Number(rankRow?.lessons_since_rank ?? 0)), t)}
+                {formatHours(hoursAtRank, t)}
               </dd>
             </div>
             <div>
@@ -144,6 +164,14 @@ export async function MemberDashboard({
             </div>
           </dl>
         </div>
+
+        {/* Visible, not only a `title`: this app is used on a phone, where a
+            tooltip never appears — the same reason the roll call replaced its
+            tooltips with a legend. A unit explained nowhere visible is a unit
+            the reader has to guess. */}
+        <p className="text-xs leading-relaxed text-foreground/55">
+          {t.promotions.hoursNote}
+        </p>
 
         <p className="flex items-start gap-2 text-xs leading-relaxed text-foreground/55">
           <AlertCircleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />

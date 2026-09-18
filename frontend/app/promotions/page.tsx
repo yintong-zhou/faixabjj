@@ -157,6 +157,15 @@ export default async function PromotionsPage({
             ))}
           </ul>
         )}
+
+        {/* The unit has to be readable, not hovered: a `title` never appears on
+            the phone this app is used on, exactly as the roll call found when
+            it replaced its tooltips with a visible legend. */}
+        {eligible.length > 0 ? (
+          <p className="text-xs leading-relaxed text-foreground/55">
+            {t.promotions.hoursNote}
+          </p>
+        ) : null}
       </section>
 
       {access.canEditRegistry ? (

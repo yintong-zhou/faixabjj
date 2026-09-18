@@ -538,6 +538,7 @@ export const it = {
     promotionFailed: "Non è stato possibile registrare la promozione",
     promotionNotForward: "Una promozione deve andare avanti, non indietro",
     criterionSaved: "Criterio aggiornato",
+    criterionFailed: "Non è stato possibile salvare il criterio",
   },
 
   corsi: {

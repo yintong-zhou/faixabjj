@@ -525,6 +525,7 @@ export const en: Dictionary = {
     promotionFailed: "The promotion could not be recorded",
     promotionNotForward: "A promotion has to move forward, not back",
     criterionSaved: "Criterion updated",
+    criterionFailed: "The criterion could not be saved",
   },
 
   corsi: {

@@ -13,7 +13,11 @@ create or replace function public.record_promotion(
   p_person_id uuid,
   p_to_belt belt_rank,
   p_to_stripes smallint,
-  p_promoted_on date default current_date,
+  -- `current_date` is UTC, the gym is not: between midnight and 02:00 in Rome
+  -- the UTC date is still yesterday. A wall-clock date and a UTC date are not
+  -- the same thing, so the gym's clock is applied here exactly as it is in
+  -- session_checkin_open().
+  p_promoted_on date default (now() at time zone public.gym_timezone())::date,
   p_notes text default null
 )
 returns uuid
@@ -32,6 +36,18 @@ begin
       using errcode = '42501';
   end if;
 
+  -- Nobody promotes themselves. A promotion is somebody else's judgement of
+  -- you, and a history row whose subject and signer are the same person is not
+  -- the record of a decision — it is a self-award wearing one. Without this a
+  -- head coach, or a portal-only admin who never trains, could hand themselves
+  -- a black belt; the same escalation the assigned_role write rule and
+  -- guard_person_auth_link close elsewhere. The app never needs the self case:
+  -- the panel is always reached from another person's detail page.
+  if p_person_id = public.current_person_id() then
+    raise exception 'a promotion cannot be recorded for yourself'
+      using errcode = '42501';
+  end if;
+
   select * into v_person from public.person where id = p_person_id;
   if not found then
     raise exception 'person not found' using errcode = 'P0002';
@@ -39,7 +55,10 @@ begin
 
   -- Backdating is legitimate (the belt was given on the mat last Saturday);
   -- forward-dating is not, and it would hand somebody free time at rank.
-  if p_promoted_on > current_date then
+  -- Compared against the gym's wall-clock date, not `current_date`: that one is
+  -- UTC, so between midnight and 02:00 in Rome it would refuse today as a
+  -- future date.
+  if p_promoted_on > (now() at time zone public.gym_timezone())::date then
     raise exception 'a promotion cannot be dated in the future'
       using errcode = '22007';
   end if;
