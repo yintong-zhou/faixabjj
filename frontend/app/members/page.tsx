@@ -20,7 +20,6 @@ import {
   UserPlusIcon,
 } from "@/components/icons";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
-import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { estimateNote, formatHours, hoursFor } from "@/utils/hours";
 import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
 import {
@@ -29,11 +28,9 @@ import {
   type PromotionInput,
 } from "@/utils/promotion";
 import {
-  addPerson,
   inviteToPortal,
   revokeAccess,
   setTemporaryPassword,
-  updateCriterion,
 } from "./actions";
 
 const PAGE_SIZE = 20;
@@ -45,6 +42,31 @@ const menuIconClass = "h-4 w-4 shrink-0";
 
 const fieldClass =
   "rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-accent";
+
+// The filters chip — the one control above the list that opens something in
+// place rather than navigating away.
+//
+// `list-none` plus the WebKit rule removes the browser's own disclosure
+// triangle, which we replace with a chevron that turns: the native marker sits
+// outside the flex row and would push the label off-centre. The 44px minimum
+// height is the touch target; a chip is only an improvement over a full-width
+// bar if it is still comfortably tappable.
+const PANEL_SUMMARY =
+  "flex min-h-11 cursor-pointer select-none list-none items-center gap-2 rounded-xl px-3 py-2.5 font-heading text-sm font-semibold transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden";
+
+// Points right when closed, down when open. `group-open` reads the state from
+// the <details> the summary belongs to, so the arrow never disagrees with the
+// panel. It belongs to the filters alone: the two links beside them carry no
+// chevron, because an arrow that does not turn on a control that does not open
+// is exactly the affordance this page should not offer twice.
+const PANEL_CHEVRON =
+  "h-4 w-4 shrink-0 text-foreground/40 transition-transform group-open:rotate-90";
+
+// The two chips that navigate away. Same shape as PANEL_SUMMARY, minus the
+// <summary> concerns — a link has no marker to hide and no cursor to set — and
+// minus the chevron, so the difference in behaviour is visible before tapping.
+const PANEL_LINK =
+  "flex min-h-11 items-center gap-2 rounded-xl border border-border px-3 py-2.5 font-heading text-sm font-semibold transition-colors hover:bg-muted";
 
 type Member = {
   id: string;
@@ -130,17 +152,16 @@ export default async function RegistroPage({
         .select("person_id, lessons_since_rank, lessons_since_stripe"),
       supabase
         .from("promotion_criteria")
-        .select("belt, stripe, min_hours, min_time_at_rank_days, min_age_years, notes")
-        .order("belt")
-        .order("stripe"),
+        // No `notes`: this page reads the criteria only to decide eligibility.
+        // The note is editorial, and it is read where it is edited,
+        // on /members/criteria.
+        .select("belt, stripe, min_hours, min_time_at_rank_days, min_age_years"),
     ]);
 
-  // numeric/bigint columns can come back from PostgREST as strings — coerce
-  // here, the one place criteria rows enter the app, so that a string never
-  // wins a `<` comparison inside promotionStatus().
-  const criteria = (
-    (criteriaRows ?? []) as (Criterion & { notes: string | null })[]
-  ).map((row) => ({
+  // numeric/bigint columns can come back from PostgREST as strings — coerced
+  // wherever criteria rows enter a page, so that a string never wins a `<`
+  // comparison inside promotionStatus().
+  const criteria = ((criteriaRows ?? []) as Criterion[]).map((row) => ({
     ...row,
     min_hours: Number(row.min_hours),
     min_time_at_rank_days: Number(row.min_time_at_rank_days),
@@ -266,304 +287,85 @@ export default async function RegistroPage({
         </p>
       ) : null}
 
+      {/* Two rows, because the controls above the list do two different things
+          and only one of them stays on the page.
+
+          Row one is navigation: "Aggiungi persona" and "Criteri" leave the
+          Registro. They are routes rather than panels because of their size —
+          a nine-field form and a sixty-row table of thresholds both buried the
+          member list the moment they opened. Neither is a second list of people
+          (one is a form, the other a table of belts), so the rule that this
+          page is the only list of people holds. Both carry the current filters
+          in `from`, so the back link returns to exactly the list they were
+          opened from.
+
+          Row two is the filters, alone: they are the only control here that
+          opens something *in place*, and grouping them with two links that
+          navigate away made three chips that looked alike and behaved
+          differently. On its own row the panel also needs no ordering trick to
+          claim the full width when it opens — it is the only thing on the line.
+
+          Still no JavaScript: a plain <details> and two links. */}
       {access.canEditRegistry ? (
-        <details className="rounded-xl border border-border">
-          <summary className="cursor-pointer px-4 py-3 font-heading text-base font-semibold sm:px-5 sm:py-4">
-            <UserPlusIcon className="mr-2 inline-block h-4.5 w-4.5 align-[-0.2em] text-accent" />
-            {t.registro.addPerson}
-          </summary>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={
+              currentQuery
+                ? `/members/new?from=${encodeURIComponent(currentQuery)}`
+                : "/members/new"
+            }
+            className={PANEL_LINK}
+          >
+            <UserPlusIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+            <span className="truncate">{t.registro.addPerson}</span>
+          </Link>
 
-          <form action={addPerson} className="flex flex-col gap-3 px-4 pb-4 sm:gap-4 sm:px-5 sm:pb-5">
-            <input type="hidden" name="_query" value={currentQuery} />
-
-            <p className="text-xs text-foreground/55">
-              {t.registro.defaultPasswordNoteBefore}{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 font-medium">
-                {DEFAULT_PASSWORD}
-              </code>{" "}
-              {t.registro.defaultPasswordNoteAfter}
-            </p>
-
-            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="full_name" className="text-sm font-medium">
-                  {t.account.fullName}
-                </label>
-                <input id="full_name" name="full_name" required className={fieldClass} />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="email" className="text-sm font-medium">
-                  {t.auth.email}
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  className={fieldClass}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="phone" className="text-sm font-medium">
-                  {t.account.phone}
-                </label>
-                <input id="phone" name="phone" type="tel" className={fieldClass} />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="birth_date" className="text-sm font-medium">
-                  {t.account.birthDate}
-                </label>
-                <input
-                  id="birth_date"
-                  name="birth_date"
-                  type="date"
-                  className={fieldClass}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="current_belt" className="text-sm font-medium">
-                  {t.account.belt}
-                </label>
-                <select
-                  id="current_belt"
-                  name="current_belt"
-                  required
-                  defaultValue=""
-                  className={fieldClass}
-                >
-                  <option value="" disabled>
-                    {t.registro.select}
-                  </option>
-                  {Object.entries(beltLabels(t)).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="current_stripes" className="text-sm font-medium">
-                  {t.registro.stripes}
-                </label>
-                <select
-                  id="current_stripes"
-                  name="current_stripes"
-                  defaultValue="0"
-                  className={fieldClass}
-                >
-                  {[0, 1, 2, 3, 4].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="rank_since" className="text-sm font-medium">
-                  {t.account.beltSince}{" "}
-                  <span className="text-foreground/50">{t.registro.todayIfEmpty}</span>
-                </label>
-                <input
-                  id="rank_since"
-                  name="rank_since"
-                  type="date"
-                  className={fieldClass}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="stripe_since" className="text-sm font-medium">
-                  {t.account.stripeSince}{" "}
-                  <span className="text-foreground/50">{t.registro.todayIfEmpty}</span>
-                </label>
-                <input
-                  id="stripe_since"
-                  name="stripe_since"
-                  type="date"
-                  className={fieldClass}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="joined_at" className="text-sm font-medium">
-                  {t.account.joinedOn}
-                </label>
-                <input
-                  id="joined_at"
-                  name="joined_at"
-                  type="date"
-                  required
-                  className={fieldClass}
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="role" className="text-sm font-medium">
-                {t.registro.role}
-              </label>
-              <select
-                id="role"
-                name="role"
-                required
-                defaultValue=""
-                className={fieldClass}
-              >
-                <option value="" disabled>
-                  {t.registro.select}
-                </option>
-                <option value="student">Allievo</option>
-                <option value="assistant">Assistente</option>
-                <option value="instructor">Istruttore</option>
-                <option value="head_coach">Maestro</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="notes" className="text-sm font-medium">
-                {t.account.notes}
-              </label>
-              <textarea
-                id="notes"
-                name="notes"
-                rows={2}
-                className={`${fieldClass} resize-y`}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
-            >
-              {t.registro.addToRegistry}
-            </button>
-          </form>
-        </details>
-      ) : null}
-
-      {/* The criteria behind the count above. It is a panel on this page and
-          not a page of its own for the same reason account management is: one
-          list of people, not two. */}
-      {access.canEditRegistry ? (
-        <details className="rounded-xl border border-border">
-          <summary className="cursor-pointer px-4 py-3 font-heading text-base font-semibold sm:px-5 sm:py-4">
-            <TrendingUpIcon className="mr-2 inline-block h-4.5 w-4.5 align-[-0.2em] text-accent" />
-            {t.promotions.criteriaTitle}
-          </summary>
-
-          <div className="flex flex-col gap-3 px-4 pb-4 sm:px-5 sm:pb-5">
-            <p className="text-sm text-foreground/65">{t.promotions.criteriaIntro}</p>
-            {/* The unit has to be readable, not hovered: a `title` never
-                appears on the phone this app is used on. */}
-            <p className="text-xs leading-relaxed text-foreground/55">
-              {t.promotions.hoursNote}
-            </p>
-
-            <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
-              {criteria.map((criterion) => (
-                <li key={`${criterion.belt}-${criterion.stripe}`} className="p-3 sm:p-4">
-                  <form
-                    action={updateCriterion}
-                    className="flex flex-wrap items-end gap-3"
-                  >
-                    {/* Saving a criterion must come back to the list you were
-                        looking at, like every other action on this page. */}
-                    <input type="hidden" name="_query" value={currentQuery} />
-                    <input type="hidden" name="belt" value={criterion.belt} />
-                    <input type="hidden" name="stripe" value={criterion.stripe} />
-
-                    <span className="flex min-w-[9rem] items-center gap-2 text-sm font-medium">
-                      <Belt belt={criterion.belt} stripes={criterion.stripe} />
-                    </span>
-
-                    <label className="flex flex-col gap-1 text-xs text-foreground/65">
-                      {t.promotions.minHours}
-                      <input
-                        type="number"
-                        name="min_hours"
-                        min={0}
-                        step="0.5"
-                        defaultValue={criterion.min_hours}
-                        required
-                        className="w-24 rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
-                      />
-                    </label>
-
-                    <label className="flex flex-col gap-1 text-xs text-foreground/65">
-                      {t.promotions.minDays}
-                      <input
-                        type="number"
-                        name="min_time_at_rank_days"
-                        min={0}
-                        step="1"
-                        defaultValue={criterion.min_time_at_rank_days}
-                        required
-                        className="w-24 rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
-                      />
-                    </label>
-
-                    <label className="flex flex-col gap-1 text-xs text-foreground/65">
-                      {t.promotions.minAge}
-                      <input
-                        type="number"
-                        name="min_age_years"
-                        min={0}
-                        max={99}
-                        step="1"
-                        defaultValue={criterion.min_age_years ?? ""}
-                        className="w-20 rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
-                      />
-                    </label>
-
-                    <label className="flex min-w-[12rem] flex-1 flex-col gap-1 text-xs text-foreground/65">
-                      {t.promotions.criterionNotes}
-                      <input
-                        type="text"
-                        name="notes"
-                        defaultValue={criterion.notes ?? ""}
-                        className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
-                      />
-                    </label>
-
-                    <button
-                      type="submit"
-                      className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
-                    >
-                      {t.promotions.save}
-                    </button>
-                  </form>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </details>
+          <Link
+            href={
+              currentQuery
+                ? `/members/criteria?from=${encodeURIComponent(currentQuery)}`
+                : "/members/criteria"
+            }
+            className={PANEL_LINK}
+          >
+            <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+            <span className="truncate">{t.promotions.criteriaTitle}</span>
+          </Link>
+        </div>
       ) : null}
 
       {/* Open only when something is filtering: an untouched list keeps the
-          panel out of the way, a filtered one shows why it is short. */}
-      <details open={activeFilters.length > 0} className="rounded-xl border border-border">
-        <summary className="cursor-pointer px-4 py-3 font-heading text-base font-semibold sm:px-5 sm:py-4">
-          <FilterIcon className="mr-2 inline-block h-4.5 w-4.5 align-[-0.2em] text-accent" />
-          {t.registro.filters}
+          panel out of the way, a filtered one shows why it is short.
+
+          The flex wrapper is what keeps the closed chip the width of its own
+          label: as a plain block on this column it would stretch edge to edge
+          and read as a bar again. `open:w-full` gives it the whole line back
+          the moment it opens, so the form inside is never narrower than the
+          page. */}
+      <div className="flex">
+      <details
+        open={activeFilters.length > 0}
+        className="group rounded-xl border border-border open:w-full"
+      >
+        <summary className={PANEL_SUMMARY}>
+          <FilterIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          <span className="truncate">{t.registro.filters}</span>
+          {/* A count, not the list of active filters: on a chip that list
+              would either overflow or truncate to nothing useful. It is never
+              the only clue — a filtered list always opens this panel, so the
+              values themselves are on screen right below. */}
           {activeFilters.length > 0 ? (
-            <span className="font-body text-xs font-normal text-foreground/60">
-              {" · "}
-              {activeFilters.join(" · ")}
+            <span className="rounded-full bg-accent/15 px-1.5 py-0.5 font-body text-[0.6875rem] font-semibold leading-none text-accent">
+              {activeFilters.length}
             </span>
           ) : null}
+          <ChevronRightIcon className={PANEL_CHEVRON} />
         </summary>
 
         <form
           method="get"
           action="/members"
-          className="flex flex-col gap-2.5 px-4 pb-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3 sm:px-5 sm:pb-5"
+          className="flex flex-col gap-2.5 border-t border-border px-3 pb-4 pt-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3 sm:px-4 sm:pb-5"
         >
           {/* Carried through the form, or narrowing by belt while looking at
               the queue would silently drop you back into the whole list. */}
@@ -655,6 +457,7 @@ export default async function RegistroPage({
           </div>
         </form>
       </details>
+      </div>
 
       {/* The queue is a line above this list, not a list of its own: putting
           the eligible people in their own list would show the same person

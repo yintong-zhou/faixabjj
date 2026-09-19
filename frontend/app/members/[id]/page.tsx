@@ -8,12 +8,15 @@ import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
 import { LESSONS_PER_WEEK, TRACKING_STARTED_ON, formatHours, hoursFor } from "@/utils/hours";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
+import { correctRankDates } from "../actions";
 import { PromotePanel } from "./promote-panel";
 import {
   AlertCircleIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
+  ChevronRightIcon,
   FileTextIcon,
+  PencilIcon,
   TrendingUpIcon,
   UserIcon,
   UsersIcon,
@@ -292,6 +295,77 @@ export default async function MemberDetailPage({
               LESSONS_PER_WEEK,
             )}
           </p>
+        ) : null}
+
+        {/* Correcting the two dates, for a maestro or an admin only.
+            `guard_person_auth_link` has always let a registry editor through —
+            it freezes these columns against everybody else, which is what keeps
+            promotion from becoming self-service — but there was nowhere in the
+            app to do it from, so a date typed wrong on the join form could only
+            be moved by recording a promotion that never happened.
+
+            Collapsed, and inside the section whose figures it governs rather
+            than as a panel of its own: it is a repair, reached deliberately,
+            not something to meet while reading somebody's record. */}
+        {access.canEditRegistry ? (
+          <details className="group rounded-xl border border-border">
+            <summary className="flex min-h-11 cursor-pointer select-none list-none items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden">
+              <PencilIcon className="h-4 w-4 shrink-0 text-accent" />
+              <span>{t.registro.correctDates}</span>
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-foreground/40 transition-transform group-open:rotate-90" />
+            </summary>
+
+            <form
+              action={correctRankDates}
+              className="flex flex-col gap-3 border-t border-border px-3 pb-4 pt-3 sm:flex-row sm:flex-wrap sm:items-end"
+            >
+              <input type="hidden" name="person_id" value={member.id} />
+              {/* Carried so the back link at the top of this page still leads
+                  to the list the member was opened from. */}
+              <input type="hidden" name="_from" value={from ?? ""} />
+
+              <label className="flex flex-col gap-1 text-xs text-foreground/65">
+                {t.account.beltSince}
+                {/* ISO on purpose: it is what the element accepts and posts
+                    back. `max` blocks a future date in the browser; the action
+                    checks it again, since a crafted POST is not bound by it. */}
+                <input
+                  type="date"
+                  name="rank_since"
+                  defaultValue={member.rank_since}
+                  max={today}
+                  required
+                  className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm sm:w-44"
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-xs text-foreground/65">
+                {t.account.stripeSince}
+                <input
+                  type="date"
+                  name="stripe_since"
+                  // Falls back to the belt date when the column is empty, the
+                  // same way promotionStatus() reads it: an empty date input
+                  // posts nothing and `required` would block the form.
+                  defaultValue={member.stripe_since ?? member.rank_since}
+                  max={today}
+                  required
+                  className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm sm:w-44"
+                />
+              </label>
+
+              <button
+                type="submit"
+                className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto"
+              >
+                {t.common.saveChanges}
+              </button>
+
+              <p className="text-xs leading-relaxed text-foreground/55 sm:w-full">
+                {t.registro.correctDatesNote}
+              </p>
+            </form>
+          </details>
         ) : null}
       </section>
 

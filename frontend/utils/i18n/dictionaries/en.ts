@@ -425,6 +425,9 @@ export const en: Dictionary = {
       "Read only: with your instructor role this record cannot be edited.",
     personalSection: "Personal details",
     pathSection: "Progress",
+    correctDates: "Correct the dates",
+    correctDatesNote:
+      "For fixing a date that is wrong, not for promoting: it records no promotion and changes neither belt nor stripes. Eligibility is measured from these two dates, so they are worth getting right.",
     notesSection: "Notes",
     rolesSection: "Roles",
     noRoles: "No role assigned.",
@@ -536,6 +539,10 @@ export const en: Dictionary = {
     promotionRecorded: "Promotion recorded",
     promotionFailed: "The promotion could not be recorded",
     promotionNotForward: "A promotion has to move forward, not back",
+    datesSaved: "Progress dates updated",
+    datesFailed: "The dates could not be updated",
+    dateInFuture: "A date cannot be in the future",
+    stripeBeforeBelt: "The last stripe cannot predate the belt change",
     criterionSaved: "Criterion updated",
     criterionFailed: "The criterion could not be saved",
   },
@@ -605,6 +612,7 @@ export const en: Dictionary = {
     hoursNote: "Mat hours, counted at 1 hour a lesson",
     atCurrentRank: "Hours at the current grade",
     criteriaTitle: "Criteria",
+    criteriaPageTitle: "Graduation Criteria",
     criteriaIntro:
       "Minimum hours and time for each grade. The belt figures come from the IBJJF minimums and common practice; the stripe figures are a starting estimate, meant to be tuned for this gym.",
     minHours: "Minimum hours",

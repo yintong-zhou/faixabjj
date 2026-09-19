@@ -436,6 +436,9 @@ export const it = {
       "Sola lettura: con il tuo ruolo di istruttore la scheda non è modificabile.",
     personalSection: "Anagrafica",
     pathSection: "Percorso",
+    correctDates: "Correggi le date",
+    correctDatesNote:
+      "Serve a correggere una data sbagliata, non a promuovere: non registra nessuna promozione e non cambia cintura né tacche. Da qui dipende il calcolo dell'idoneità, quindi vale la pena che siano giuste.",
     notesSection: "Note",
     rolesSection: "Ruoli",
     noRoles: "Nessun ruolo assegnato.",
@@ -551,6 +554,11 @@ export const it = {
     promotionRecorded: "Promozione registrata",
     promotionFailed: "Non è stato possibile registrare la promozione",
     promotionNotForward: "Una promozione deve andare avanti, non indietro",
+    datesSaved: "Date del percorso aggiornate",
+    datesFailed: "Non è stato possibile aggiornare le date",
+    dateInFuture: "Una data non può essere nel futuro",
+    stripeBeforeBelt:
+      "L'ultima tacca non può essere precedente al cambio di cintura",
     criterionSaved: "Criterio aggiornato",
     criterionFailed: "Non è stato possibile salvare il criterio",
   },
@@ -620,6 +628,10 @@ export const it = {
     hoursNote: "Ore di lezione, calcolate a 1 ora per lezione",
     atCurrentRank: "Ore al grado attuale",
     criteriaTitle: "Criteri",
+    // Il titolo della pagina, distinto dall'etichetta del chip sul Registro:
+    // quello deve restare corto per stare su una riga del telefono, come
+    // t.nav.registro sta a t.registro.title.
+    criteriaPageTitle: "Criteri di Graduazione",
     criteriaIntro:
       "Ore e tempo minimi per ogni grado. I valori delle cinture vengono dai minimi IBJJF e dalla pratica comune; quelli delle tacche sono una stima iniziale, da tarare sulla palestra.",
     minHours: "Ore minime",

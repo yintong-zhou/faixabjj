@@ -10,8 +10,10 @@ import {
 } from "@/utils/supabase/require-admin";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { getDictionary } from "@/utils/i18n/server";
+import { BELT_ORDER } from "@/utils/supabase/profile";
 
 const PATH = "/members";
+const CRITERIA_PATH = "/members/criteria";
 
 // Filters and the current page live in the URL, so every action carries them
 // back — otherwise acting on a row would silently reset the list you were
@@ -22,6 +24,19 @@ function back(params: Record<string, string>, query?: string) {
     search.set(key, value);
   }
   redirect(`${PATH}?${search.toString()}`);
+}
+
+// The criteria editor is its own page, so its action returns there rather than
+// to the list. `from` is the Registro's query string, carried through so the
+// page's back link still leads to the list the editor was opened from — it is
+// never applied to this redirect's own parameters.
+function backToCriteria(params: Record<string, string>, from?: string) {
+  const search = new URLSearchParams();
+  if (from) search.set("from", from);
+  for (const [key, value] of Object.entries(params)) {
+    search.set(key, value);
+  }
+  redirect(`${CRITERIA_PATH}?${search.toString()}`);
 }
 
 async function origin() {
@@ -37,7 +52,12 @@ const ASSIGNABLE_ROLES = [
   "admin",
 ] as const;
 
-const BELTS = ["white", "blue", "purple", "brown", "black"] as const;
+// All seventeen belts, children's ladder included — imported rather than
+// listed here, because a second copy of the ladder is how the two stop
+// matching. They did: this was still the five adult belts after the children's
+// system landed, so the panel offered a grey belt and this check refused it.
+const isBelt = (value: string) =>
+  (BELT_ORDER as readonly string[]).includes(value);
 
 const text = (formData: FormData, key: string) => {
   const value = (formData.get(key) as string | null)?.trim();
@@ -88,7 +108,7 @@ export async function addPerson(formData: FormData) {
   }
 
   const belt = formData.get("current_belt") as string;
-  if (!BELTS.includes(belt as (typeof BELTS)[number])) {
+  if (!isBelt(belt)) {
     back({ error: t.msg.pickBelt }, query);
     return;
   }
@@ -359,7 +379,7 @@ export async function recordPromotion(formData: FormData) {
     10,
   );
 
-  if (!personId || !toBelt || !BELTS.includes(toBelt as (typeof BELTS)[number])) {
+  if (!personId || !toBelt || !isBelt(toBelt)) {
     redirect(`/members/${personId ?? ""}?error=${encodeURIComponent(t.msg.promotionFailed)}`);
   }
 
@@ -391,32 +411,114 @@ export async function recordPromotion(formData: FormData) {
   redirect(`/members/${personId}?ok=${encodeURIComponent(t.msg.promotionRecorded)}`);
 }
 
+// Corrects the two dates a member's progress is measured from.
+//
+// This is NOT a promotion and deliberately writes no history row: nothing was
+// awarded, a date that was typed wrong is being fixed — the belt arrived from
+// another academy and the join form guessed, or somebody entered the stripe
+// date where the belt date belonged. record_promotion() stays the only way a
+// grade changes, so the promotion table keeps meaning "what was decided, and
+// when", and a correction never masquerades as a decision.
+//
+// Both dates are frozen by guard_person_auth_link against anybody who is not a
+// registry editor, which is what keeps promotion out of self-service: backdating
+// `rank_since` is the cleanest way to fake eligibility. The trigger already
+// allowed an editor through — what was missing was anywhere to do it from, so
+// after creation the two dates could only be moved by recording a promotion
+// that never happened. requireRegistryEditor here is the early, clear refusal;
+// the trigger and RLS are the boundary, since this runs on the user's own
+// client and not the service-role one.
+export async function correctRankDates(formData: FormData) {
+  const { t } = await getDictionary();
+  const { supabase } = await requireRegistryEditor(PATH);
+
+  const personId = text(formData, "person_id");
+  const fromQuery = (formData.get("_from") as string | null) ?? "";
+
+  const detail = (params: Record<string, string>) => {
+    const search = new URLSearchParams();
+    if (fromQuery) search.set("from", fromQuery);
+    for (const [key, value] of Object.entries(params)) search.set(key, value);
+    redirect(`/members/${personId ?? ""}?${search.toString()}`);
+  };
+
+  const rankSince = text(formData, "rank_since");
+  const stripeSince = text(formData, "stripe_since");
+
+  if (!personId || !rankSince || !stripeSince) {
+    detail({ error: t.msg.datesFailed });
+    return;
+  }
+
+  // Compared as ISO strings, which sort chronologically, and against the gym's
+  // own "today" rather than the browser's — the date arrives as text and a
+  // crafted POST is not bound by the input's `max`.
+  const today = new Date(Date.now()).toISOString().slice(0, 10);
+  if (rankSince > today || stripeSince > today) {
+    detail({ error: t.msg.dateInFuture });
+    return;
+  }
+
+  // A stripe is awarded on a belt somebody already holds, so it cannot predate
+  // it. Getting this pair backwards is the mistake the form exists to fix, and
+  // saving it the wrong way round would leave "time at this belt" longer than
+  // the member has been training.
+  if (stripeSince < rankSince) {
+    detail({ error: t.msg.stripeBeforeBelt });
+    return;
+  }
+
+  const { error } = await supabase
+    .from("person")
+    .update({ rank_since: rankSince, stripe_since: stripeSince })
+    .eq("id", personId);
+
+  if (error) {
+    console.error(
+      `[members] correctRankDates failed: ${error.code ?? "no code"} ${error.message ?? ""}`.trim(),
+    );
+    detail({ error: t.msg.datesFailed });
+    return;
+  }
+
+  revalidatePath(`/members/${personId}`);
+  // Both dates feed promotionStatus(), so the Registro's eligibility count, its
+  // `idonei` filter and the green dot all change with them.
+  revalidatePath(PATH);
+  detail({ ok: t.msg.datesSaved });
+}
+
 // Tunes one row of promotion_criteria. The grade itself is never editable:
 // the ladder is fixed, only its numbers are the gym's business — so belt and
 // stripe arrive as hidden fields and are used to address the row, never to
 // create one.
 //
 // It lives here, next to the Registro's other actions, because the criteria
-// editor is a panel on the Registro rather than a page of its own — and it
-// uses the same `back()` helper, so saving a criterion returns to the list
-// you were filtering.
+// editor belongs to the Registro even though it now has its own route: same
+// privilege, same guard, same file.
+//
+// It redirects back to /members/criteria rather than to the list, because that
+// is the page the form is on — sixty rows of thresholds are edited a few at a
+// time, and being thrown back to the member list after each save would be
+// absurd. `_from` carries the Registro's own filters through untouched, so the
+// back link on that page still leads to the list you came from.
 export async function updateCriterion(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requireRegistryEditor(PATH);
+  const { supabase } = await requireRegistryEditor(CRITERIA_PATH);
 
-  const query = (formData.get("_query") as string | null) ?? "";
+  const from = (formData.get("_from") as string | null) ?? "";
 
   const belt = text(formData, "belt");
   const stripe = number(formData, "stripe");
   if (!belt || stripe === null) {
-    back({ error: t.msg.criterionFailed }, query);
+    backToCriteria({ error: t.msg.criterionFailed }, from);
     return;
   }
 
   const minHours = number(formData, "min_hours");
   const minDays = number(formData, "min_time_at_rank_days");
   if (minHours === null || minHours < 0 || minDays === null || minDays < 0) {
-    back({ error: t.msg.criterionFailed }, query);
+    backToCriteria({ error: t.msg.criterionFailed }, from);
     return;
   }
 
@@ -439,10 +541,14 @@ export async function updateCriterion(formData: FormData) {
     console.error(
       `[members] updateCriterion failed: ${error.code ?? "no code"} ${error.message ?? ""}`.trim(),
     );
-    back({ error: t.msg.criterionFailed }, query);
+    backToCriteria({ error: t.msg.criterionFailed }, from);
     return;
   }
 
+  // Both paths: the thresholds are edited here, and the Registro's count, dot
+  // and `idonei` filter are computed from them, so a saved criterion changes
+  // the list as much as it changes this page.
+  revalidatePath(CRITERIA_PATH);
   revalidatePath(PATH);
-  back({ ok: t.msg.criterionSaved }, query);
+  backToCriteria({ ok: t.msg.criterionSaved }, from);
 }

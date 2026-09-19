@@ -426,6 +426,9 @@ export const ptBR: Dictionary = {
       "Somente leitura: com sua função de instrutor esta ficha não pode ser editada.",
     personalSection: "Dados pessoais",
     pathSection: "Trajetória",
+    correctDates: "Corrigir as datas",
+    correctDatesNote:
+      "Serve para corrigir uma data errada, não para promover: não registra nenhuma promoção e não altera faixa nem graus. A elegibilidade é medida a partir dessas duas datas, então vale a pena que estejam certas.",
     notesSection: "Observações",
     rolesSection: "Funções",
     noRoles: "Nenhuma função atribuída.",
@@ -537,6 +540,10 @@ export const ptBR: Dictionary = {
     promotionRecorded: "Promoção registrada",
     promotionFailed: "Não foi possível registrar a promoção",
     promotionNotForward: "Uma promoção precisa avançar, não retroceder",
+    datesSaved: "Datas da trajetória atualizadas",
+    datesFailed: "Não foi possível atualizar as datas",
+    dateInFuture: "Uma data não pode estar no futuro",
+    stripeBeforeBelt: "O último grau não pode ser anterior à troca de faixa",
     criterionSaved: "Critério atualizado",
     criterionFailed: "Não foi possível salvar o critério",
   },
@@ -606,6 +613,7 @@ export const ptBR: Dictionary = {
     hoursNote: "Horas de aula, calculadas a 1 hora por aula",
     atCurrentRank: "Horas na graduação atual",
     criteriaTitle: "Critérios",
+    criteriaPageTitle: "Critérios de Graduação",
     criteriaIntro:
       "Horas e tempo mínimos para cada graduação. Os valores das faixas vêm dos mínimos da IBJJF e da prática comum; os dos graus são uma estimativa inicial, para ajustar à academia.",
     minHours: "Horas mínimas",
