@@ -1,9 +1,9 @@
 <div align="center">
-  <img src="frontend/public/logo/faixabjj_logo.png" alt="FAIXABJJ" width="320">
+  <img src="frontend/public/logo/faixabjj_logo.png" alt="Faixa BJJ" width="320">
   <p><strong>Track class hours, stripes and belt promotions in a Brazilian Jiu-Jitsu school.</strong></p>
 </div>
 
-FAIXABJJ keeps one registry for everybody who trains at the gym — students and
+Faixa BJJ keeps one registry for everybody who trains at the gym — students and
 instructors alike — counts the hours they put on the mat, and tells the head
 coach who is getting close to their next stripe or belt. It does that one thing
 and stops there.
@@ -17,7 +17,7 @@ possible.
 ## Why
 
 Generic gym software treats belt rank as a text field. Promotions end up decided
-by feel, or tracked in a notebook that lives in one person's bag. FAIXABJJ gives
+by feel, or tracked in a notebook that lives in one person's bag. Faixa BJJ gives
 the instructor an objective baseline — accumulated hours, time at the current
 belt, attendance over the last weeks — and then gets out of the way.
 

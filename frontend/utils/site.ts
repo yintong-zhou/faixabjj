@@ -6,7 +6,13 @@
 // environment because it differs between a preview deployment and production,
 // and falls back to localhost so a local build still produces valid absolute
 // URLs rather than throwing.
-export const SITE_NAME = "FAIXABJJ";
+// The brand as it is written wherever a person reads it. Two words: the
+// technical identifiers around it — the `faixabjj-locale` cookie, the
+// `faixabjj-cookie-notice` key, the `faixabjj-theme-change` event, the logo
+// filenames — deliberately keep the old single-word spelling. Renaming a
+// stored key would silently reset every visitor's language, theme and cookie
+// acknowledgement, and the privacy page lists those names verbatim.
+export const SITE_NAME = "Faixa BJJ";
 
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";

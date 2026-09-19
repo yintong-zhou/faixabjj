@@ -36,6 +36,8 @@ Plain SQL migrations in `supabase/migrations/` (standard Supabase CLI layout).
 
 **⚠️ Migrations are applied by hand from the dashboard; the MCP here cannot do it.** Never run schema/RLS changes against whatever project the connected MCP shows — verify the project ref is `poksgledkecwviypspmi` first. Until that is sorted, paste migrations into the correct project's SQL Editor, or connect the right MCP/CLI and re-check `list_migrations`.
 
+**Every migration must be safe to run twice, and applying by hand is why.** Pasting into the SQL Editor executes the statements but records nothing in `supabase_migrations.schema_migrations`, so Supabase still believes the file is pending. A preview branch clones the schema — effects and all — and then replays every "pending" migration on top of it, which fails on the first statement that is not idempotent. That is how `create policy "registry viewers can select promotion_criteria"` came back as `42710: already exists`. So: **precede every `create policy` with `drop policy if exists` of the _same_ name** (not only of the one it replaces — that was the gap), and use `if not exists` / `or replace` on tables, indexes, columns, enum values, views and functions. `insert` seeds carry `on conflict do nothing`, and a corrective `update` is guarded on the value it is correcting. The alternative fix — inserting the missing rows into `supabase_migrations.schema_migrations` so Supabase stops replaying them — is worth doing as well, but idempotency is what makes the history survive being replayed at all.
+
 ### Connecting the frontend to Supabase
 
 The frontend talks to Supabase directly (`@supabase/supabase-js` + `@supabase/ssr`), not through a custom API layer — that is what makes the RLS model work, since the user's JWT must reach Postgres.
@@ -139,7 +141,7 @@ Visible to instructors, maestri and admin. An **instructor sees it read-only**: 
 
 **Hours are an opening balance plus what was recorded.** The estimate exists only to give each member a starting figure on go-live day and is **frozen** from that date (a unit test asserts this). Every hour after go-live arrives only through a member's check-in or an instructor's roll call, which the `attendance` RLS policies enforce (accepting an insert from a class manager, or from the member with `checked_in_by = 'self'` inside the window). **This module must never become a second way of adding an hour.**
 
-**Hours before the app existed are estimated, not counted.** `person_hours` only knows FAIXABJJ attendance, so a three-year member would read as zero. `frontend/utils/hours.ts` is the single definition: hours before `TRACKING_STARTED_ON` are assumed at `LESSONS_PER_WEEK` (3) a week since `joined_at`, hours from that date on are counted, total is the sum.
+**Hours before the app existed are estimated, not counted.** `person_hours` only knows Faixa BJJ attendance, so a three-year member would read as zero. `frontend/utils/hours.ts` is the single definition: hours before `TRACKING_STARTED_ON` are assumed at `LESSONS_PER_WEEK` (3) a week since `joined_at`, hours from that date on are counted, total is the sum.
 
 - **`TRACKING_STARTED_ON` must be set to the real go-live date** — the whole point of the design. Without a cutoff, estimating while also counting real attendance double-counts every week from now on. A future date inflates every total; the code clamps the estimate at today, but that is a guard, not a substitute.
 - The average is **one constant for everybody**, explicitly: it is a declared estimate, and a per-person figure would dress an assumption up as a measurement.
@@ -337,7 +339,7 @@ To preview the app in this environment, use the `frontend` launch configuration 
 
 ## What this project is
 
-FAIXABJJ is a lightweight web app for tracking class hours, stripes and belt promotions in a Brazilian Jiu-Jitsu school, with a unified registry for students and instructors.
+Faixa BJJ is a lightweight web app for tracking class hours, stripes and belt promotions in a Brazilian Jiu-Jitsu school, with a unified registry for students and instructors.
 
 It deliberately is **not** a full gym management system — no payments, no online enrollment, no competition management. It sits alongside existing gym management software and covers one thing well: technical progression toward stripes/belts, with minimal added workload for instructors. Promotion eligibility is always surfaced as a suggestion/alert — the decision always stays with the instructor, never automated.
 

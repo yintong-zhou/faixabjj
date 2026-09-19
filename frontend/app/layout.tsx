@@ -33,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
     // Interior pages set only their own title; the template adds the brand.
     title: {
       default: t.home.metaTitle,
-      template: "%s · FAIXABJJ",
+      template: `%s · ${SITE_NAME}`,
     },
     description: t.home.metaDescription,
     applicationName: SITE_NAME,
@@ -49,13 +49,13 @@ export async function generateMetadata(): Promise<Metadata> {
           url: "/logo/faixabjj_logo.png",
           width: 618,
           height: 404,
-          alt: "FAIXA BJJ",
+          alt: SITE_NAME,
         },
       ],
     },
     twitter: {
       card: "summary",
-      title: "FAIXABJJ",
+      title: SITE_NAME,
       description:
         "Ore, gradi e cinture per una scuola di Brazilian Jiu-Jitsu, in un registro unico.",
     },

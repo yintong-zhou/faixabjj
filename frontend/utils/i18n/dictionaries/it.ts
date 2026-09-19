@@ -146,14 +146,14 @@ export const it = {
   },
 
   home: {
-    metaTitle: "FAIXABJJ - gestione ore, gradi e cinture per palestre di BJJ",
+    metaTitle: "Faixa BJJ - gestione ore, gradi e cinture per palestre di BJJ",
     metaDescription:
       "Software per scuole di Brazilian Jiu-Jitsu: registro unico di allievi e istruttori, presenze e conteggio ore automatico, criteri di promozione a gradi e cinture. La decisione resta all'istruttore.",
     ogDescription:
       "Registro unico, presenze con conteggio ore automatico e criteri di promozione configurabili, per scuole di Brazilian Jiu-Jitsu.",
     badge: "MVP in sviluppo",
     title: "La progressione tecnica tracciata.",
-    lead: "FAIXABJJ affianca il gestionale che la palestra usa già e copre l'unica cosa che gli strumenti generici fanno male: seguire il percorso di ogni allievo verso gradi e cinture, aggiungendo il minimo indispensabile di lavoro agli istruttori.",
+    lead: "Faixa BJJ affianca il gestionale che la palestra usa già e copre l'unica cosa che gli strumenti generici fanno male: seguire il percorso di ogni allievo verso gradi e cinture, aggiungendo il minimo indispensabile di lavoro agli istruttori.",
     ctaPrimary: "Accedi al portale",
     ctaSecondary: "Come funziona",
     noSignup:
@@ -697,7 +697,7 @@ export const it = {
     title: "Privacy e cookie",
     updated: (date: string) => `Ultimo aggiornamento: ${date}`,
     lead:
-      "Questa pagina spiega quali dati personali FAIXABJJ raccoglie, perché, per quanto tempo li conserva e quali diritti hai su di essi.",
+      "Questa pagina spiega quali dati personali Faixa BJJ raccoglie, perché, per quanto tempo li conserva e quali diritti hai su di essi.",
     draftTitle: "Documento in bozza",
     draftBody:
       "L'applicazione è in fase di test e il titolare del trattamento non è ancora stato designato. Prima di qualsiasi uso con dati di persone reali vanno compilati nome, sede e contatto del titolare, e vanno verificati i tempi di conservazione indicati qui sotto.",
@@ -766,7 +766,7 @@ export const it = {
     ],
     cookieHeading: "9. Cookie e archiviazione locale",
     cookieIntro:
-      "FAIXABJJ usa esclusivamente cookie tecnici e archiviazione locale necessari al funzionamento del servizio o a ricordare una preferenza espressa dall'utente. Non usiamo cookie di profilazione, né strumenti di statistica o pubblicità, né cookie di terze parti. Per questi strumenti l'articolo 122 del Codice privacy non richiede il consenso preventivo: per questo il banner informa e non chiede un'autorizzazione.",
+      "Faixa BJJ usa esclusivamente cookie tecnici e archiviazione locale necessari al funzionamento del servizio o a ricordare una preferenza espressa dall'utente. Non usiamo cookie di profilazione, né strumenti di statistica o pubblicità, né cookie di terze parti. Per questi strumenti l'articolo 122 del Codice privacy non richiede il consenso preventivo: per questo il banner informa e non chiede un'autorizzazione.",
     cookieTable: {
       name: "Nome",
       type: "Tipo",

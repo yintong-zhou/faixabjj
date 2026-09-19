@@ -12,7 +12,7 @@ import { LOCALE_TAG } from "@/utils/i18n/locales";
 import { SITE_NAME, SITE_URL } from "@/utils/site";
 
 // The landing page has its own title rather than inheriting the template:
-// "FAIXABJJ — ..." reads better as a search result than "Home · FAIXABJJ".
+// "Faixa BJJ — ..." reads better as a search result than "Home · Faixa BJJ".
 //
 // generateMetadata rather than a static object, because the title and
 // description are now translated and the locale is only known per request.
@@ -72,7 +72,7 @@ export default async function Home() {
         <div className="w-fit rounded-lg border border-border bg-secondary p-3 sm:p-4">
           <Image
             src="/logo/faixabjj_logo-removebg-preview.png"
-            alt="FAIXA BJJ"
+            alt={SITE_NAME}
             width={618}
             height={404}
             priority

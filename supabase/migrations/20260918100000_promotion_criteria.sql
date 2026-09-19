@@ -95,6 +95,7 @@ on conflict (belt, stripe) do nothing;
 -- decided not to show them. Hiding it in the UI would leave two API calls
 -- between a student and the number, so the rule is enforced here instead.
 drop policy if exists "authenticated can select promotion_criteria" on public.promotion_criteria;
+drop policy if exists "registry viewers can select promotion_criteria" on public.promotion_criteria;
 create policy "registry viewers can select promotion_criteria" on public.promotion_criteria
   for select to authenticated
   using (public.can_view_registry());
