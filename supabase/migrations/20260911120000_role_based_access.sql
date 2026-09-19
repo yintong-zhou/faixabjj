@@ -132,6 +132,7 @@ grant execute on function public.current_access() to authenticated;
 -- writes — but only staff sees anybody else's.
 
 drop policy if exists "authenticated can select person" on public.person;
+drop policy if exists "staff or self can select person" on public.person;
 create policy "staff or self can select person" on public.person
   for select to authenticated
   using (public.can_view_registry() or auth_user_id = auth.uid());
@@ -139,11 +140,13 @@ create policy "staff or self can select person" on public.person
 drop policy if exists "authenticated can insert person" on public.person;
 -- The self case keeps getOrCreateProfile()'s fallback working for an account
 -- whose trigger-created row is missing; it can only ever create its own.
+drop policy if exists "editors or self can insert person" on public.person;
 create policy "editors or self can insert person" on public.person
   for insert to authenticated
   with check (public.can_edit_registry() or auth_user_id = auth.uid());
 
 drop policy if exists "authenticated can update person" on public.person;
+drop policy if exists "editors or self can update person" on public.person;
 create policy "editors or self can update person" on public.person
   for update to authenticated
   using (public.can_edit_registry() or auth_user_id = auth.uid())
@@ -159,20 +162,24 @@ create policy "editors or self can update person" on public.person
 -- nothing else. Writing is maestro/admin only — an instructor is read-only.
 
 drop policy if exists "authenticated can select attendance" on public.attendance;
+drop policy if exists "staff or self can select attendance" on public.attendance;
 create policy "staff or self can select attendance" on public.attendance
   for select to authenticated
   using (public.can_view_registry() or person_id = public.current_person_id());
 
 drop policy if exists "authenticated can insert attendance" on public.attendance;
+drop policy if exists "editors can insert attendance" on public.attendance;
 create policy "editors can insert attendance" on public.attendance
   for insert to authenticated with check (public.can_edit_registry());
 
 drop policy if exists "authenticated can update attendance" on public.attendance;
+drop policy if exists "editors can update attendance" on public.attendance;
 create policy "editors can update attendance" on public.attendance
   for update to authenticated
   using (public.can_edit_registry()) with check (public.can_edit_registry());
 
 drop policy if exists "authenticated can delete attendance" on public.attendance;
+drop policy if exists "editors can delete attendance" on public.attendance;
 create policy "editors can delete attendance" on public.attendance
   for delete to authenticated using (public.can_edit_registry());
 
@@ -183,6 +190,7 @@ create policy "editors can delete attendance" on public.attendance
 -- (the anti-self-promotion rule from 20260911000000).
 
 drop policy if exists "authenticated can select assigned_role" on public.assigned_role;
+drop policy if exists "staff or self can select assigned_role" on public.assigned_role;
 create policy "staff or self can select assigned_role" on public.assigned_role
   for select to authenticated
   using (public.can_view_registry() or person_id = public.current_person_id());
@@ -194,28 +202,34 @@ create policy "staff or self can select assigned_role" on public.assigned_role
 -- readable by any signed-in user, writable by maestro/admin.
 
 drop policy if exists "authenticated can insert role_threshold" on public.role_threshold;
+drop policy if exists "editors can insert role_threshold" on public.role_threshold;
 create policy "editors can insert role_threshold" on public.role_threshold
   for insert to authenticated with check (public.can_edit_registry());
 
 drop policy if exists "authenticated can update role_threshold" on public.role_threshold;
+drop policy if exists "editors can update role_threshold" on public.role_threshold;
 create policy "editors can update role_threshold" on public.role_threshold
   for update to authenticated
   using (public.can_edit_registry()) with check (public.can_edit_registry());
 
 drop policy if exists "authenticated can delete role_threshold" on public.role_threshold;
+drop policy if exists "editors can delete role_threshold" on public.role_threshold;
 create policy "editors can delete role_threshold" on public.role_threshold
   for delete to authenticated using (public.can_edit_registry());
 
 drop policy if exists "authenticated can insert promotion_criteria" on public.promotion_criteria;
+drop policy if exists "editors can insert promotion_criteria" on public.promotion_criteria;
 create policy "editors can insert promotion_criteria" on public.promotion_criteria
   for insert to authenticated with check (public.can_edit_registry());
 
 drop policy if exists "authenticated can update promotion_criteria" on public.promotion_criteria;
+drop policy if exists "editors can update promotion_criteria" on public.promotion_criteria;
 create policy "editors can update promotion_criteria" on public.promotion_criteria
   for update to authenticated
   using (public.can_edit_registry()) with check (public.can_edit_registry());
 
 drop policy if exists "authenticated can delete promotion_criteria" on public.promotion_criteria;
+drop policy if exists "editors can delete promotion_criteria" on public.promotion_criteria;
 create policy "editors can delete promotion_criteria" on public.promotion_criteria
   for delete to authenticated using (public.can_edit_registry());
 

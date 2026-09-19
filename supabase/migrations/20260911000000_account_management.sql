@@ -100,6 +100,7 @@ grant execute on function public.can_manage_users() to authenticated;
 
 -- Deleting a person is now a manager-only action.
 drop policy if exists "authenticated can delete person" on public.person;
+drop policy if exists "user managers can delete person" on public.person;
 create policy "user managers can delete person" on public.person
   for delete to authenticated using (public.can_manage_users());
 
@@ -108,16 +109,19 @@ create policy "user managers can delete person" on public.person
 -- active 'head_coach' assignment for themselves and become a manager on the
 -- spot. Reading stays open to all staff.
 drop policy if exists "authenticated can insert assigned_role" on public.assigned_role;
+drop policy if exists "user managers can insert assigned_role" on public.assigned_role;
 create policy "user managers can insert assigned_role" on public.assigned_role
   for insert to authenticated with check (public.can_manage_users());
 
 drop policy if exists "authenticated can update assigned_role" on public.assigned_role;
+drop policy if exists "user managers can update assigned_role" on public.assigned_role;
 create policy "user managers can update assigned_role" on public.assigned_role
   for update to authenticated
   using (public.can_manage_users())
   with check (public.can_manage_users());
 
 drop policy if exists "authenticated can delete assigned_role" on public.assigned_role;
+drop policy if exists "user managers can delete assigned_role" on public.assigned_role;
 create policy "user managers can delete assigned_role" on public.assigned_role
   for delete to authenticated using (public.can_manage_users());
 
