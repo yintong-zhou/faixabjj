@@ -38,6 +38,18 @@ export const ptBR: Dictionary = {
 
   belts: {
     white: "Branca",
+    gray_white: "Cinza/Branca",
+    gray: "Cinza",
+    gray_black: "Cinza/Preta",
+    yellow_white: "Amarela/Branca",
+    yellow: "Amarela",
+    yellow_black: "Amarela/Preta",
+    orange_white: "Laranja/Branca",
+    orange: "Laranja",
+    orange_black: "Laranja/Preta",
+    green_white: "Verde/Branca",
+    green: "Verde",
+    green_black: "Verde/Preta",
     blue: "Azul",
     purple: "Roxa",
     brown: "Marrom",

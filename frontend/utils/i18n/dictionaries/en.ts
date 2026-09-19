@@ -37,6 +37,18 @@ export const en: Dictionary = {
 
   belts: {
     white: "White",
+    gray_white: "Grey/White",
+    gray: "Grey",
+    gray_black: "Grey/Black",
+    yellow_white: "Yellow/White",
+    yellow: "Yellow",
+    yellow_black: "Yellow/Black",
+    orange_white: "Orange/White",
+    orange: "Orange",
+    orange_black: "Orange/Black",
+    green_white: "Green/White",
+    green: "Green",
+    green_black: "Green/Black",
     blue: "Blue",
     purple: "Purple",
     brown: "Brown",

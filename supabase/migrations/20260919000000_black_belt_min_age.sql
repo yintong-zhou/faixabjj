@@ -26,8 +26,15 @@ comment on column public.promotion_criteria.min_age_years is
   'Minimum age in whole years, null when the grade has none. Seeded only for brown->black (IBJJF: 18); the IBJJF minimums for blue (16), purple (16) and brown (18) are modelled in belt-criteria.md but deliberately left unseeded.';
 
 -- ---------------------------------------------------------------------------
--- The other three IBJJF age minimums — NOT applied, on purpose
+-- The other three IBJJF age minimums — NOT applied here
 -- ---------------------------------------------------------------------------
+-- ⚠️ SUPERSEDED: 20260919110000_kid_belt_promotion.sql does seed all three,
+-- because the children's system made them load-bearing rather than optional —
+-- without an age on (blue, 0), a child's attendance alone would put them in the
+-- queue for an adult blue belt. The reasoning below is kept because it is why
+-- they were not seeded on day one, and because the last paragraph — birth dates
+-- becoming load-bearing — is still exactly what to watch for.
+--
 -- The merged belt-criteria.md also carries ibjjf_age_min_years for the three
 -- lower transitions: 16 for white -> blue, 16 for blue -> purple, 18 for
 -- purple -> brown. They are left out of this migration because seeding them is

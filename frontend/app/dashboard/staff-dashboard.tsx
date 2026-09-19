@@ -13,7 +13,7 @@ import { daysSince } from "@/utils/dates";
 import { hoursFor } from "@/utils/hours";
 import { PORTAL_ONLY_ROLES } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
-import { BELT_ORDER, beltLabel } from "@/utils/supabase/profile";
+import { ADULT_BELTS, BELT_ORDER, beltLabel } from "@/utils/supabase/profile";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { addDays, formatTime, monthStart, shiftMonth } from "@/utils/schedule";
 import { Section, Stat } from "./stat";
@@ -149,10 +149,19 @@ export async function StaffDashboard({
 
   // Drawn with no stripes: the row stands for the belt, not for any one
   // member's degree at it.
+  // The five adult belts are always drawn, so the chart keeps the same shape
+  // from one week to the next and an empty rank reads as "nobody here" rather
+  // than as a missing row. The twelve children's belts appear only once
+  // somebody holds one: a gym with no children's course would otherwise open
+  // its dashboard to twelve empty bars every day.
   const beltCounts = BELT_ORDER.map((belt) => ({
     belt,
     members: active.filter((m) => m.current_belt === belt),
-  }));
+  })).filter(
+    (b) =>
+      b.members.length > 0 ||
+      (ADULT_BELTS as readonly string[]).includes(b.belt),
+  );
   const mostBelts = Math.max(1, ...beltCounts.map((b) => b.members.length));
   const unknownBelts = active.filter(
     (m) => !BELT_ORDER.includes(m.current_belt as (typeof BELT_ORDER)[number]),

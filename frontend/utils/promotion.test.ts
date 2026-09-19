@@ -22,6 +22,37 @@ describe("nextStep", () => {
   it("proposes nothing for a belt it does not know", () => {
     expect(nextStep("coral", 0)).toBeNull();
   });
+
+  // The two ladders share their first rung, so white is the one belt whose
+  // next step depends on who is wearing it.
+  it("sends an adult white belt to blue and a child's to grey/white", () => {
+    expect(nextStep("white", 4, { age: 30 })).toEqual({ belt: "blue", stripe: 0 });
+    expect(nextStep("white", 3, { age: 9 })).toEqual({ belt: "gray_white", stripe: 0 });
+  });
+
+  it("reads an unknown age as an adult", () => {
+    expect(nextStep("white", 4)).toEqual({ belt: "blue", stripe: 0 });
+    expect(nextStep("white", 4, { age: null })).toEqual({ belt: "blue", stripe: 0 });
+  });
+
+  // Three degrees on a children's belt, not four, and the age is irrelevant
+  // once the belt itself says which ladder this is.
+  it("stops a children's belt at the third degree", () => {
+    expect(nextStep("gray", 2)).toEqual({ belt: "gray", stripe: 3 });
+    expect(nextStep("gray", 3)).toEqual({ belt: "gray_black", stripe: 0 });
+  });
+
+  it("walks the children's ladder from one colour group to the next", () => {
+    expect(nextStep("gray_black", 3)).toEqual({ belt: "yellow_white", stripe: 0 });
+    expect(nextStep("yellow_black", 3)).toEqual({ belt: "orange_white", stripe: 0 });
+    expect(nextStep("orange_black", 3)).toEqual({ belt: "green_white", stripe: 0 });
+  });
+
+  // The transition at 16 is a judgement — green becomes blue *or* purple — so
+  // there is nothing honest to propose past the last children's belt.
+  it("proposes nothing past green/black", () => {
+    expect(nextStep("green_black", 3)).toBeNull();
+  });
 });
 
 // Fixed dates everywhere, so nothing drifts with the clock.
@@ -171,6 +202,44 @@ describe("promotionStatus", () => {
     );
 
     expect(status.next).toBeNull();
+    expect(status.eligible).toBe(false);
+  });
+
+  // The children's belts carry no criteria rows on purpose, so no child ever
+  // reaches the eligibility queue however much they train.
+  it("never calls a child eligible, because their ladder has no criteria", () => {
+    const status = promotionStatus(
+      person({
+        current_belt: "gray",
+        current_stripes: 3,
+        birth_date: "2016-01-01",
+        lessons_since_rank: 500,
+        lessons_since_stripe: 500,
+      }),
+      CRITERIA,
+      opts,
+    );
+
+    expect(status.next).toEqual({ belt: "gray_black", stripe: 0 });
+    expect(status.eligible).toBe(false);
+    expect(status.blockers).toEqual(["no-criterion"]);
+  });
+
+  // A child on a white belt is on the children's ladder, so the adult blue
+  // criterion is never even the grade being measured.
+  it("does not measure a child's white belt against the adult blue criterion", () => {
+    const status = promotionStatus(
+      person({
+        current_belt: "white",
+        current_stripes: 4,
+        birth_date: "2018-01-01",
+        lessons_since_rank: 500,
+      }),
+      CRITERIA,
+      opts,
+    );
+
+    expect(status.next).toEqual({ belt: "gray_white", stripe: 0 });
     expect(status.eligible).toBe(false);
   });
 

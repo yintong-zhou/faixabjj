@@ -58,6 +58,12 @@ export function PromotePanel({
               defaultValue={String(proposed?.stripe ?? 0)}
               className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
             >
+              {/* Always 0-4, even though a children's belt takes only three
+                  degrees and the black belt none. Narrowing the list as the
+                  belt changes would need client state for a control that is
+                  server-rendered everywhere else, and record_promotion()
+                  refuses the out-of-range value anyway — the database is the
+                  enforcement, as it is for every other rule in this panel. */}
               {[0, 1, 2, 3, 4].map((n) => (
                 <option key={n} value={n}>
                   {n}

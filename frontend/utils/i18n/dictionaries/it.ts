@@ -42,6 +42,20 @@ export const it = {
 
   belts: {
     white: "Bianca",
+    // Le dodici cinture dei corsi bambini e ragazzi (IBJJF, 4-15 anni). Ogni
+    // gruppo di colore ha tre gradi: bianca, piena, nera.
+    gray_white: "Grigia/Bianca",
+    gray: "Grigia",
+    gray_black: "Grigia/Nera",
+    yellow_white: "Gialla/Bianca",
+    yellow: "Gialla",
+    yellow_black: "Gialla/Nera",
+    orange_white: "Arancione/Bianca",
+    orange: "Arancione",
+    orange_black: "Arancione/Nera",
+    green_white: "Verde/Bianca",
+    green: "Verde",
+    green_black: "Verde/Nera",
     blue: "Blu",
     purple: "Viola",
     brown: "Marrone",
