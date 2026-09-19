@@ -2,7 +2,7 @@
 //
 // The estimate is **not an ongoing calculation**. It exists to give each member
 // a starting figure on the day the gym switched this tracking system on,
-// because `person_hours` only counts attendance recorded in FAIXABJJ and a
+// because `person_hours` only counts attendance recorded in Faixa BJJ and a
 // member who has trained for three years would otherwise read as zero — the
 // exact figure promotion eligibility rests on.
 //

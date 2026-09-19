@@ -1,7 +1,7 @@
 // Who counts as a member of the gym, as opposed to somebody who merely runs
 // the portal.
 //
-// `admin` exists for whoever administers FAIXABJJ without teaching, so such an
+// `admin` exists for whoever administers Faixa BJJ without teaching, so such an
 // account must not appear in the Registro list, in a roll call, or in any
 // other place the app asks "which of our people is this". It stays selectable
 // only where an admin account is actually being created.

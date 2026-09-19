@@ -136,14 +136,14 @@ export const ptBR: Dictionary = {
   },
 
   home: {
-    metaTitle: "FAIXABJJ - horas de aula, graus e faixas para academias de BJJ",
+    metaTitle: "Faixa BJJ - horas de aula, graus e faixas para academias de BJJ",
     metaDescription:
       "Software para academias de Jiu-Jitsu brasileiro: um único cadastro de alunos e instrutores, presenças com contagem automática de horas e critérios de graduação para graus e faixas. A decisão continua sendo do professor.",
     ogDescription:
       "Cadastro único, presenças com contagem automática de horas e critérios de graduação configuráveis, para academias de Jiu-Jitsu brasileiro.",
     badge: "MVP em desenvolvimento",
     title: "A evolução técnica, registrada.",
-    lead: "O FAIXABJJ acompanha o sistema de gestão que a academia já usa e cobre aquilo que as ferramentas genéricas fazem mal: seguir o caminho de cada aluno rumo a graus e faixas, com o mínimo de trabalho extra para os professores.",
+    lead: "O Faixa BJJ acompanha o sistema de gestão que a academia já usa e cobre aquilo que as ferramentas genéricas fazem mal: seguir o caminho de cada aluno rumo a graus e faixas, com o mínimo de trabalho extra para os professores.",
     ctaPrimary: "Entrar no portal",
     ctaSecondary: "Como funciona",
     noSignup:
@@ -678,7 +678,7 @@ export const ptBR: Dictionary = {
     title: "Privacidade e cookies",
     updated: (date: string) => `Última atualização: ${date}`,
     lead:
-      "Esta página explica quais dados pessoais o FAIXABJJ coleta, por quê, por quanto tempo os conserva e quais direitos você tem sobre eles.",
+      "Esta página explica quais dados pessoais o Faixa BJJ coleta, por quê, por quanto tempo os conserva e quais direitos você tem sobre eles.",
     draftTitle: "Documento provisório",
     draftBody:
       "O aplicativo está em fase de teste e o controlador dos dados ainda não foi designado. Antes de qualquer uso com dados de pessoas reais, é preciso preencher nome, endereço e contato do controlador e revisar os prazos de conservação indicados abaixo.",
@@ -747,7 +747,7 @@ export const ptBR: Dictionary = {
     ],
     cookieHeading: "9. Cookies e armazenamento local",
     cookieIntro:
-      "O FAIXABJJ usa exclusivamente cookies técnicos e armazenamento local necessários ao funcionamento do serviço ou para lembrar uma preferência expressa pelo usuário. Não usamos cookies de perfilamento, nem ferramentas de estatística ou publicidade, nem cookies de terceiros. Para essas ferramentas não é exigido consentimento prévio: por isso o banner informa em vez de pedir autorização.",
+      "O Faixa BJJ usa exclusivamente cookies técnicos e armazenamento local necessários ao funcionamento do serviço ou para lembrar uma preferência expressa pelo usuário. Não usamos cookies de perfilamento, nem ferramentas de estatística ou publicidade, nem cookies de terceiros. Para essas ferramentas não é exigido consentimento prévio: por isso o banner informa em vez de pedir autorização.",
     cookieTable: {
       name: "Nome",
       type: "Tipo",

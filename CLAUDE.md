@@ -139,7 +139,7 @@ Visible to instructors, maestri and admin. An **instructor sees it read-only**: 
 
 **Hours are an opening balance plus what was recorded.** The estimate exists only to give each member a starting figure on go-live day and is **frozen** from that date (a unit test asserts this). Every hour after go-live arrives only through a member's check-in or an instructor's roll call, which the `attendance` RLS policies enforce (accepting an insert from a class manager, or from the member with `checked_in_by = 'self'` inside the window). **This module must never become a second way of adding an hour.**
 
-**Hours before the app existed are estimated, not counted.** `person_hours` only knows FAIXABJJ attendance, so a three-year member would read as zero. `frontend/utils/hours.ts` is the single definition: hours before `TRACKING_STARTED_ON` are assumed at `LESSONS_PER_WEEK` (3) a week since `joined_at`, hours from that date on are counted, total is the sum.
+**Hours before the app existed are estimated, not counted.** `person_hours` only knows Faixa BJJ attendance, so a three-year member would read as zero. `frontend/utils/hours.ts` is the single definition: hours before `TRACKING_STARTED_ON` are assumed at `LESSONS_PER_WEEK` (3) a week since `joined_at`, hours from that date on are counted, total is the sum.
 
 - **`TRACKING_STARTED_ON` must be set to the real go-live date** — the whole point of the design. Without a cutoff, estimating while also counting real attendance double-counts every week from now on. A future date inflates every total; the code clamps the estimate at today, but that is a guard, not a substitute.
 - The average is **one constant for everybody**, explicitly: it is a declared estimate, and a per-person figure would dress an assumption up as a measurement.
@@ -337,7 +337,7 @@ To preview the app in this environment, use the `frontend` launch configuration 
 
 ## What this project is
 
-FAIXABJJ is a lightweight web app for tracking class hours, stripes and belt promotions in a Brazilian Jiu-Jitsu school, with a unified registry for students and instructors.
+Faixa BJJ is a lightweight web app for tracking class hours, stripes and belt promotions in a Brazilian Jiu-Jitsu school, with a unified registry for students and instructors.
 
 It deliberately is **not** a full gym management system — no payments, no online enrollment, no competition management. It sits alongside existing gym management software and covers one thing well: technical progression toward stripes/belts, with minimal added workload for instructors. Promotion eligibility is always surfaced as a suggestion/alert — the decision always stays with the instructor, never automated.
 

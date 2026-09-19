@@ -135,14 +135,14 @@ export const en: Dictionary = {
   },
 
   home: {
-    metaTitle: "FAIXABJJ - class hours, stripes and belts for BJJ gyms",
+    metaTitle: "Faixa BJJ - class hours, stripes and belts for BJJ gyms",
     metaDescription:
       "Software for Brazilian Jiu-Jitsu schools: one registry for students and instructors, attendance with an automatic hour count, and promotion criteria for stripes and belts. The decision stays with the instructor.",
     ogDescription:
       "One registry, attendance with an automatic hour count and configurable promotion criteria, for Brazilian Jiu-Jitsu schools.",
     badge: "MVP in development",
     title: "Technical progress, tracked.",
-    lead: "FAIXABJJ sits alongside the management software your gym already uses and covers the one thing generic tools do badly: following each student's path towards stripes and belts, while adding as little work as possible for instructors.",
+    lead: "Faixa BJJ sits alongside the management software your gym already uses and covers the one thing generic tools do badly: following each student's path towards stripes and belts, while adding as little work as possible for instructors.",
     ctaPrimary: "Sign in to the portal",
     ctaSecondary: "How it works",
     noSignup:
@@ -677,7 +677,7 @@ export const en: Dictionary = {
     title: "Privacy and cookies",
     updated: (date: string) => `Last updated: ${date}`,
     lead:
-      "This page explains which personal data FAIXABJJ collects, why, how long it is kept and what rights you have over it.",
+      "This page explains which personal data Faixa BJJ collects, why, how long it is kept and what rights you have over it.",
     draftTitle: "Draft document",
     draftBody:
       "The application is in testing and no data controller has been designated yet. Before any use with real people's data, the controller's name, address and contact must be filled in, and the retention periods below must be reviewed.",
@@ -746,7 +746,7 @@ export const en: Dictionary = {
     ],
     cookieHeading: "9. Cookies and local storage",
     cookieIntro:
-      "FAIXABJJ uses only technical cookies and local storage, needed either to run the service or to remember a preference the user expressed. We use no profiling cookies, no analytics or advertising tools, and no third-party cookies. Such tools require no prior consent under the ePrivacy Directive: that is why the banner informs you rather than asking for permission.",
+      "Faixa BJJ uses only technical cookies and local storage, needed either to run the service or to remember a preference the user expressed. We use no profiling cookies, no analytics or advertising tools, and no third-party cookies. Such tools require no prior consent under the ePrivacy Directive: that is why the banner informs you rather than asking for permission.",
     cookieTable: {
       name: "Name",
       type: "Type",

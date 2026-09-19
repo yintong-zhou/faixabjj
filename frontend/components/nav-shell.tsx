@@ -15,6 +15,7 @@ import {
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Locale } from "@/utils/i18n/locales";
+import { SITE_NAME } from "@/utils/site";
 
 // Every word this component renders. It is a Client Component — it needs the
 // pathname to mark the active tab — and a client component cannot read the
@@ -135,8 +136,10 @@ export function NavShell({
                 className="h-full w-full object-contain"
               />
             </span>
+            {/* The brand, never translated and never retyped: SITE_NAME is the
+                one definition the metadata and the sitemap also read. */}
             <span className="font-heading text-lg font-bold tracking-tight">
-              FAIXABJJ
+              {SITE_NAME}
             </span>
           </Link>
           <div className="flex items-center gap-2">
