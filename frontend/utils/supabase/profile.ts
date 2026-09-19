@@ -55,6 +55,18 @@ export async function getOrCreateProfile(
 export function beltLabels(t: Dictionary = en): Record<string, string> {
   return {
     white: t.belts.white,
+    gray_white: t.belts.gray_white,
+    gray: t.belts.gray,
+    gray_black: t.belts.gray_black,
+    yellow_white: t.belts.yellow_white,
+    yellow: t.belts.yellow,
+    yellow_black: t.belts.yellow_black,
+    orange_white: t.belts.orange_white,
+    orange: t.belts.orange,
+    orange_black: t.belts.orange_black,
+    green_white: t.belts.green_white,
+    green: t.belts.green,
+    green_black: t.belts.green_black,
     blue: t.belts.blue,
     purple: t.belts.purple,
     brown: t.belts.brown,
@@ -66,10 +78,71 @@ export function beltLabel(belt: string, t: Dictionary = en): string {
   return beltLabels(t)[belt] ?? belt;
 }
 
-// The order belts are awarded in — white through black. BELT_LABELS' key order
-// happens to match today, but relying on an object literal's shape for a domain
-// rule is how it silently stops matching.
-export const BELT_ORDER = ["white", "blue", "purple", "brown", "black"] as const;
+// There are two ladders, not one, and they share their first rung.
+//
+// An adult starts white and goes to blue. A child starts white and works
+// through the four IBJJF colour groups — grey, yellow, orange, green, each with
+// a white, a plain and a black variant — and only converts to an adult belt at
+// 16. belt-criteria.md carries both. Modelling them as a single 17-step line
+// would mean suggesting a grey belt to an adult white belt, which is why
+// nextStep() in utils/promotion.ts picks the ladder rather than walking
+// BELT_ORDER.
+export const ADULT_BELTS = ["white", "blue", "purple", "brown", "black"] as const;
+
+export const KID_BELTS = [
+  "white",
+  "gray_white",
+  "gray",
+  "gray_black",
+  "yellow_white",
+  "yellow",
+  "yellow_black",
+  "orange_white",
+  "orange",
+  "orange_black",
+  "green_white",
+  "green",
+  "green_black",
+] as const;
+
+// The artwork files say "gray", so the enum does too — the rule established
+// when the purple belts were renamed is that the enum value *is* the filename,
+// with `_` written as `-`. belt-criteria.md spells the colour "grey" in prose;
+// that is the English word, not an identifier, and the two do not have to
+// match.
+
+// Every belt in display order: white, then the children's colours, then the
+// adult belts. This is what sorts a roll call and lays out the belt chart, and
+// it is deliberately NOT the promotion ladder — see ADULT_BELTS / KID_BELTS.
+// Relying on beltLabels()' key order for a domain rule is how it silently
+// stops matching, so the order is written out here.
+export const BELT_ORDER = [
+  "white",
+  "gray_white",
+  "gray",
+  "gray_black",
+  "yellow_white",
+  "yellow",
+  "yellow_black",
+  "orange_white",
+  "orange",
+  "orange_black",
+  "green_white",
+  "green",
+  "green_black",
+  "blue",
+  "purple",
+  "brown",
+  "black",
+] as const;
+
+/** True for a belt that exists only on the children's ladder. */
+export function isKidBelt(belt: string): boolean {
+  return (
+    (KID_BELTS as readonly string[]).includes(belt) &&
+    !(ADULT_BELTS as readonly string[]).includes(belt)
+  );
+}
 
 export function beltRank(belt: string): number {
   const index = (BELT_ORDER as readonly string[]).indexOf(belt);

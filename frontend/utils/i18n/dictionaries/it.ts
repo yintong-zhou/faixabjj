@@ -42,6 +42,20 @@ export const it = {
 
   belts: {
     white: "Bianca",
+    // Le dodici cinture dei corsi bambini e ragazzi (IBJJF, 4-15 anni). Ogni
+    // gruppo di colore ha tre gradi: bianca, piena, nera.
+    gray_white: "Grigia/Bianca",
+    gray: "Grigia",
+    gray_black: "Grigia/Nera",
+    yellow_white: "Gialla/Bianca",
+    yellow: "Gialla",
+    yellow_black: "Gialla/Nera",
+    orange_white: "Arancione/Bianca",
+    orange: "Arancione",
+    orange_black: "Arancione/Nera",
+    green_white: "Verde/Bianca",
+    green: "Verde",
+    green_black: "Verde/Nera",
     blue: "Blu",
     purple: "Viola",
     brown: "Marrone",
@@ -422,6 +436,9 @@ export const it = {
       "Sola lettura: con il tuo ruolo di istruttore la scheda non è modificabile.",
     personalSection: "Anagrafica",
     pathSection: "Percorso",
+    correctDates: "Correggi le date",
+    correctDatesNote:
+      "Serve a correggere una data sbagliata, non a promuovere: non registra nessuna promozione e non cambia cintura né tacche. Da qui dipende il calcolo dell'idoneità, quindi vale la pena che siano giuste.",
     notesSection: "Note",
     rolesSection: "Ruoli",
     noRoles: "Nessun ruolo assegnato.",
@@ -533,6 +550,17 @@ export const it = {
     lessonCancelled: "Lezione annullata.",
     lessonRestored: "Lezione ripristinata.",
     cancelFailed: "Annullamento non riuscito.",
+
+    promotionRecorded: "Promozione registrata",
+    promotionFailed: "Non è stato possibile registrare la promozione",
+    promotionNotForward: "Una promozione deve andare avanti, non indietro",
+    datesSaved: "Date del percorso aggiornate",
+    datesFailed: "Non è stato possibile aggiornare le date",
+    dateInFuture: "Una data non può essere nel futuro",
+    stripeBeforeBelt:
+      "L'ultima tacca non può essere precedente al cambio di cintura",
+    criterionSaved: "Criterio aggiornato",
+    criterionFailed: "Non è stato possibile salvare il criterio",
   },
 
   corsi: {
@@ -589,6 +617,74 @@ export const it = {
     hours: (n: string) => `${n} ore`,
     estimateNote: (estimated: string, perWeek: number) =>
       `Include ${estimated} ore iniziali, stimate a ${perWeek} lezioni a settimana dall'iscrizione per il periodo prima del tracciamento. Da allora le ore aumentano solo con il check-in o l'appello.`,
+  },
+
+  promotions: {
+    queueTitle: "Minimi raggiunti",
+    queueIntro:
+      "Chi ha raggiunto i minimi di tempo e di ore per il grado successivo. È un suggerimento: la valutazione resta dell'istruttore.",
+    queueEmpty: "Nessuno ha raggiunto i minimi al momento.",
+    eligibleCount: (n: number) => (n === 1 ? "1 persona" : `${n} persone`),
+    hoursNote: "Ore di lezione, calcolate a 1 ora per lezione",
+    atCurrentRank: "Ore al grado attuale",
+    criteriaTitle: "Criteri",
+    // Il titolo della pagina, distinto dall'etichetta del chip sul Registro:
+    // quello deve restare corto per stare su una riga del telefono, come
+    // t.nav.registro sta a t.registro.title.
+    criteriaPageTitle: "Criteri di Graduazione",
+    criteriaIntro:
+      "Ore e tempo minimi per ogni grado. I valori delle cinture vengono dai minimi IBJJF e dalla pratica comune; quelli delle tacche sono una stima iniziale, da tarare sulla palestra.",
+    minHours: "Ore minime",
+    minDays: "Giorni minimi",
+    minAge: "Età minima",
+    criterionNotes: "Note",
+    save: "Salva",
+    promote: "Promuovi",
+    promoteTitle: (name: string) => `Promuovi ${name}`,
+    targetBelt: "Nuova cintura",
+    targetStripes: "Tacche",
+    promotedOn: "Data della promozione",
+    promotionNotes: "Note",
+    confirm: "Registra promozione",
+    history: "Storico promozioni",
+    historyEmpty: "Nessuna promozione registrata.",
+    historyEntry: (from: string, to: string) => `Da ${from} a ${to}`,
+    promotedBy: (name: string) => `Registrata da ${name}`,
+    remindersTitle: "Da valutare sul tappeto",
+    remindersNote:
+      "Promemoria, non una checklist: niente di quanto segue viene salvato.",
+    reminders: {
+      blue: [
+        "Attacco e difesa di base in guardia, montata, cento chili e controllo della schiena",
+        "Sopravvive nello sparring senza farsi sottomettere facilmente",
+        "Rispetta le regole di sicurezza: batte in tempo, controlla le sottomissioni",
+        "Etichetta di base sul tappeto",
+        "Rispetto per i compagni di allenamento",
+      ],
+      purple: [
+        "Gioco personale riconoscibile, con posizioni e sequenze preferite",
+        "Passaggi di guardia, sottomissioni e transizioni solide",
+        "Tiene il confronto con pari grado e con cinture superiori",
+        "Costanza negli allenamenti",
+        "Affidabilità in palestra",
+      ],
+      brown: [
+        "Gioco tecnico maturo",
+        "Concatena le tecniche in modo fluido",
+        "Controllo posizionale avanzato",
+        "Sa correggere e aiutare le cinture più basse",
+        "Contributo attivo alla vita della palestra",
+        "Fa da mentore o assiste nell'insegnamento",
+      ],
+      black: [
+        "Adatta il proprio gioco a stili di avversario diversi",
+        "È in grado di insegnare l'intero programma",
+        "Maturità marziale complessiva",
+        "Capacità di guida dimostrata nel tempo",
+        "Umiltà e rispetto per la tradizione",
+        "Dedizione di lungo periodo all'arte e alla palestra",
+      ],
+    },
   },
 
   cookieNotice: {

@@ -6,7 +6,10 @@ import type { Dictionary } from "./i18n/dictionaries/it";
 // Both ends are normalised to UTC midnight on purpose: comparing a UTC-parsed
 // date against a local-time "now" would drift by a day depending on the
 // viewer's timezone and the hour of the request.
-export function daysSince(isoDate: string | null): number | null {
+//
+// `today` is optional and exists so callers that must be deterministic — the
+// promotion maths and its tests — can pin it. Omitted, it means now.
+export function daysSince(isoDate: string | null, today?: string): number | null {
   if (!isoDate) {
     return null;
   }
@@ -16,15 +19,52 @@ export function daysSince(isoDate: string | null): number | null {
     return null;
   }
 
-  const today = new Date();
-  const now = Date.UTC(
-    today.getUTCFullYear(),
-    today.getUTCMonth(),
-    today.getUTCDate(),
-  );
+  let now: number;
+  if (today) {
+    now = Date.parse(`${today}T00:00:00Z`);
+    if (Number.isNaN(now)) {
+      return null;
+    }
+  } else {
+    const current = new Date();
+    now = Date.UTC(
+      current.getUTCFullYear(),
+      current.getUTCMonth(),
+      current.getUTCDate(),
+    );
+  }
 
   // A future date (a join date typed ahead of time) reads as 0, not negative.
   return Math.max(0, Math.round((now - then) / 86_400_000));
+}
+
+// Whole years old on a given day. Used only where a promotion criterion states
+// a minimum age — today that is brown to black, which IBJJF puts at 19.
+//
+// Compared field by field rather than by subtracting milliseconds: a year is
+// not a fixed number of days, and "has the birthday happened yet" is exactly
+// the question.
+export function ageOn(
+  birthDate: string | null,
+  onDate: string,
+): number | null {
+  if (!birthDate) {
+    return null;
+  }
+
+  const born = birthDate.split("-").map(Number);
+  const on = onDate.split("-").map(Number);
+  if (born.length !== 3 || on.length !== 3) {
+    return null;
+  }
+  if (born.some(Number.isNaN) || on.some(Number.isNaN)) {
+    return null;
+  }
+
+  const [by, bm, bd] = born;
+  const [oy, om, od] = on;
+  const beforeBirthday = om < bm || (om === bm && od < bd);
+  return oy - by - (beforeBirthday ? 1 : 0);
 }
 
 // Every date shown in the app reads dd/mm/yyyy. The columns arrive from

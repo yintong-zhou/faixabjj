@@ -85,6 +85,8 @@ function navItemsFor(
     items.push(CORSI_ITEM);
   }
   if (canViewRegistry) {
+    // The eligibility queue is a summary line and a filter inside the
+    // Registro, not a tab of its own: one list of people, not two.
     items.push(REGISTRO_ITEM);
   }
   items.push(ACCOUNT_ITEM);

@@ -2,14 +2,21 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Belt } from "@/components/belt";
-import { roleLabel } from "@/utils/supabase/profile";
+import { beltLabel, roleLabel } from "@/utils/supabase/profile";
 import { getDictionary } from "@/utils/i18n/server";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
 import { LESSONS_PER_WEEK, TRACKING_STARTED_ON, formatHours, hoursFor } from "@/utils/hours";
+import { promotionStatus, type Criterion } from "@/utils/promotion";
+import { correctRankDates } from "../actions";
+import { PromotePanel } from "./promote-panel";
 import {
+  AlertCircleIcon,
+  CheckCircleIcon,
   ChevronLeftIcon,
+  ChevronRightIcon,
   FileTextIcon,
+  PencilIcon,
   TrendingUpIcon,
   UserIcon,
   UsersIcon,
@@ -36,6 +43,31 @@ type RoleRow = {
   end_date: string | null;
 };
 
+type PromotionRow = {
+  id: string;
+  from_belt: string;
+  from_stripes: number;
+  to_belt: string;
+  to_stripes: number;
+  promoted_on: string;
+  notes: string | null;
+  // The signer, embedded in the same round trip rather than fetched after.
+  // `promotion` has two foreign keys into `person`, so the relationship has to
+  // be named by its constraint or PostgREST cannot tell them apart. Null when
+  // the signer's registry row has since been removed (`on delete set null`).
+  //
+  // Typed as either shape: PostgREST returns a single object for this to-one
+  // embed, but without generated database types supabase-js cannot know the
+  // cardinality and infers an array. `promoterName()` collapses the two rather
+  // than casting through `unknown`, which would silence a real mismatch too.
+  promoted_by: { full_name: string } | { full_name: string }[] | null;
+};
+
+function promoterName(row: PromotionRow): string | null {
+  const promoter = Array.isArray(row.promoted_by) ? row.promoted_by[0] : row.promoted_by;
+  return promoter?.full_name ?? null;
+}
+
 function Field({
   label,
   value,
@@ -58,10 +90,10 @@ export default async function MemberDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; ok?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { from } = await searchParams;
+  const { from, ok, error } = await searchParams;
   const { t } = await getDictionary();
   // Same gate as the list: staff only, 404 for everyone else.
   const { supabase, access } = await requireRegistryViewer(`/members/${id}`);
@@ -103,6 +135,58 @@ export default async function MemberDetailPage({
     .order("start_date", { ascending: false });
 
   const roles = (roleRows ?? []) as RoleRow[];
+
+  // Counted lessons since the current belt/stripe, and the configured
+  // thresholds — the same two queries the Registro runs, just for one person
+  // rather than the whole gym, so the panel can default to the next grade
+  // instead of making the coach type it from scratch.
+  const [{ data: rankHours }, { data: criteriaRows }, { data: promotionRows }] =
+    await Promise.all([
+      supabase
+        .from("person_rank_hours")
+        .select("lessons_since_rank, lessons_since_stripe")
+        .eq("person_id", member.id)
+        .maybeSingle(),
+      supabase
+        .from("promotion_criteria")
+        .select("belt, stripe, min_hours, min_time_at_rank_days, min_age_years")
+        .order("belt")
+        .order("stripe"),
+      supabase
+        .from("promotion")
+        .select(
+          "id, from_belt, from_stripes, to_belt, to_stripes, promoted_on, notes, promoted_by:person!promotion_promoted_by_fkey(full_name)",
+        )
+        .eq("person_id", id)
+        .order("promoted_on", { ascending: false }),
+    ]);
+
+  // numeric/bigint columns can come back from PostgREST as strings, which
+  // would let a string silently win a `<` comparison in promotionStatus() —
+  // same coercion as the Registro, the one place criteria rows enter the app.
+  const criteria = ((criteriaRows ?? []) as Criterion[]).map((row) => ({
+    ...row,
+    min_hours: Number(row.min_hours),
+    min_time_at_rank_days: Number(row.min_time_at_rank_days),
+  }));
+
+  const status = promotionStatus(
+    {
+      current_belt: member.current_belt,
+      current_stripes: member.current_stripes,
+      rank_since: member.rank_since,
+      stripe_since: member.stripe_since ?? member.rank_since,
+      joined_at: member.joined_at,
+      birth_date: member.birth_date,
+      lessons_since_rank: Number(rankHours?.lessons_since_rank ?? 0),
+      lessons_since_stripe: Number(rankHours?.lessons_since_stripe ?? 0),
+    },
+    criteria,
+  );
+
+  const promotions = (promotionRows ?? []) as PromotionRow[];
+  const today = new Date().toISOString().slice(0, 10);
+
   // Carries the list's filters and page back, so closing the detail view
   // returns to exactly the list you opened it from.
   const backHref = from ? `/members?${from}` : "/members";
@@ -123,11 +207,7 @@ export default async function MemberDetailPage({
         </h1>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Belt
-            belt={member.current_belt}
-            stripes={member.current_stripes}
-            size="md"
-          />
+          <Belt belt={member.current_belt} stripes={member.current_stripes} size="md" />
           {member.auth_user_id ? null : (
             <span className="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground/55">
               {t.registro.noAccount}
@@ -136,11 +216,22 @@ export default async function MemberDetailPage({
         </div>
 
         {access.canEditRegistry ? null : (
-          <p className="text-sm text-foreground/60">
-            {t.registro.detailReadOnly}
-          </p>
+          <p className="text-sm text-foreground/60">{t.registro.detailReadOnly}</p>
         )}
       </header>
+
+      {ok ? (
+        <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
+          <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {ok}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {error}
+        </p>
+      ) : null}
 
       <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
@@ -205,6 +296,135 @@ export default async function MemberDetailPage({
             )}
           </p>
         ) : null}
+
+        {/* Correcting the two dates, for a maestro or an admin only.
+            `guard_person_auth_link` has always let a registry editor through —
+            it freezes these columns against everybody else, which is what keeps
+            promotion from becoming self-service — but there was nowhere in the
+            app to do it from, so a date typed wrong on the join form could only
+            be moved by recording a promotion that never happened.
+
+            Collapsed, and inside the section whose figures it governs rather
+            than as a panel of its own: it is a repair, reached deliberately,
+            not something to meet while reading somebody's record. */}
+        {access.canEditRegistry ? (
+          <details className="group rounded-xl border border-border">
+            <summary className="flex min-h-11 cursor-pointer select-none list-none items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden">
+              <PencilIcon className="h-4 w-4 shrink-0 text-accent" />
+              <span>{t.registro.correctDates}</span>
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-foreground/40 transition-transform group-open:rotate-90" />
+            </summary>
+
+            <form
+              action={correctRankDates}
+              className="flex flex-col gap-3 border-t border-border px-3 pb-4 pt-3 sm:flex-row sm:flex-wrap sm:items-end"
+            >
+              <input type="hidden" name="person_id" value={member.id} />
+              {/* Carried so the back link at the top of this page still leads
+                  to the list the member was opened from. */}
+              <input type="hidden" name="_from" value={from ?? ""} />
+
+              <label className="flex flex-col gap-1 text-xs text-foreground/65">
+                {t.account.beltSince}
+                {/* ISO on purpose: it is what the element accepts and posts
+                    back. `max` blocks a future date in the browser; the action
+                    checks it again, since a crafted POST is not bound by it. */}
+                <input
+                  type="date"
+                  name="rank_since"
+                  defaultValue={member.rank_since}
+                  max={today}
+                  required
+                  className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm sm:w-44"
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-xs text-foreground/65">
+                {t.account.stripeSince}
+                <input
+                  type="date"
+                  name="stripe_since"
+                  // Falls back to the belt date when the column is empty, the
+                  // same way promotionStatus() reads it: an empty date input
+                  // posts nothing and `required` would block the form.
+                  defaultValue={member.stripe_since ?? member.rank_since}
+                  max={today}
+                  required
+                  className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm sm:w-44"
+                />
+              </label>
+
+              <button
+                type="submit"
+                className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto"
+              >
+                {t.common.saveChanges}
+              </button>
+
+              <p className="text-xs leading-relaxed text-foreground/55 sm:w-full">
+                {t.registro.correctDatesNote}
+              </p>
+            </form>
+          </details>
+        ) : null}
+      </section>
+
+      {access.canEditRegistry ? (
+        <PromotePanel
+          personId={member.id}
+          personName={member.full_name}
+          status={status}
+          today={today}
+          t={t}
+        />
+      ) : null}
+
+      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+          <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          {t.promotions.history}
+        </h2>
+
+        {promotions.length === 0 ? (
+          <p className="text-sm text-foreground/60">{t.promotions.historyEmpty}</p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-border">
+            {promotions.map((row) => {
+              const promoter = promoterName(row);
+              return (
+                <li
+                  key={row.id}
+                  className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                >
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-sm font-medium">
+                      {t.promotions.historyEntry(
+                        t.belts.label(beltLabel(row.from_belt, t), row.from_stripes),
+                        t.belts.label(beltLabel(row.to_belt, t), row.to_stripes),
+                      )}
+                    </span>
+                    {promoter ? (
+                      <span className="text-xs text-foreground/55">
+                        {t.promotions.promotedBy(promoter)}
+                      </span>
+                    ) : null}
+                    {/* The note was stored and never shown. A promotion the
+                      instructor explained is exactly the entry somebody
+                      re-reads years later. */}
+                    {row.notes ? (
+                      <span className="text-xs leading-relaxed text-foreground/70">
+                        {row.notes}
+                      </span>
+                    ) : null}
+                  </div>
+                  <span className="shrink-0 text-xs text-foreground/55">
+                    {formatDate(row.promoted_on)}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section className="flex flex-col gap-2 rounded-xl border border-border p-4 sm:gap-3 sm:p-5">
@@ -232,9 +452,7 @@ export default async function MemberDetailPage({
                 key={`${role.role}-${role.start_date}`}
                 className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
               >
-                <span className="text-sm font-medium">
-                  {roleLabel(role.role, t)}
-                </span>
+                <span className="text-sm font-medium">{roleLabel(role.role, t)}</span>
                 <span className="text-xs text-foreground/55">
                   {role.end_date
                     ? t.registro.roleRange(
