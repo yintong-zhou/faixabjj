@@ -182,6 +182,10 @@ incrociata fra SQL, query e tipi.
 - **Le quattro migrazioni non sono mai state applicate**, quindi finora è stato
   lecito correggerle sul posto. Dal momento in cui le applichi questa libertà
   finisce: da lì in avanti serve una migrazione correttiva.
+  **Aggiornamento del 19/09/2026:** `20260918100000_promotion_criteria.sql` è
+  stata applicata, quindi per quel file la libertà è finita davvero — la
+  correzione dell'età della nera (19 → 18) vive in
+  `20260919000000_black_belt_min_age.sql`.
 - **Non ricreare `/promotions`**: vedi "cosa NON ha funzionato".
 - **`utils/promotion.ts` non va duplicato né reimplementato in una pagina.** Il
   pallino, il conteggio e il filtro concordano perché chiamano tutti lui.

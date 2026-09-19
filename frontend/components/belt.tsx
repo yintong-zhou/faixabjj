@@ -3,20 +3,12 @@ import Image from "next/image";
 import { beltLabel } from "@/utils/supabase/profile";
 import { getDictionary } from "@/utils/i18n/server";
 
-// The files in public/belts are named by colour, and the enum's "purple" is
-// "violet" there. Mapping here keeps the database vocabulary and the asset
-// names independent of each other.
-const BELT_FILE_COLOR: Record<string, string> = {
-  white: "white",
-  blue: "blue",
-  purple: "violet",
-  brown: "brown",
-  black: "black",
-};
-
-// How many stripe variants actually exist per colour. The person table caps
-// stripes at 4, but a black belt has degrees up to 7, so the ceiling is per
-// colour rather than a single number.
+// How many stripe variants actually exist per colour, and — since a belt with
+// no entry here has no artwork — which colours can be drawn at all. The files
+// in public/belts are named after the `belt_rank` enum value, so the key is
+// also the filename prefix. The person table caps stripes at 4, but a black
+// belt has degrees up to 7, so the ceiling is per colour rather than a single
+// number.
 const MAX_STRIPES: Record<string, number> = {
   white: 4,
   blue: 4,
@@ -60,12 +52,12 @@ export async function Belt({
   className?: string;
 }) {
   const { t } = await getDictionary();
-  const color = BELT_FILE_COLOR[belt];
+  const maxStripes = MAX_STRIPES[belt];
   const label = t.belts.label(beltLabel(belt, t), stripes);
 
   // An unknown colour means a new enum value arrived without its artwork.
   // Falling back to the words is better than a broken image.
-  if (!color) {
+  if (maxStripes === undefined) {
     return (
       <span
         className={`w-fit self-start rounded-full bg-secondary/40 px-2 py-0.5 text-xs ${className}`}
@@ -75,7 +67,7 @@ export async function Belt({
     );
   }
 
-  const capped = Math.min(Math.max(0, Math.round(stripes)), MAX_STRIPES[color] ?? 4);
+  const capped = Math.min(Math.max(0, Math.round(stripes)), maxStripes);
   const width = SIZES[size];
 
   // `w-fit` and `self-start` are what keep every belt the same size. A flex
@@ -89,7 +81,7 @@ export async function Belt({
       className={`inline-flex w-fit shrink-0 self-start items-center rounded-[4px] border border-border bg-muted p-[3px] ${className}`}
     >
       <Image
-        src={`/belts/${color}-${capped}-stripe.png`}
+        src={`/belts/${belt}-${capped}-stripe.png`}
         alt={label}
         width={width}
         height={Math.round(width * 0.3)}

@@ -3,11 +3,23 @@
 ## meta
 
 ```yaml
-scope: IBJJF federation minimums + common academy practice
+sources:
+  - id: ibjjf
+    title: IBJJF — General System of Graduation (2026)
+    authority: binding federation rule
+    precedence: highest   # where this document and community practice disagree, IBJJF wins
+  - id: practice
+    title: common academy practice, aggregate community observation
+    authority: non-binding, variable by academy
+scope: belt-to-belt promotions up to black belt, plus black belt degrees
 authority: instructor discretion, per-student, case-by-case
-note: ibjjf_min is a binding federation rule; practical_min and technical/behavioral criteria are common practice, not law
+note: >
+  IBJJF age and time floors are law; practical minimums, the hours model and the
+  technical/behavioral criteria are common practice, not law. For children the
+  IBJJF system is suggested; for adults up to brown belt promotion is at the
+  professor's discretion; for black belt and its degrees IBJJF rules apply.
 belt_order: [white, blue, purple, brown, black]
-stripes_max_per_belt: 4          # exception: black belt has no stripe system, uses degrees (danges) instead
+stripes_max_per_belt: 4          # exception: black belt has no stripe system, it has 6 degrees
 stripe_interval_months: [2, 4]   # shorter at white/blue, longer at higher belts
 stripe_criteria:
   - attendance_consistency
@@ -17,13 +29,88 @@ stripe_criteria:
 stripe_decision_maker: instructor_only  # no federation rule governs stripe issuance
 ```
 
+## children_and_youth
+
+Ages 4–15. IBJJF, suggested rather than binding.
+
+### minimum_age_by_group
+
+```yaml
+- group: white
+  belts: [white]
+  age_min_years: null   # any age
+- group: grey
+  belts: [grey_white, grey, grey_black]
+  age_min_years: 4
+- group: yellow
+  belts: [yellow_white, yellow, yellow_black]
+  age_min_years: 7
+- group: orange
+  belts: [orange_white, orange, orange_black]
+  age_min_years: 10
+- group: green
+  belts: [green_white, green, green_black]
+  age_min_years: 13
+```
+
+### minimum_time_in_belt
+
+```yaml
+value: null
+note: no mandatory minimum time for children and youth
+```
+
+### promotion_methods
+
+Promotion happens on completing the degrees required by the method the
+professor has adopted.
+
+```yaml
+- method: quarterly
+  frequency_months: 3
+  degrees_per_belt: 3        # white degrees
+  promoting_degree: 4
+- method: triannual
+  frequency_months: 4
+  degrees_per_belt: 2
+  promoting_degree: 3
+- method: monthly
+  frequency_months: 1
+  degrees_per_belt: 11       # 4 white, 4 red, 3 of the next belt colour
+  promoting_degree: 12
+- method: white_to_grey_white
+  frequency_months: 1
+  degrees_per_belt: 6        # 1 degree per month for 6 months
+  promoting_degree: 6
+```
+
+### transition_at_16
+
+```yaml
+- from: white
+  to: white        # may remain white
+- from: grey
+  to: blue
+- from: yellow
+  to: blue
+- from: orange
+  to: blue
+- from: green
+  to: [blue, purple]   # at the professor's discretion
+```
+
 ## transitions
+
+Adults and youth aged 16 and older (juvenile 1 and up). The `ibjjf_*` fields are
+federation rules; `practical_min_years`, `technical` and `behavioral` are common
+practice.
 
 ```yaml
 - id: white_to_blue
-  ibjjf_min_years: null
+  ibjjf_min_years: null          # no minimum time
+  ibjjf_age_min_years: 16
   practical_min_years: [0.5, 1]
-  age_min_years: null
+  reductions: null
   technical:
     - basic_guard_mount_side_control_back_control_offense_and_defense
     - survive_sparring_without_easy_submission
@@ -34,8 +121,13 @@ stripe_decision_maker: instructor_only  # no federation rule governs stripe issu
 
 - id: blue_to_purple
   ibjjf_min_years: 2
+  ibjjf_age_min_years: 16
   practical_min_years: [2, 3]
-  age_min_years: null
+  reductions:
+    - condition: previously_grey_yellow_or_orange
+      min_years: 1
+    - condition: previously_green_or_juvenile_blue_or_adult_world_champion_at_blue
+      min_years: 0
   technical:
     - recognizable_personal_game_preferred_positions_and_sequences
     - solid_guard_passing_submissions_transitions
@@ -46,8 +138,13 @@ stripe_decision_maker: instructor_only  # no federation rule governs stripe issu
 
 - id: purple_to_brown
   ibjjf_min_years: 1.5
+  ibjjf_age_min_years: 18
   practical_min_years: [1.5, 2]
-  age_min_years: null
+  reductions:
+    - condition: previously_juvenile_blue
+      min_years: 1
+    - condition: previously_orange_or_green_plus_juvenile_blue_or_juvenile_purple_or_adult_world_champion_at_purple
+      min_years: 0
   technical:
     - mature_technical_game
     - fluid_technique_chaining
@@ -59,8 +156,14 @@ stripe_decision_maker: instructor_only  # no federation rule governs stripe issu
 
 - id: brown_to_black
   ibjjf_min_years: 1
+  ibjjf_age_min_years: 18
   practical_min_years: [1, 2]
-  age_min_years: 19
+  reductions:
+    - condition: adult_world_champion_at_brown
+      min_years: 0
+  note: >
+    black belt at 18 is reserved for athletes who won the Adult World
+    Championship title at brown belt
   technical:
     - adapts_game_against_varied_opponent_styles
     - able_to_teach_full_curriculum
@@ -69,6 +172,43 @@ stripe_decision_maker: instructor_only  # no federation rule governs stripe issu
     - sustained_leadership_over_time
     - humility_and_respect_for_tradition
     - long_term_dedication_to_art_and_academy
+```
+
+## black_belt_degrees
+
+The black belt is not promoted to a further belt; it is divided into 6 degrees.
+Out of scope for this app, which models belts and stripes only.
+
+```yaml
+- degree: 1
+  min_years_from_previous: 3
+  min_years_total_at_black: 3
+- degree: 2
+  min_years_from_previous: 3
+  min_years_total_at_black: 6
+- degree: 3
+  min_years_from_previous: 3
+  min_years_total_at_black: 9
+- degree: 4
+  min_years_from_previous: 5
+  min_years_total_at_black: 14
+- degree: 5
+  min_years_from_previous: 5
+  min_years_total_at_black: 19
+- degree: 6
+  min_years_from_previous: 5
+  min_years_total_at_black: 24
+```
+
+### ibjjf_administrative_requirements
+
+Apply to the black belt and its degrees.
+
+```yaml
+- affiliated_with_ibjjf_at_time_of_application
+- no_provisional_graduation
+- first_aid_or_cpr_certificate
+- ibjjf_referee_training_rules_seminar_or_rules_webinar_certificate_within_12_months
 ```
 
 ## hours_model
@@ -156,8 +296,9 @@ hours_per_year_by_frequency:
 ## data_quality
 
 ```yaml
-ibjjf_min: official_federation_rule    # verifiable, stable
+ibjjf_rules: official_federation_rule    # verifiable, stable; highest precedence
 practical_min: aggregate_community_observation  # variable, non-authoritative
 hours_model: linear_approximation      # ignores training intensity, instruction quality, private lessons
 stripe_and_soft_criteria: instructor_subjective_by_design  # no universal ruleset beyond IBJJF time+age floors
+children_system: suggested_not_binding  # IBJJF states it as a suggestion for ages 4-15
 ```
