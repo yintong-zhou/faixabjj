@@ -269,6 +269,7 @@ Surfaced elsewhere: the kebab gets a "Promuovi" item for registry editors; the m
 
 Three things worth knowing:
 
+- **Staff can switch to their own view**, with a segmented control in the header and the choice in the URL (`v=mia`, the same `v` the calendar uses). A maestro or an instructor holds a belt, collects hours and attends lessons like everybody else, and the gym-wide view used to be the only thing this route would draw for them. The gym stays the default, because that is what they open the dashboard for. **A member sees no control**: there is nothing to switch to, and offering the choice would hint at a view they cannot open.
 - **The split is in which queries run, not which cards render.** A student never triggers the gym-wide queries, and RLS would refuse them anyway (an allievo cannot read `member_overview` or another member's attendance). Hiding cards would not have been access control.
 - **Staff counts exclude a portal-only admin** (`PORTAL_ONLY_ROLES`), who is not a student and would skew every figure.
 - **The member view is bounded to 90 days**; "last time" reads "—" beyond that window rather than scanning further back.

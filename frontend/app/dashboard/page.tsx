@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { AlertCircleIcon } from "@/components/icons";
 import { getOrCreateProfile } from "@/utils/supabase/profile";
@@ -12,7 +13,19 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.dashboard.title };
 }
 
-export default async function DashboardPage() {
+// Which of the two dashboards to draw, in the URL like every other bit of view
+// state in this app — the same `v` the calendar uses for its grid. A link to
+// somebody's own figures is then just a URL, and a reload keeps the view.
+const MINE = "mia";
+
+type Search = { v?: string };
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<Search>;
+}) {
+  const { v } = await searchParams;
   const { supabase, userId, email } = await requireAdmin("/dashboard");
   const access = await getAccess(supabase);
   const { t } = await getDictionary();
@@ -24,21 +37,47 @@ export default async function DashboardPage() {
   // read member_overview or another member's attendance.
   const isStaff = access.canManageClasses;
 
-  const profile = isStaff ? null : await getOrCreateProfile(supabase, userId, email);
+  // Staff train too. A maestro or an instructor holds a belt, collects hours
+  // and turns up to lessons like everybody else, and until now the gym-wide
+  // view was the only thing this route would draw for them — their own figures
+  // were visible nowhere. They can switch; the gym stays the default, because
+  // it is what they open the dashboard for.
+  //
+  // A member sees no control: there is nothing to switch to, and offering the
+  // choice would hint at a view they cannot open.
+  const showingMine = !isStaff || v === MINE;
+
+  // Unchanged in substance: the split is still in which queries run, not in
+  // which cards render. A gym-wide query is issued only when the gym view is
+  // the one actually being drawn.
+  const profile = showingMine
+    ? await getOrCreateProfile(supabase, userId, email)
+    : null;
   const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="flex w-full flex-col gap-6 sm:gap-10">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          {t.dashboard.title}
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {t.dashboard.title}
+          </h1>
+          {isStaff ? (
+            <ViewToggle
+              showingMine={showingMine}
+              gymHref="/dashboard"
+              mineHref={`/dashboard?v=${MINE}`}
+              gymLabel={t.dashboard.viewGym}
+              mineLabel={t.dashboard.viewMine}
+            />
+          ) : null}
+        </div>
         <p className="text-sm leading-relaxed text-foreground/65">
-          {isStaff ? t.dashboard.staffLead : t.dashboard.memberLead}
+          {showingMine ? t.dashboard.memberLead : t.dashboard.staffLead}
         </p>
       </header>
 
-      {isStaff ? (
+      {!showingMine ? (
         <StaffDashboard supabase={supabase} today={today} t={t} />
       ) : profile ? (
         <MemberDashboard supabase={supabase} profile={profile} today={today} t={t} />
@@ -48,6 +87,45 @@ export default async function DashboardPage() {
           {t.dashboard.profileUnavailable}
         </p>
       )}
+    </div>
+  );
+}
+
+// Two links, not a client-side toggle: switching view is a navigation and
+// survives a reload, exactly like the calendar's list/grid control.
+function ViewToggle({
+  showingMine,
+  gymHref,
+  mineHref,
+  gymLabel,
+  mineLabel,
+}: {
+  showingMine: boolean;
+  gymHref: string;
+  mineHref: string;
+  gymLabel: string;
+  mineLabel: string;
+}) {
+  const base = "rounded-full px-3 py-1.5 text-xs font-medium transition-colors";
+  const on = "bg-foreground text-background";
+  const off = "text-foreground/60 hover:bg-muted";
+
+  return (
+    <div className="flex shrink-0 items-center gap-1 rounded-full border border-border p-1">
+      <Link
+        href={gymHref}
+        aria-current={showingMine ? undefined : "page"}
+        className={`${base} ${showingMine ? off : on}`}
+      >
+        {gymLabel}
+      </Link>
+      <Link
+        href={mineHref}
+        aria-current={showingMine ? "page" : undefined}
+        className={`${base} ${showingMine ? on : off}`}
+      >
+        {mineLabel}
+      </Link>
     </div>
   );
 }

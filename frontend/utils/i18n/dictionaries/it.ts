@@ -260,6 +260,10 @@ export const it = {
     staffLead:
       "Il quadro della palestra: allievi, lezioni del mese e distribuzione delle cinture.",
     memberLead: "Il tuo percorso: grado, ore di lezione e prossimi allenamenti.",
+    // Le due viste del controllo segmentato, visibile solo a chi ha entrambe:
+    // un allievo non ha niente fra cui scegliere.
+    viewGym: "Palestra",
+    viewMine: "Il mio percorso",
     profileUnavailable:
       "Il tuo profilo non è disponibile. Se il problema persiste, avvisa la segreteria della palestra.",
 

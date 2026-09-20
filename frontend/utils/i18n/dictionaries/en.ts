@@ -249,6 +249,8 @@ export const en: Dictionary = {
     staffLead:
       "The gym at a glance: students, this month's lessons and the belt spread.",
     memberLead: "Your path: rank, class hours and upcoming training.",
+    viewGym: "Gym",
+    viewMine: "My path",
     profileUnavailable:
       "Your profile is not available. If the problem persists, let the gym office know.",
 

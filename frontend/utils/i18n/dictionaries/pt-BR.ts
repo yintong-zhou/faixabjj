@@ -250,6 +250,8 @@ export const ptBR: Dictionary = {
     staffLead:
       "A academia em um olhar: alunos, aulas do mês e distribuição das faixas.",
     memberLead: "Seu caminho: graduação, horas de aula e próximos treinos.",
+    viewGym: "Academia",
+    viewMine: "Meu caminho",
     profileUnavailable:
       "Seu perfil não está disponível. Se o problema persistir, avise a secretaria da academia.",
 
