@@ -325,24 +325,34 @@ export async function StaffDashboard({
 
         <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
           {beltCounts.map(({ belt, members: atBelt }) => (
-            <li key={belt} className="flex items-center gap-3 px-3 py-3 sm:px-4">
-              <Belt belt={belt} stripes={0} className="shrink-0" />
+            <li key={belt}>
+              {/* The whole row is the link, not the number inside it: the count
+                  is a few characters wide and the belt image is the part a
+                  thumb aims at. `attivi=1` travels with the belt because this
+                  chart counts active members only — without it the list would
+                  answer with a different number than the row that opened it. */}
+              <Link
+                href={`/members?cintura=${belt}&attivi=1`}
+                className="flex items-center gap-3 px-3 py-3 transition-colors hover:bg-muted sm:px-4"
+              >
+                <Belt belt={belt} stripes={0} className="shrink-0" />
 
-              <span className="w-16 shrink-0 text-sm font-medium sm:w-20">
-                {beltLabel(belt, t)}
-              </span>
+                <span className="w-16 shrink-0 text-sm font-medium sm:w-20">
+                  {beltLabel(belt, t)}
+                </span>
 
-              {/* A bar rather than a chart library: one number per row, and a
-                  dependency would not earn its place here. */}
-              <span
-                className="h-2 min-w-0.5 rounded-full bg-accent/70"
-                style={{ width: `${(atBelt.length / mostBelts) * 100}%` }}
-                aria-hidden="true"
-              />
+                {/* A bar rather than a chart library: one number per row, and a
+                    dependency would not earn its place here. */}
+                <span
+                  className="h-2 min-w-0.5 rounded-full bg-accent/70"
+                  style={{ width: `${(atBelt.length / mostBelts) * 100}%` }}
+                  aria-hidden="true"
+                />
 
-              <span className="ml-auto shrink-0 text-sm tabular-nums text-foreground/70">
-                {atBelt.length}
-              </span>
+                <span className="ml-auto shrink-0 text-sm tabular-nums text-foreground/70">
+                  {atBelt.length}
+                </span>
+              </Link>
             </li>
           ))}
         </ul>
