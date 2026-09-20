@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertCircleIcon } from "@/components/icons";
 import { PasswordInput } from "@/components/password-input";
+import { Turnstile } from "@/components/turnstile";
 import { getDictionary } from "@/utils/i18n/server";
 import { login } from "./actions";
 
@@ -68,6 +69,8 @@ export default async function LoginPage({
             {error}
           </p>
         ) : null}
+
+        <Turnstile action="login" />
 
         <button
           type="submit"

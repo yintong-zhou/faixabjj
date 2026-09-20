@@ -99,6 +99,10 @@ export const it = {
     forgotLink: "Password dimenticata?",
     signInButton: "Accedi",
     wrongCredentials: "Email o password non corrette.",
+    // Il controllo antibot ha rifiutato la richiesta. Volutamente vago su cosa
+    // sia andato storto: chi lo legge in buona fede deve solo riprovare.
+    captchaFailed:
+      "Verifica di sicurezza non riuscita. Ricarica la pagina e riprova.",
 
     forgotTitle: "Password dimenticata",
     forgotLead:

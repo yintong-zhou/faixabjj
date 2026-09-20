@@ -90,6 +90,7 @@ export const en: Dictionary = {
     forgotLink: "Forgotten your password?",
     signInButton: "Sign in",
     wrongCredentials: "Email or password is incorrect.",
+    captchaFailed: "Security check failed. Reload the page and try again.",
 
     forgotTitle: "Forgotten password",
     forgotLead:

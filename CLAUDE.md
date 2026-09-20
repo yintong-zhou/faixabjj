@@ -67,6 +67,19 @@ No self-serve signup, and **no signup page on purpose** (confirmed with the user
 - Use `supabase.auth.getClaims()`, not `getUser()` — current guidance, verifies the JWT locally via WebCrypto/JWKS.
 - The home page `/` is for **signed-out visitors only**: publicly reachable, but `VISITOR_ONLY` in the proxy redirects an authenticated visitor to `/dashboard`, like `/login`. The nav drops Home for every signed-in user and the header logo points at `/dashboard`, so the redirect is a safety net, not the normal path.
 
+## Bot protection (Cloudflare Turnstile)
+
+The two forms a signed-out visitor can reach are challenged: `/login` (action `login`) and `/forgot-password` (action `password_reset`). There is no signup form to protect — accounts are created from the Registro — and `/reset-password` is deliberately left alone, since the recovery token in the link is already the gate.
+
+- **The browser never calls siteverify.** The widget puts a token in the form, the server action posts it to `https://challenges.cloudflare.com/turnstile/v0/siteverify` with the secret, and only then does the existing handler run. `utils/turnstile.ts` is the single definition; `components/turnstile.tsx` draws the widget.
+- **All three of `success`, `action` and `hostname` are checked**, not just `success`. Without the action a token solved on the password-reset form is replayable against the login form; without the hostname a token solved on a copy of the page hosted elsewhere is replayable against ours. `TURNSTILE_HOSTNAMES` is per deployment and **must not contain `localhost` in production** — that is what makes one widget safe for local and production at once.
+- **Unconfigured means refuse in production, skip in development.** A deploy that lost its environment variables would otherwise serve a login form with no widget and no verification, looking exactly like a protected one; requiring the keys locally would mean nobody can run the app without a Cloudflare account. Same trade as the service-role key in `admin.ts`.
+- **The verification comes before the credentials are read**, and before the reset mail is sent. Checking afterwards would still allow one password attempt, or one mail, per request.
+- **A refused password reset still answers `?sent=1`**, like every other outcome there: that page must not become an oracle for which addresses have an account. Login answers with `t.auth.captchaFailed`, deliberately vague. The real reason goes to the server log through `logDbError()`.
+- **No reset logic is needed**: a Turnstile token is single-use, and both actions redirect on every outcome, so the page remounts with a fresh widget.
+- The widget's own theme is `auto` (system preference). It cannot follow this app's manual toggle — it is drawn inside a Cloudflare iframe our stylesheet and `data-theme` do not reach. Its language does follow the app's, via `data-language`.
+- **Testing locally**: leave the three variables unset and the form works with no challenge. With Cloudflare's always-pass test keys (`1x00000000000000000000AA` / `1x0000000000000000000000000000000AA`), siteverify reports the hostname as `example.com`, so `TURNSTILE_HOSTNAMES` must say `example.com` or the check fails for a reason that has nothing to do with the code.
+
 ## Account management
 
 Two areas, both under `/account`, both in `PROTECTED_PREFIXES`.

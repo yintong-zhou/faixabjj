@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Turnstile } from "@/components/turnstile";
 import { getDictionary } from "@/utils/i18n/server";
 import { requestPasswordReset } from "./actions";
 
@@ -54,6 +55,8 @@ export default async function ForgotPasswordPage({
             className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-accent"
           />
         </div>
+
+        <Turnstile action="password_reset" />
 
         <button
           type="submit"

@@ -91,6 +91,8 @@ export const ptBR: Dictionary = {
     forgotLink: "Esqueceu a senha?",
     signInButton: "Entrar",
     wrongCredentials: "E-mail ou senha incorretos.",
+    captchaFailed:
+      "Verificação de segurança falhou. Recarregue a página e tente novamente.",
 
     forgotTitle: "Esqueci a senha",
     forgotLead:
