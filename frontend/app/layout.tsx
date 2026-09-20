@@ -24,7 +24,7 @@ const workSans = Work_Sans({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getDictionary();
+  const { locale, t } = await getDictionary();
 
   return {
     // Absolute base for every relative URL below. Without it Open Graph tags
@@ -39,10 +39,20 @@ export async function generateMetadata(): Promise<Metadata> {
     applicationName: SITE_NAME,
     keywords: t.home.keywords,
     category: "sports",
+    // Named on the iOS home screen, and asked to open without browser chrome —
+    // the counterpart of app/manifest.ts, which Safari does not read for this.
+    appleWebApp: {
+      capable: true,
+      title: SITE_NAME,
+      statusBarStyle: "default",
+    },
     openGraph: {
       type: "website",
       siteName: SITE_NAME,
-      locale: "it_IT",
+      // The page is served in whichever language this request resolved to, so
+      // the tag has to say that one rather than a language the reader may not
+      // be getting.
+      locale: LOCALE_TAG[locale].replace("-", "_"),
       url: "/",
       images: [
         {
@@ -56,8 +66,7 @@ export async function generateMetadata(): Promise<Metadata> {
     twitter: {
       card: "summary",
       title: SITE_NAME,
-      description:
-        "Ore, gradi e cinture per una scuola di Brazilian Jiu-Jitsu, in un registro unico.",
+      description: t.home.metaDescription,
     },
     robots: {
       index: true,
