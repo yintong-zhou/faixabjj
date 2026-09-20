@@ -24,7 +24,11 @@ alter view public.person_hours set (security_invoker = on);
 -- security_invoker = on: the view is evaluated as the calling user, so the
 -- `person` policies apply unchanged. Staff see everyone; an allievo querying
 -- this view sees only their own row. The view adds no privileges of its own.
-create or replace view public.member_overview
+-- Dropped first rather than replaced: `create or replace view` cannot change
+-- the column list, so once a later migration has reshaped this view, replaying
+-- this file would fail on "cannot drop columns from view".
+drop view if exists public.member_overview;
+create view public.member_overview
 with (security_invoker = on)
 as
 select

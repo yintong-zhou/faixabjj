@@ -5,8 +5,18 @@
 -- person per session". The old shape could not express a member training twice
 -- in one evening, which the hour count has to be able to record.
 
-create type class_status as enum ('scheduled', 'cancelled');
-create type checkin_source as enum ('self', 'staff');
+-- `create type` has no `if not exists`, so it is wrapped in a block that
+-- swallows the duplicate: replaying this history must not stop here.
+do $$ begin
+  create type class_status as enum ('scheduled', 'cancelled');
+exception when duplicate_object then null;
+end $$;
+-- `create type` has no `if not exists`, so it is wrapped in a block that
+-- swallows the duplicate: replaying this history must not stop here.
+do $$ begin
+  create type checkin_source as enum ('self', 'staff');
+exception when duplicate_object then null;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- course — the recurring rule, not a lesson
@@ -14,7 +24,7 @@ create type checkin_source as enum ('self', 'staff');
 -- One course carries a single time slot across several weekdays. A course that
 -- runs at different times on different days is two courses; that trade buys us
 -- one table instead of two.
-create table course (
+create table if not exists course (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   description text,
@@ -40,6 +50,7 @@ create table course (
   constraint course_weekdays_check check (weekdays <@ array[1,2,3,4,5,6,7]::smallint[])
 );
 
+drop trigger if exists course_set_updated_at on course;
 create trigger course_set_updated_at
 before update on course
 for each row execute function set_updated_at();
@@ -50,7 +61,7 @@ for each row execute function set_updated_at();
 -- Times are copied from the course at generation instead of being read through
 -- it, so editing a course never silently rewrites lessons that already
 -- happened. The unique key is what makes generation idempotent.
-create table class_session (
+create table if not exists class_session (
   id uuid primary key default gen_random_uuid(),
   course_id uuid not null references course (id) on delete cascade,
   session_date date not null,
@@ -64,16 +75,16 @@ create table class_session (
   constraint class_session_times_check check (end_time > start_time)
 );
 
-create index class_session_date_idx on class_session (session_date);
-create index class_session_course_id_idx on class_session (course_id);
+create index if not exists class_session_date_idx on class_session (session_date);
+create index if not exists class_session_course_id_idx on class_session (course_id);
 
 -- ---------------------------------------------------------------------------
 -- attendance — rewired onto sessions
 -- ---------------------------------------------------------------------------
-alter table attendance add column session_id uuid references class_session (id) on delete cascade;
+alter table attendance add column if not exists session_id uuid references class_session (id) on delete cascade;
 -- Records who created the row. A row the member made themselves is one they
 -- may still undo; a row the staff made is not.
-alter table attendance add column checked_in_by checkin_source not null default 'staff';
+alter table attendance add column if not exists checked_in_by checkin_source not null default 'staff';
 
 -- Existing rows predate the calendar and have no session. Park them under an
 -- inactive course so no hour of anybody's history is lost. Almost certainly a
@@ -109,8 +120,14 @@ alter table attendance alter column session_id set not null;
 
 -- "One per person per day" is exactly the rule that has to go: two classes in
 -- one evening are two hours.
-alter table attendance drop constraint attendance_person_id_class_date_key;
-alter table attendance add constraint attendance_person_session_key unique (person_id, session_id);
+-- Both guarded so the history can be replayed: `drop constraint` without
+-- `if exists` fails once the old one is already gone, and `add constraint` has
+-- no `if not exists` at all, so the new one is added only when absent.
+alter table attendance drop constraint if exists attendance_person_id_class_date_key;
+do $$ begin
+  alter table attendance add constraint attendance_person_session_key unique (person_id, session_id);
+exception when duplicate_table or duplicate_object then null;
+end $$;
 
 -- Both views read columns that are about to disappear, so they come down
 -- first: person_hours sums duration_hours, and member_overview reads
@@ -122,14 +139,14 @@ drop view if exists public.person_hours;
 -- The session carries the date and the instructor now.
 drop index if exists attendance_class_date_idx;
 drop index if exists attendance_led_by_idx;
-alter table attendance drop column class_date;
-alter table attendance drop column led_by;
+alter table attendance drop column if exists class_date;
+alter table attendance drop column if exists led_by;
 
 -- One attendance is one hour, full stop. A defaulted duration column would let
 -- a crafted write store 2 and turn the rule into a convention.
-alter table attendance drop column duration_hours;
+alter table attendance drop column if exists duration_hours;
 
-create index attendance_session_id_idx on attendance (session_id);
+create index if not exists attendance_session_id_idx on attendance (session_id);
 
 -- ---------------------------------------------------------------------------
 -- person_hours — now a count, not a sum
