@@ -11,6 +11,7 @@ import {
 } from "@/components/icons";
 import { daysSince } from "@/utils/dates";
 import { hoursFor } from "@/utils/hours";
+import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLES } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
 import { ADULT_BELTS, BELT_ORDER, beltLabel } from "@/utils/supabase/profile";
@@ -65,11 +66,11 @@ export async function StaffDashboard({
   const until = addDays(shiftMonth(from, 1), -1);
 
   const [
-    { data: memberRows },
-    { data: sessionRows },
-    { count: activeCourses },
-    { data: rankRows },
-    { data: criteriaRows },
+    { data: memberRows, error: memberError },
+    { data: sessionRows, error: sessionError },
+    { count: activeCourses, error: courseError },
+    { data: rankRows, error: rankError },
+    { data: criteriaRows, error: criteriaError },
   ] = await Promise.all([
       supabase
         .from("member_overview")
@@ -99,6 +100,20 @@ export async function StaffDashboard({
         .from("promotion_criteria")
         .select("belt, stripe, min_hours, min_time_at_rank_days, min_age_years"),
     ]);
+
+  // A failed query and an empty gym render identically here — every card just
+  // says 0 — so a broken view or a missing grant used to look like a school
+  // with no students. The page still degrades to zeros rather than erroring,
+  // because a dashboard is not worth a 500, but the reason is now in the log.
+  for (const [where, error] of [
+    ["member_overview", memberError],
+    ["session_overview", sessionError],
+    ["course", courseError],
+    ["person_rank_hours", rankError],
+    ["promotion_criteria", criteriaError],
+  ] as const) {
+    if (error) logDbError("dashboard", where, error);
+  }
 
   const members = (memberRows ?? []) as Member[];
   const sessions = (sessionRows ?? []) as Session[];

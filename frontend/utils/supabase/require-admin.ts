@@ -85,6 +85,17 @@ export async function getAccess(supabase: SupabaseClient): Promise<Access> {
   const { data, error } = await supabase.rpc("current_access");
 
   if (error || !data) {
+    // Still fails closed — that part is deliberate, and a privilege must never
+    // be granted because a query went wrong. What was wrong was doing it
+    // *silently*: "the RPC does not exist on this database" and "this account
+    // has no active role" produced exactly the same screen, a staff member
+    // looking at the allievo dashboard with nothing to explain it. The refusal
+    // stays; only the silence goes.
+    console.error(
+      `[access] current_access failed, treating as no access: ${
+        error?.code ?? "no code"
+      } ${error?.message ?? "no data returned"}`.trim(),
+    );
     return NO_ACCESS;
   }
 

@@ -5,15 +5,25 @@
 create extension if not exists pgcrypto;
 
 -- Belt ranks and person roles used across several tables.
-create type belt_rank as enum ('white', 'blue', 'purple', 'brown', 'black');
-create type person_role as enum ('student', 'assistant', 'instructor', 'head_coach');
+-- `create type` has no `if not exists`, so it is wrapped in a block that
+-- swallows the duplicate: replaying this history must not stop here.
+do $$ begin
+  create type belt_rank as enum ('white', 'blue', 'purple', 'brown', 'black');
+exception when duplicate_object then null;
+end $$;
+-- `create type` has no `if not exists`, so it is wrapped in a block that
+-- swallows the duplicate: replaying this history must not stop here.
+do $$ begin
+  create type person_role as enum ('student', 'assistant', 'instructor', 'head_coach');
+exception when duplicate_object then null;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- Person — single unified registry for students and instructors. The same
 -- person can hold multiple roles at once (see assigned_role) as their rank
 -- grows, so role is not a column here.
 -- ---------------------------------------------------------------------------
-create table person (
+create table if not exists person (
   id uuid primary key default gen_random_uuid(),
   auth_user_id uuid references auth.users (id) on delete set null,
   full_name text not null,
@@ -29,8 +39,8 @@ create table person (
   updated_at timestamptz not null default now()
 );
 
-create unique index person_auth_user_id_key on person (auth_user_id) where auth_user_id is not null;
-create index person_email_idx on person (email) where email is not null;
+create unique index if not exists person_auth_user_id_key on person (auth_user_id) where auth_user_id is not null;
+create index if not exists person_email_idx on person (email) where email is not null;
 
 create or replace function set_updated_at()
 returns trigger
@@ -42,6 +52,7 @@ begin
 end;
 $$;
 
+drop trigger if exists person_set_updated_at on person;
 create trigger person_set_updated_at
 before update on person
 for each row execute function set_updated_at();
@@ -51,7 +62,7 @@ for each row execute function set_updated_at();
 -- hold several different roles concurrently (e.g. student + assistant), but
 -- not two active assignments of the *same* role at once.
 -- ---------------------------------------------------------------------------
-create table assigned_role (
+create table if not exists assigned_role (
   id uuid primary key default gen_random_uuid(),
   person_id uuid not null references person (id) on delete cascade,
   role person_role not null,
@@ -61,13 +72,13 @@ create table assigned_role (
   constraint assigned_role_dates_check check (end_date is null or end_date >= start_date)
 );
 
-create index assigned_role_person_id_idx on assigned_role (person_id);
-create unique index assigned_role_active_unique on assigned_role (person_id, role) where end_date is null;
+create index if not exists assigned_role_person_id_idx on assigned_role (person_id);
+create unique index if not exists assigned_role_active_unique on assigned_role (person_id, role) where end_date is null;
 
 -- ---------------------------------------------------------------------------
 -- RoleThreshold — suggested (never automatic) belt threshold per role.
 -- ---------------------------------------------------------------------------
-create table role_threshold (
+create table if not exists role_threshold (
   role person_role primary key,
   suggested_min_belt belt_rank not null,
   suggested_min_stripes smallint not null default 0 check (suggested_min_stripes between 0 and 4),
@@ -78,7 +89,7 @@ create table role_threshold (
 -- Attendance — present/absent per person/date, one row per class day, with a
 -- reference to who led the session.
 -- ---------------------------------------------------------------------------
-create table attendance (
+create table if not exists attendance (
   id uuid primary key default gen_random_uuid(),
   person_id uuid not null references person (id) on delete cascade,
   class_date date not null,
@@ -90,9 +101,9 @@ create table attendance (
   unique (person_id, class_date)
 );
 
-create index attendance_person_id_idx on attendance (person_id);
-create index attendance_class_date_idx on attendance (class_date);
-create index attendance_led_by_idx on attendance (led_by) where led_by is not null;
+create index if not exists attendance_person_id_idx on attendance (person_id);
+create index if not exists attendance_class_date_idx on attendance (class_date);
+create index if not exists attendance_led_by_idx on attendance (led_by) where led_by is not null;
 
 -- Automatic hour count per person, derived from attendance.
 create view person_hours as
@@ -107,7 +118,7 @@ group by person_id;
 -- belt/stripe. Used to power eligibility alerts; promotions themselves stay
 -- a manual instructor decision.
 -- ---------------------------------------------------------------------------
-create table promotion_criteria (
+create table if not exists promotion_criteria (
   belt belt_rank not null,
   stripe smallint not null check (stripe between 0 and 4),
   min_hours numeric(6, 1) not null,
