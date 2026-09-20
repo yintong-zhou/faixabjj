@@ -48,10 +48,11 @@ values
   ('20260919100000', 'kid_belt_ranks'),
   ('20260919110000', 'kid_belt_promotion'),
   ('20260919120000', 'clear_criteria_notes'),
-  ('20260920000000', 'restore_current_access')
+  ('20260920000000', 'restore_current_access'),
+  ('20260920010000', 'restore_member_overview')
 on conflict (version) do nothing;
 
--- Check: this must list all 22 versions above, and nothing pending.
+-- Check: this must list all 23 versions above, and nothing pending.
 select version, name
 from supabase_migrations.schema_migrations
 order by version;

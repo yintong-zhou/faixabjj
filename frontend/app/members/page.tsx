@@ -21,6 +21,7 @@ import {
 } from "@/components/icons";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
 import { estimateNote, formatHours, hoursFor } from "@/utils/hours";
+import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
 import {
   promotionStatus,
@@ -137,8 +138,11 @@ export default async function RegistroPage({
   // `idonei` filter be the same fact seen three ways: a per-page computation
   // could not paginate a filter and could not produce a total. A gym is a few
   // hundred rows with narrow columns, so it is one small query.
-  const [{ data: activeRows }, { data: rankRows }, { data: criteriaRows }] =
-    await Promise.all([
+  const [
+    { data: activeRows, error: activeError },
+    { data: rankRows, error: rankError },
+    { data: criteriaRows, error: criteriaError },
+  ] = await Promise.all([
       supabase
         .from("member_overview")
         .select(
@@ -157,6 +161,18 @@ export default async function RegistroPage({
         // on /members/criteria.
         .select("belt, stripe, min_hours, min_time_at_rank_days, min_age_years"),
     ]);
+
+  // Unlike the list query below, whose error reaches the screen, these three
+  // feed a count and a dot — so a failure here reads as "nobody is eligible",
+  // which is a sentence the page is perfectly willing to say. The reason goes
+  // to the log instead of nowhere.
+  for (const [where, error] of [
+    ["member_overview", activeError],
+    ["person_rank_hours", rankError],
+    ["promotion_criteria", criteriaError],
+  ] as const) {
+    if (error) logDbError("members", where, error);
+  }
 
   // numeric/bigint columns can come back from PostgREST as strings — coerced
   // wherever criteria rows enter a page, so that a string never wins a `<`

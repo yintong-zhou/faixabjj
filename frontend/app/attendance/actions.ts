@@ -8,6 +8,7 @@ import {
   requireClassManager,
 } from "@/utils/supabase/require-admin";
 import { getDictionary } from "@/utils/i18n/server";
+import { logDbError } from "@/utils/log";
 
 const PATH = "/attendance";
 
@@ -32,21 +33,6 @@ function backToSession(
     search.set("from", from);
   }
   redirect(`/attendance/${sessionId}?${search.toString()}`);
-}
-
-// The member is told something they can act on; the reason goes to the server
-// log, where whoever runs the gym's deployment can find it. Nothing from the
-// database is ever put on screen: the codes and constraint names describe the
-// schema, and that is not a member's business.
-function logDbError(
-  where: string,
-  error: { code?: string | null; message?: string | null; details?: string | null },
-) {
-  console.error(
-    `[attendance] ${where} failed: ${error.code ?? "no code"} ${error.message ?? ""} ${
-      error.details ?? ""
-    }`.trim(),
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -87,7 +73,7 @@ export async function checkIn(formData: FormData) {
     let message = t.msg.checkinFailed;
     if (error.code === "23505") message = t.msg.alreadyPresent;
     else if (error.code === "42501") message = t.msg.checkinClosed;
-    else logDbError("checkIn", error);
+    else logDbError("attendance", "checkIn", error);
 
     back({ error: message }, query);
     return;
@@ -128,7 +114,7 @@ export async function undoCheckIn(formData: FormData) {
   // event and must not be dressed up as "too late", which would send the
   // member looking at the clock.
   if (error) {
-    logDbError("undoCheckIn", error);
+    logDbError("attendance", "undoCheckIn", error);
     back({ error: t.msg.undoFailed }, query);
     return;
   }
@@ -185,7 +171,7 @@ export async function saveRollCall(formData: FormData) {
     .eq("session_id", sessionId);
 
   if (readError) {
-    logDbError("saveRollCall:read", readError);
+    logDbError("attendance", "saveRollCall:read", readError);
     backToSession(sessionId, { error: t.msg.rollCallFailed }, from);
     return;
   }
@@ -235,7 +221,7 @@ export async function saveRollCall(formData: FormData) {
       .upsert(rows, { onConflict: "person_id,session_id" });
 
     if (error) {
-      logDbError("saveRollCall:upsert", error);
+      logDbError("attendance", "saveRollCall:upsert", error);
       backToSession(sessionId, { error: t.msg.rollCallFailed }, from);
       return;
     }
@@ -263,7 +249,7 @@ export async function saveRollCall(formData: FormData) {
       .in("person_id", toDelete);
 
     if (error) {
-      logDbError("saveRollCall:delete", error);
+      logDbError("attendance", "saveRollCall:delete", error);
       backToSession(sessionId, { error: t.msg.rollCallPartial }, from);
       return;
     }

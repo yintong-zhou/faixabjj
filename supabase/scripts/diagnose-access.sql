@@ -15,6 +15,17 @@ select prosrc like '%canManageClasses%' as has_four_flags
 from pg_proc
 where proname = 'current_access';
 
+-- 1b. Is member_overview the final shape?
+-- Expect 14 rows including stripe_since and total_hours, and no belt_since. An
+-- older shape means an earlier migration was re-pasted over a later one (see
+-- 20260920010000_restore_member_overview.sql): the staff dashboard renders
+-- every card as 0 while the Registro's list keeps working.
+select column_name
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'member_overview'
+order by ordinal_position;
+
 -- 2. Do the predicates exist, and can `authenticated` execute them?
 -- A missing row, or has_execute = false, is indistinguishable from having no
 -- role as far as the app is concerned.
