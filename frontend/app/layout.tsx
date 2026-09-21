@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Work_Sans } from "next/font/google";
 import { cookies } from "next/headers";
+import { Analytics } from "@vercel/analytics/next";
 import { InlineScript } from "@/components/inline-script";
 import { CookieNotice } from "@/components/cookie-notice";
 import { NavShell } from "@/components/nav-shell";
@@ -155,6 +156,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           more={t.cookieNotice.more}
           accept={t.cookieNotice.accept}
         />
+
+        <Analytics />
       </body>
     </html>
   );

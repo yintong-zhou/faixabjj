@@ -1,0 +1,49 @@
+## Vercel Web Analytics Installation
+
+Successfully installed and configured Vercel Web Analytics for this Next.js project.
+
+### Implementation Details
+
+**Package Installed:**
+- `@vercel/analytics@2.0.1` (latest version as of installation)
+
+**Files Modified:**
+
+1. **frontend/app/layout.tsx**
+   - Added import: `import { Analytics } from "@vercel/analytics/next";`
+   - Added `<Analytics />` component at the end of the `<body>` tag
+   - Placement follows the official Vercel documentation for Next.js App Router projects
+
+2. **frontend/package.json**
+   - Added `@vercel/analytics` to dependencies
+
+3. **frontend/package-lock.json**
+   - Updated with the new package and its dependencies
+
+### Installation Process
+
+1. Fetched the latest official Vercel Web Analytics documentation from https://vercel.com/docs/analytics/quickstart
+2. Identified this as a Next.js App Router project (confirmed by presence of `app/layout.tsx`)
+3. Installed `@vercel/analytics` package using npm with `--legacy-peer-deps` flag (required due to peer dependency conflicts with vitest's vite version)
+4. Added the Analytics component to the root layout following Next.js App Router best practices
+5. Verified the implementation:
+   - Build completed successfully with no errors
+   - Linter passed with no issues
+   - All existing tests (65 tests across 4 test files) passed
+
+### Framework-Specific Configuration
+
+Following the official documentation, the Analytics component was added to the root layout (`app/layout.tsx`) for Next.js App Router projects. This ensures analytics tracking is active on all pages of the application.
+
+### Next Steps
+
+To activate analytics:
+1. Deploy the application to Vercel
+2. Enable Web Analytics in your Vercel dashboard for this project
+3. After deployment, verify tracking is working by checking for a Fetch/XHR request to `/<unique-path>/view` in the browser's Network tab
+
+### Notes
+
+- The installation required the `--legacy-peer-deps` flag due to peer dependency conflicts between @vercel/analytics and the project's vitest setup (vite version mismatch)
+- This is a known compatibility issue and does not affect the functionality of the analytics package
+- All existing functionality remains intact - no breaking changes introduced
