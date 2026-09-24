@@ -162,7 +162,7 @@ export default async function GymDetailPage({
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {managers.map((m) => (
-              <li key={m.person_id} className="flex items-start justify-between gap-3 py-2.5">
+              <li key={m.person_id} className="flex items-center justify-between gap-3 py-2.5">
                 <div className="flex min-w-0 flex-col">
                   <span className="truncate font-medium">{m.full_name}</span>
                   <span className="truncate text-xs text-foreground/60">

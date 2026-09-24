@@ -107,7 +107,7 @@ export default async function GymsPage({ searchParams }: { searchParams: Promise
       ) : (
         <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
           {gyms.map((gym) => (
-            <li key={gym.id} className="flex items-start justify-between gap-3 px-4 py-3">
+            <li key={gym.id} className="flex items-center justify-between gap-3 px-4 py-3">
               <div className="flex min-w-0 flex-col gap-0.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <Link href={`/gyms/${gym.id}`} className="truncate font-medium hover:text-accent">
