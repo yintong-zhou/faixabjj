@@ -9,10 +9,11 @@ Faixa BJJ is the **product**; it hosts isolated gyms that share nothing. The fir
 - `current_gym_id()` is null for the superadmin, for an account without a profile, and for a **suspended** gym — that is how suspension hides data and refuses writes from one place.
 - Trigger `gym_scope` (`20260925010000`) fills `gym_id` from the caller, freezes it, and refuses references to another gym's rows (person, course, session, instructor, promoter). RLS alone checks only the new row's own `gym_id`. Refusals use `42501`, like RLS.
 - **SQL with no API request (a migration, the SQL Editor) that names no gym writes into the first gym** — the one every pre-tenancy row belongs to — so the pre-tenancy seed migrations stay replayable. Never for `person`. Name `gym_id` explicitly in any hand-written insert.
+- Trigger `guard_person_auth_user` (`20260925040000`) guards `person.auth_user_id`, the proof every service-role account action relies on: an end-user JWT may set it only to `auth.uid()` or null (service role, the auth trigger and plain SQL may link any account), and **nobody** may link a `platform_admin` account. Without it a manager could point a row at the superadmin and reset its password.
 - `gym_timezone()` keeps its zero-argument signature and reads the caller's gym: every reader of a session is in that session's gym.
 - Views need nothing: all are `security_invoker`, so RLS isolates them.
 - `session_checkin_open()` is redefined in `20260925030000` to scope its lookup to the caller's own gym: it returns `false` for another gym's session (or a suspended one) and for a caller with no current gym, instead of answering as it would for the caller's own session. The filter sits inside the selected expression wrapped in `coalesce`, not the `WHERE` clause — a `WHERE` filter would turn a cross-gym lookup into no row, i.e. null, and null is not the `false` its callers test for.
-- Verified by `bash supabase/tests/replay.sh --isolation` (`supabase/tests/tenant-isolation.sql`, checks T1–T13). **Re-run it after any policy, trigger, security definer or table change.** Never run anything in `supabase/tests/` against a real project.
+- Verified by `bash supabase/tests/replay.sh --isolation` (`supabase/tests/tenant-isolation.sql`, checks T1–T14). **Re-run it after any policy, trigger, security definer or table change.** Never run anything in `supabase/tests/` against a real project.
 
 ## The platform superadmin
 

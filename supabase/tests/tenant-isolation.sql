@@ -140,6 +140,121 @@ do $$ begin
 end $$;
 rollback;
 
+-- T14: person.auth_user_id cannot be forged. It is the proof the service-role
+-- account actions rely on, so a manager who could point a row of their own gym
+-- at somebody else's account could reset its password or delete it.
+-- Fixtures, as postgres: b3, an account of gym B with no person row (an
+-- invitee not yet linked); c0, an account with no gym at all; and an
+-- account-less person of gym A to re-point.
+insert into auth.users (id, email, raw_app_meta_data) values
+  ('00000000-0000-0000-0000-0000000000b3', 'b3@other', jsonb_build_object('gym_id', current_setting('test.gym_b'))),
+  ('00000000-0000-0000-0000-0000000000c0', 'c0@other', '{}'::jsonb);
+delete from public.person where auth_user_id = '00000000-0000-0000-0000-0000000000b3';
+insert into public.person (id, full_name, gym_id) values
+  ('00000000-0000-0000-0000-00000000fa11', 'Senza account', current_setting('test.gym_a')::uuid);
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
+do $$
+declare
+  v_rows int;
+begin
+  begin
+    insert into public.person (full_name, auth_user_id) values ('Falso', '00000000-0000-0000-0000-0000000000f0');
+    raise exception 'FAIL T14: a1 inserted a person linked to the superadmin';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into public.person (full_name, auth_user_id) values ('Falso', '00000000-0000-0000-0000-0000000000c0');
+    raise exception 'FAIL T14: a1 inserted a person linked to an account that is not theirs';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.person set auth_user_id = '00000000-0000-0000-0000-0000000000b3'
+    where id = '00000000-0000-0000-0000-00000000fa11';
+    raise exception 'FAIL T14: a1 linked a person to an account of gym B';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.person set auth_user_id = '00000000-0000-0000-0000-0000000000f0'
+    where id = '00000000-0000-0000-0000-00000000fa11';
+    raise exception 'FAIL T14: a1 linked a person to the superadmin';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- Positive control: clearing the link (revokeAccess, the FK's ON DELETE SET
+  -- NULL) still works for an end user.
+  update public.person set auth_user_id = null where email = 'a2@test';
+  get diagnostics v_rows = row_count;
+  if v_rows <> 1 then
+    raise exception 'FAIL T14: control failed — a1 could not clear a2''s account link';
+  end if;
+  -- Editing any other column of a linked row is untouched by the guard.
+  update public.person set notes = 'ok' where email = 'a1@test';
+  get diagnostics v_rows = row_count;
+  if v_rows <> 1 then
+    raise exception 'FAIL T14: control failed — a1 could not edit their own row';
+  end if;
+end $$;
+rollback;
+
+-- T14, positive control: the self-insert of getOrCreateProfile — an end user's
+-- JWT, auth_user_id = auth.uid(). Run as postgres with c0's claims, not under
+-- `set role authenticated`: under RLS no account without a person row can
+-- insert one any more (no current gym), so this isolates the guard itself.
+begin;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000c0', true);
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000c0","role":"authenticated"}', true);
+do $$
+declare
+  v_id uuid;
+begin
+  insert into public.person (full_name, auth_user_id, gym_id)
+  values ('c0', '00000000-0000-0000-0000-0000000000c0', current_setting('test.gym_a')::uuid)
+  returning id into v_id;
+  if v_id is null then
+    raise exception 'FAIL T14: control failed — a self-insert was refused';
+  end if;
+end $$;
+rollback;
+
+-- T14, service role: it may link any account (inviteToPortal) — except the
+-- superadmin, which nobody may link.
+begin;
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+do $$
+declare
+  v_rows int;
+begin
+  begin
+    update public.person set auth_user_id = '00000000-0000-0000-0000-0000000000f0'
+    where id = '00000000-0000-0000-0000-00000000fa11';
+    raise exception 'FAIL T14: the service role linked a person to the superadmin';
+  exception when insufficient_privilege then null;
+  end;
+  update public.person set auth_user_id = '00000000-0000-0000-0000-0000000000c0'
+  where id = '00000000-0000-0000-0000-00000000fa11';
+  get diagnostics v_rows = row_count;
+  if v_rows <> 1 then
+    raise exception 'FAIL T14: control failed — the service role could not link an invitee';
+  end if;
+end $$;
+rollback;
+
+-- T14, no API request at all (a migration, the SQL Editor): still no superadmin.
+do $$ begin
+  begin
+    update public.person set auth_user_id = '00000000-0000-0000-0000-0000000000f0'
+    where id = '00000000-0000-0000-0000-00000000fa11';
+    raise exception 'FAIL T14: plain SQL linked a person to the superadmin';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+delete from public.person where id = '00000000-0000-0000-0000-00000000fa11';
+
 -- T5: a2 cannot check in to a session of gym B. Uses …05cc, not …05bb: with
 -- its default 19:00-20:00 window, "members can check themselves in" refuses
 -- a2's self check-in for about 22 3/4 hours a day on the window alone, gym or
