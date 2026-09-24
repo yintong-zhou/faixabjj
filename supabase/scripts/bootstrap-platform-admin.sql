@@ -33,5 +33,11 @@ begin
   insert into public.platform_admin (auth_user_id) values (v_user)
   on conflict do nothing;
 
+  -- A superadmin belongs to no gym, so its account names none either
+  -- (20260925040000 may have copied the gym into app_metadata beforehand).
+  update auth.users
+     set raw_app_meta_data = raw_app_meta_data - 'gym_id'
+   where id = v_user and raw_app_meta_data ? 'gym_id';
+
   raise notice 'admin@bjj.com is now the platform superadmin';
 end $$;

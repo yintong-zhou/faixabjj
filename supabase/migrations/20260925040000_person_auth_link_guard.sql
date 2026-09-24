@@ -65,3 +65,18 @@ $$;
 drop trigger if exists guard_person_auth_user on public.person;
 create trigger guard_person_auth_user before insert or update on public.person
   for each row execute function public.guard_person_auth_user();
+
+-- The account side of the same proof. The account actions also check that the
+-- target account names the caller's gym in its own app_metadata, which only
+-- the service role writes. Accounts created before tenancy carry no gym_id
+-- there, so they take it from the person row they are already linked to.
+-- Guarded on the key being absent: re-running changes nothing, and an account
+-- that already names a gym is never rewritten. A platform superadmin is left
+-- alone: it belongs to no gym (bootstrap-platform-admin.sql strips the key).
+update auth.users u
+   set raw_app_meta_data = coalesce(u.raw_app_meta_data, '{}'::jsonb)
+                           || jsonb_build_object('gym_id', p.gym_id::text)
+  from public.person p
+ where p.auth_user_id = u.id
+   and not (coalesce(u.raw_app_meta_data, '{}'::jsonb) ? 'gym_id')
+   and not exists (select 1 from public.platform_admin pa where pa.auth_user_id = u.id);
