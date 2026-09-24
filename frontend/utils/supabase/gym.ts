@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import type { HoursSettings } from "@/utils/hours";
+import { logDbError } from "@/utils/log";
 import { createClient } from "@/utils/supabase/server";
 
 export type GymStatus = "active" | "suspended";
@@ -48,14 +49,16 @@ export function toGymSettings(row: GymRow): GymSettings {
 // row RLS no longer shows — requireAdmin has already sent that user away.
 export const getGymSettings = cache(async (): Promise<GymSettings | null> => {
   const supabase = createClient(await cookies());
-  const { data: gymId } = await supabase.rpc("current_gym_id");
+  const { data: gymId, error: gymIdError } = await supabase.rpc("current_gym_id");
+  if (gymIdError) logDbError("gym", "current_gym_id", gymIdError);
   if (!gymId) return null;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("gym")
     .select(GYM_COLUMNS)
     .eq("id", gymId as string)
     .maybeSingle();
+  if (error) logDbError("gym", "select", error);
 
   return data ? toGymSettings(data as GymRow) : null;
 });
