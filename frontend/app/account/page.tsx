@@ -335,12 +335,20 @@ export default async function AccountPage({
         </dl>
 
         {isManager ? (
-          <Link
-            href="/members"
-            className="self-start text-sm font-medium text-accent hover:opacity-80"
-          >
-            {t.account.manageMembers}
-          </Link>
+          <div className="flex flex-col gap-2">
+            <Link
+              href="/members"
+              className="self-start text-sm font-medium text-accent hover:opacity-80"
+            >
+              {t.account.manageMembers}
+            </Link>
+            <Link
+              href="/gym"
+              className="self-start text-sm font-medium text-accent hover:opacity-80"
+            >
+              {t.account.myGym}
+            </Link>
+          </div>
         ) : null}
       </section>
 
