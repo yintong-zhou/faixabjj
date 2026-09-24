@@ -109,6 +109,55 @@ async function personInMyGym(
   );
 }
 
+// Belt and braces for the actions that change or delete an account with the
+// service role. personInMyGym() rests on person.auth_user_id, which the
+// database now refuses to point at somebody else's account
+// (guard_person_auth_user); this checks the account itself as well, so a row
+// linked by any other route still cannot reach it. The account must say it
+// belongs to the caller's gym in its own app_metadata — written only by the
+// service role — and must not be a platform superadmin.
+async function accountInMyGym(
+  supabase: SupabaseClient,
+  admin: ReturnType<typeof createAdminClient>,
+  targetId: string,
+): Promise<boolean> {
+  const { data: gymId, error: gymIdError } = await supabase.rpc("current_gym_id");
+  if (gymIdError) logDbError("members", "accountInMyGym:current_gym_id", gymIdError);
+  if (!gymId) return false;
+
+  const { data: platformAdmin, error: platformAdminError } = await admin
+    .from("platform_admin")
+    .select("auth_user_id")
+    .eq("auth_user_id", targetId)
+    .maybeSingle();
+  if (platformAdminError) {
+    logDbError("members", "accountInMyGym:platform_admin", platformAdminError);
+    return false;
+  }
+  if (platformAdmin) {
+    console.error("[members] account action refused: target is a platform admin");
+    return false;
+  }
+
+  const { data, error } = await admin.auth.admin.getUserById(targetId);
+  if (error || !data?.user) {
+    logDbError(
+      "members",
+      "accountInMyGym:getUserById",
+      error
+        ? { code: error.code ?? null, message: error.message }
+        : { code: "no-user", message: "no user returned" },
+    );
+    return false;
+  }
+  const accountGymId = (data.user.app_metadata as { gym_id?: string } | undefined)?.gym_id;
+  if (accountGymId !== gymId) {
+    console.error("[members] account action refused: account belongs to another gym");
+    return false;
+  }
+  return true;
+}
+
 // Adds a member to the registry *and* creates their login account in one act.
 //
 // The account is created with the shared default password, its address marked
@@ -440,6 +489,11 @@ export async function setTemporaryPassword(formData: FormData) {
     return;
   }
 
+  if (!(await accountInMyGym(supabase, admin, targetId))) {
+    back({ error: t.msg.userNotInGym }, query);
+    return;
+  }
+
   const { data, error } = await admin.auth.admin.updateUserById(targetId, {
     password: DEFAULT_PASSWORD,
     app_metadata: { must_change_password: true },
@@ -490,6 +544,11 @@ export async function revokeAccess(formData: FormData) {
       { error: t.msg.secretMissingRevoke },
       query,
     );
+    return;
+  }
+
+  if (!(await accountInMyGym(supabase, admin, targetId))) {
+    back({ error: t.msg.userNotInGym }, query);
     return;
   }
 
