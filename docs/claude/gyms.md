@@ -38,6 +38,7 @@ Faixa BJJ is the **product**; it hosts isolated gyms that share nothing. The fir
 - `utils/hours.ts` and `utils/promotion.ts` take them as a required parameter (`HoursSettings`); the old constants survive only as defaults for a new gym in `utils/gym-defaults.ts`.
 - "Today" at a gym is `todayIn(gym.timezone)`, not the UTC date.
 - A new gym gets a copy of `promotion_criteria_template` (snapshot taken at migration time) via trigger `gym_seed_criteria`.
+- **Location** `gym.latitude`/`longitude` (both or neither, `gym_location_valid`). The superadmin sets it in the gym form; the manager, who has no update on `gym`, on **`/gym`** ("La mia palestra", `requireUserManager`, linked from `/account`) through `set_gym_location()` (`security definer`, own gym only, 42501 otherwise). `/gym` also renders the printable check-in QR (`qrcode`, SVG on the server, `SITE_URL/check-in`). Route prefixes match by segment (`underPath()`, `utils/paths.ts`) so `/gym` and `/gyms` never match each other.
 
 ## Deleting a gym
 

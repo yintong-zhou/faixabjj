@@ -1,7 +1,7 @@
 ---
 type: spec
 date: 2026-09-25
-status: in revisione — da approvare prima del piano di implementazione
+status: approvata — implementata in docs/superpowers/plans/2026-09-24-gym-location-checkin.md
 tags: [check-in, geolocalizzazione, qr, palestre, rls, gdpr]
 ---
 
