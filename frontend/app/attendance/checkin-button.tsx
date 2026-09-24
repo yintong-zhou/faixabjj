@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { unstable_rethrow } from "next/navigation";
 
 import { geoFailure, type GeoFailure } from "@/utils/checkin";
 
@@ -53,7 +54,17 @@ export function CheckinButton({
       form.set("accuracy", String(position.coords.accuracy));
     }
     startTransition(async () => {
-      await checkIn(form);
+      try {
+        await checkIn(form);
+      } catch (error) {
+        // checkIn() always finishes with a Next redirect (success or failure
+        // alike); this only catches something else going wrong before it —
+        // a network drop, a crashed server action. unstable_rethrow lets
+        // Next's own redirect (and notFound, etc.) continue past this catch
+        // instead of being swallowed and shown as a geo failure.
+        unstable_rethrow(error);
+        setFailure("unavailable");
+      }
     });
   }
 
