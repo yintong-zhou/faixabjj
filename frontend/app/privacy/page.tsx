@@ -6,7 +6,7 @@ import { getDictionary } from "@/utils/i18n/server";
 // The date the text itself last changed. Hardcoded on purpose: "last updated"
 // must mean the day somebody rewrote the notice, not the day the page was
 // deployed — a build date would silently claim a review that never happened.
-const UPDATED_ON = "2026-09-18";
+const UPDATED_ON = "2026-09-24";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getDictionary();

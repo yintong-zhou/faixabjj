@@ -255,6 +255,7 @@ export const it = {
     classHours: "Ore di lezione",
     activeRoles: "Ruoli attivi",
     manageMembers: "Gestisci i membri dal Registro →",
+    myGym: "Posizione della palestra e QR per il check-in →",
 
     passwordSection: "Password",
     updatePassword: "Aggiorna password",
@@ -372,6 +373,49 @@ export const it = {
     closed: "check-in chiuso",
     openState: "check-in aperto",
     checkIn: "Check-in",
+  },
+
+  checkin: {
+    title: "Check-in",
+    lead: "Segnati presente alla lezione in corso. Il check-in riesce solo in palestra.",
+    noOpenSession: "Nessuna lezione è aperta al check-in adesso.",
+    toCalendar: "Vai al calendario",
+    staffUseRollCall: "Lo staff registra le presenze con l'appello, dal calendario.",
+    locating: "Rilevo la posizione…",
+    sending: "Invio…",
+    retry: "Riprova",
+    locationNeeded: "In questa palestra il check-in richiede la posizione del telefono. Riprova e consenti l'accesso alla posizione.",
+    imprecise: "La posizione è troppo imprecisa. Spostati vicino all'ingresso o a una finestra e riprova.",
+    tooFar: (m: number) =>
+      `Risulti a circa ${m} m dalla palestra: il check-in si fa solo in palestra, entro 50 m.`,
+    geo: {
+      denied:
+        "Il browser non ha il permesso di leggere la posizione. Riattivalo nelle impostazioni del sito, oppure chiedi all'istruttore di segnarti con l'appello.",
+      unavailable: "Posizione non disponibile. Controlla che la localizzazione del telefono sia attiva e riprova.",
+      timeout: "La posizione non è arrivata in tempo. Riprova.",
+      unsupported: "Questo browser non fornisce la posizione. Chiedi all'istruttore di segnarti con l'appello.",
+    },
+  },
+
+  myGym: {
+    title: "La mia palestra",
+    lead: "La posizione della palestra e il QR code per il check-in.",
+    locationSection: "Posizione",
+    locationHelp:
+      "Con la posizione impostata, il check-in degli allievi riesce solo entro 50 m da questo punto. Il modo più preciso: dalla palestra, premi «Usa la mia posizione attuale».",
+    noLocation: "Posizione non impostata: il check-in funziona da qualsiasi luogo, durante la finestra della lezione.",
+    useCurrent: "Usa la mia posizione attuale",
+    locating: "Rilevo la posizione…",
+    save: "Salva posizione",
+    clear: "Rimuovi posizione",
+    qrSection: "QR code per il check-in",
+    qrHelp:
+      "Stampalo e appendilo in palestra. Inquadrandolo si apre la pagina del check-in, con lo stesso controllo della posizione del pulsante.",
+    qrCaption: "Inquadra per il check-in",
+    print: "Stampa",
+    saved: "Posizione salvata.",
+    cleared: "Posizione rimossa.",
+    failed: "Operazione non riuscita. Riprova.",
   },
 
   rollCall: {
@@ -737,6 +781,7 @@ export const it = {
           "Dati di contatto e anagrafici: nome e cognome, email, numero di telefono, data di nascita. Email e nome sono obbligatori per creare un account; telefono e data di nascita sono facoltativi.",
           "Dati di progressione tecnica: cintura, numero di gradi, data dell'ultimo cambio cintura, data dell'ultimo grado, data di iscrizione, ruolo ricoperto in palestra e relativo storico.",
           "Dati di frequenza: presenza o assenza a ciascuna lezione, con l'indicazione se la presenza è stata registrata dall'interessato (check-in) o dall'istruttore (appello).",
+          "Posizione del dispositivo: se la palestra ha impostato la propria posizione, al momento del check-in il browser chiede quella del telefono. Serve solo a verificare di trovarsi entro 50 m dalla palestra: viene confrontata e scartata, senza essere salvata né registrata nei log. Il browser chiede il permesso secondo le sue impostazioni; rifiutarlo impedisce solo il check-in da sé, perché l'istruttore può sempre registrare la presenza con l'appello.",
           "Note libere: un campo di annotazioni che lo staff può compilare. Non va usato per dati particolari ai sensi dell'articolo 9 del GDPR — in particolare informazioni su salute o infortuni — perché questa informativa non copre quel tipo di trattamento.",
           "Dati di accesso: credenziali gestite dal fornitore di autenticazione (la password è conservata solo come hash, mai in chiaro) e log tecnici del servizio.",
         ],
@@ -851,6 +896,11 @@ export const it = {
       trackingHelp: "Prima di questa data le ore si stimano, da questa data si contano le presenze. Non può essere nel futuro.",
       sessionLengthHours: "Durata di una lezione (ore)",
       lessonsPerWeek: "Lezioni a settimana, per la stima delle ore pregresse",
+      latitude: "Latitudine",
+      longitude: "Longitudine",
+      locationHelp:
+        "Facoltative. Con la posizione impostata, il check-in degli allievi riesce solo entro 50 m dalla palestra. Da Google Maps: tasto destro sul punto e copia le coordinate.",
+      openMap: "Controlla sulla mappa ↗",
     },
     create: "Crea palestra",
     settings: "Impostazioni",
@@ -883,6 +933,8 @@ export const it = {
       trackingStartedOn: "La data di avvio deve essere una data valida, non nel futuro.",
       sessionLengthHours: "La durata della lezione deve essere tra 0 e 8 ore.",
       lessonsPerWeek: "Le lezioni a settimana devono essere tra 0 e 14.",
+      location:
+        "Latitudine e longitudine vanno indicate entrambe, come numeri: latitudine tra −90 e 90, longitudine tra −180 e 180.",
     },
     msg: {
       created: (name: string) => `${name} creata. Aggiungi ora il suo primo gestore.`,

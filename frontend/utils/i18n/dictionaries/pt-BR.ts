@@ -243,6 +243,7 @@ export const ptBR: Dictionary = {
     classHours: "Horas de aula",
     activeRoles: "Funções ativas",
     manageMembers: "Gerenciar os membros no cadastro →",
+    myGym: "Localização da academia e QR de check-in →",
 
     passwordSection: "Senha",
     updatePassword: "Atualizar senha",
@@ -358,6 +359,49 @@ export const ptBR: Dictionary = {
     closed: "check-in encerrado",
     openState: "check-in aberto",
     checkIn: "Check-in",
+  },
+
+  checkin: {
+    title: "Check-in",
+    lead: "Marque presença na aula em andamento. O check-in só funciona na academia.",
+    noOpenSession: "Nenhuma aula está aberta para check-in agora.",
+    toCalendar: "Ir para o calendário",
+    staffUseRollCall: "A equipe registra as presenças pela chamada, no calendário.",
+    locating: "Obtendo sua localização…",
+    sending: "Enviando…",
+    retry: "Tentar de novo",
+    locationNeeded: "Nesta academia o check-in precisa da localização do celular. Tente de novo e permita o acesso à localização.",
+    imprecise: "A localização está imprecisa demais. Vá para perto da entrada ou de uma janela e tente de novo.",
+    tooFar: (m: number) =>
+      `Você parece estar a cerca de ${m} m da academia: o check-in só funciona na academia, a até 50 m.`,
+    geo: {
+      denied:
+        "O navegador não tem permissão para ler a localização. Reative-a nas configurações do site ou peça ao instrutor para marcar você na chamada.",
+      unavailable: "Localização indisponível. Verifique se a localização do celular está ativada e tente de novo.",
+      timeout: "A localização não chegou a tempo. Tente de novo.",
+      unsupported: "Este navegador não fornece a localização. Peça ao instrutor para marcar você na chamada.",
+    },
+  },
+
+  myGym: {
+    title: "Minha academia",
+    lead: "A localização da academia e o QR code de check-in.",
+    locationSection: "Localização",
+    locationHelp:
+      "Com a localização definida, os alunos só fazem check-in a até 50 m deste ponto. O mais preciso: na academia, toque em “Usar minha localização atual”.",
+    noLocation: "Localização não definida: o check-in funciona de qualquer lugar, durante a janela da aula.",
+    useCurrent: "Usar minha localização atual",
+    locating: "Obtendo sua localização…",
+    save: "Salvar localização",
+    clear: "Remover localização",
+    qrSection: "QR code de check-in",
+    qrHelp:
+      "Imprima e afixe na academia. Ao escaneá-lo abre a página de check-in, com a mesma verificação de localização do botão.",
+    qrCaption: "Escaneie para fazer check-in",
+    print: "Imprimir",
+    saved: "Localização salva.",
+    cleared: "Localização removida.",
+    failed: "Não foi possível concluir. Tente de novo.",
   },
 
   rollCall: {
@@ -714,6 +758,7 @@ export const ptBR: Dictionary = {
           "Dados de contato e identificação: nome, e-mail, telefone, data de nascimento. Nome e e-mail são obrigatórios para criar uma conta; telefone e data de nascimento são opcionais.",
           "Dados de progressão técnica: faixa, número de graus, data da última troca de faixa, data do último grau, data de matrícula, função na academia e seu histórico.",
           "Dados de frequência: presença ou ausência em cada aula, registrando se a presença foi lançada pelo próprio aluno (check-in) ou pelo instrutor (chamada).",
+          "Localização do dispositivo: se a academia definiu a própria localização, no momento do check-in o navegador pede a do celular. Ela serve apenas para verificar que você está a até 50 m da academia: é comparada e descartada, sem ser salva nem registrada em logs. O navegador pede permissão conforme as suas configurações; recusar impede apenas o check-in por conta própria, pois o instrutor sempre pode registrar a presença pela chamada.",
           "Observações livres: um campo que a equipe pode preencher. Não deve ser usado para categorias especiais de dados nos termos do artigo 9 do GDPR — saúde ou lesões em particular — porque este aviso não cobre esse tipo de tratamento.",
           "Dados de acesso: credenciais geridas pelo provedor de autenticação (as senhas são guardadas apenas como hash, nunca em texto claro) e registros técnicos do serviço.",
         ],
@@ -828,6 +873,11 @@ export const ptBR: Dictionary = {
       trackingHelp: "Antes desta data as horas são estimadas; a partir dela as presenças são contadas. Não pode estar no futuro.",
       sessionLengthHours: "Duração de uma aula (horas)",
       lessonsPerWeek: "Aulas por semana, para estimar as horas anteriores",
+      latitude: "Latitude",
+      longitude: "Longitude",
+      locationHelp:
+        "Opcionais. Com a localização definida, os alunos só fazem check-in a até 50 m da academia. No Google Maps: clique com o botão direito no ponto e copie as coordenadas.",
+      openMap: "Conferir no mapa ↗",
     },
     create: "Criar academia",
     settings: "Configurações",
@@ -860,6 +910,8 @@ export const ptBR: Dictionary = {
       trackingStartedOn: "A data de início deve ser uma data válida, não no futuro.",
       sessionLengthHours: "A duração da aula deve estar entre 0 e 8 horas.",
       lessonsPerWeek: "As aulas por semana devem estar entre 0 e 14.",
+      location:
+        "Informe latitude e longitude, as duas, como números: latitude entre −90 e 90, longitude entre −180 e 180.",
     },
     msg: {
       created: (name: string) => `${name} criada. Agora adicione o seu primeiro gestor.`,

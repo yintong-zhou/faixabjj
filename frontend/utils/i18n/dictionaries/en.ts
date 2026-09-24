@@ -241,6 +241,7 @@ export const en: Dictionary = {
     classHours: "Class hours",
     activeRoles: "Active roles",
     manageMembers: "Manage members in the registry →",
+    myGym: "Gym location and check-in QR →",
 
     passwordSection: "Password",
     updatePassword: "Update password",
@@ -356,6 +357,49 @@ export const en: Dictionary = {
     closed: "check-in closed",
     openState: "check-in open",
     checkIn: "Check in",
+  },
+
+  checkin: {
+    title: "Check-in",
+    lead: "Mark yourself present at the current lesson. Check-in works only at the gym.",
+    noOpenSession: "No lesson is open for check-in right now.",
+    toCalendar: "Go to the calendar",
+    staffUseRollCall: "Staff record attendance with the roll call, from the calendar.",
+    locating: "Finding your location…",
+    sending: "Sending…",
+    retry: "Try again",
+    locationNeeded: "At this gym check-in needs your phone's location. Try again and allow location access.",
+    imprecise: "Your location is too imprecise. Move near the entrance or a window and try again.",
+    tooFar: (m: number) =>
+      `You appear to be about ${m} m from the gym: check-in works only at the gym, within 50 m.`,
+    geo: {
+      denied:
+        "The browser is not allowed to read your location. Turn it back on in the site settings, or ask the instructor to mark you in the roll call.",
+      unavailable: "Location unavailable. Check that location services are on and try again.",
+      timeout: "Your location did not arrive in time. Try again.",
+      unsupported: "This browser does not provide a location. Ask the instructor to mark you in the roll call.",
+    },
+  },
+
+  myGym: {
+    title: "My gym",
+    lead: "The gym's location and the check-in QR code.",
+    locationSection: "Location",
+    locationHelp:
+      "With a location set, members can check in only within 50 m of this point. Most precise: at the gym, press “Use my current location”.",
+    noLocation: "No location set: check-in works from anywhere, during the lesson's window.",
+    useCurrent: "Use my current location",
+    locating: "Finding your location…",
+    save: "Save location",
+    clear: "Remove location",
+    qrSection: "Check-in QR code",
+    qrHelp:
+      "Print it and put it up at the gym. Scanning it opens the check-in page, with the same location check as the button.",
+    qrCaption: "Scan to check in",
+    print: "Print",
+    saved: "Location saved.",
+    cleared: "Location removed.",
+    failed: "Something went wrong. Try again.",
   },
 
   rollCall: {
@@ -712,6 +756,7 @@ export const en: Dictionary = {
           "Contact and identity data: name, email, phone number, date of birth. Name and email are required to create an account; phone and date of birth are optional.",
           "Technical progression data: belt, number of stripes, date of the last belt promotion, date of the last stripe, join date, role held at the gym and its history.",
           "Attendance data: present or absent for each lesson, recording whether the presence was entered by the member (check-in) or by the instructor (roll call).",
+          "Device location: if the gym has set its location, at check-in the browser asks for your phone's. It is used only to check that you are within 50 m of the gym: it is compared and discarded, never stored or written to logs. The browser asks for permission according to its settings; refusing only prevents checking yourself in, since the instructor can always record your attendance in the roll call.",
           "Free-text notes: a field staff can fill in. It must not be used for special categories of data under Article 9 GDPR — health or injuries in particular — because this notice does not cover that kind of processing.",
           "Access data: credentials handled by the authentication provider (passwords are stored only as hashes, never in clear text) and the service's technical logs.",
         ],
@@ -826,6 +871,11 @@ export const en: Dictionary = {
       trackingHelp: "Before this date hours are estimated; from this date attendance is counted. It cannot be in the future.",
       sessionLengthHours: "Lesson length (hours)",
       lessonsPerWeek: "Lessons per week, for estimating earlier hours",
+      latitude: "Latitude",
+      longitude: "Longitude",
+      locationHelp:
+        "Optional. With a location set, members can check in only within 50 m of the gym. In Google Maps: right-click the spot and copy the coordinates.",
+      openMap: "Check on the map ↗",
     },
     create: "Create gym",
     settings: "Settings",
@@ -858,6 +908,8 @@ export const en: Dictionary = {
       trackingStartedOn: "The start date must be a valid date, not in the future.",
       sessionLengthHours: "The lesson length must be between 0 and 8 hours.",
       lessonsPerWeek: "Lessons per week must be between 0 and 14.",
+      location:
+        "Enter both latitude and longitude as numbers: latitude between −90 and 90, longitude between −180 and 180.",
     },
     msg: {
       created: (name: string) => `${name} created. Now add its first manager.`,
