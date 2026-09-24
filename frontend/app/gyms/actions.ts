@@ -33,6 +33,8 @@ function gymInput(formData: FormData) {
     tracking_started_on: field(formData, "tracking_started_on"),
     session_length_hours: field(formData, "session_length_hours"),
     lessons_per_week: field(formData, "lessons_per_week"),
+    latitude: field(formData, "latitude"),
+    longitude: field(formData, "longitude"),
   };
 }
 
@@ -52,6 +54,8 @@ export async function createGym(formData: FormData) {
       tracking_started_on: value.trackingStartedOn,
       session_length_hours: value.sessionLengthHours,
       lessons_per_week: value.lessonsPerWeek,
+      latitude: value.latitude,
+      longitude: value.longitude,
     })
     .select("id")
     .single();
@@ -84,6 +88,8 @@ export async function updateGym(formData: FormData) {
       tracking_started_on: value.trackingStartedOn,
       session_length_hours: value.sessionLengthHours,
       lessons_per_week: value.lessonsPerWeek,
+      latitude: value.latitude,
+      longitude: value.longitude,
     })
     .eq("id", id)
     .select("id");

@@ -131,6 +131,8 @@ export default async function GymDetailPage({
               trackingStartedOn: gym.trackingStartedOn,
               sessionLengthHours: gym.sessionLengthHours,
               lessonsPerWeek: gym.lessonsPerWeek,
+              latitude: gym.latitude,
+              longitude: gym.longitude,
             }}
           />
           <button type="submit" className={primaryButtonClass}>

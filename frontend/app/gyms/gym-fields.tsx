@@ -1,3 +1,4 @@
+import { LocationFields } from "@/components/location-fields";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { GYM_TIMEZONES } from "@/utils/gym-defaults";
 
@@ -10,9 +11,11 @@ export type GymFieldDefaults = {
   trackingStartedOn: string;
   sessionLengthHours: number;
   lessonsPerWeek: number;
+  latitude: number | null;
+  longitude: number | null;
 };
 
-// The same five fields for "new gym" and for a gym's settings, so the two
+// The same fields for "new gym" and for a gym's settings, so the two
 // forms cannot drift. The server re-validates everything (utils/gyms.ts).
 export function GymFields({
   t,
@@ -80,6 +83,21 @@ export function GymFields({
           step={0.5}
           defaultValue={defaults.lessonsPerWeek}
           className={fieldClass}
+        />
+      </div>
+
+      <div className="sm:col-span-2">
+        <LocationFields
+          defaults={{ latitude: defaults.latitude, longitude: defaults.longitude }}
+          labels={{
+            latitude: t.gyms.fields.latitude,
+            longitude: t.gyms.fields.longitude,
+            help: t.gyms.fields.locationHelp,
+            openMap: t.gyms.fields.openMap,
+            useCurrent: t.myGym.useCurrent,
+            locating: t.myGym.locating,
+            geo: t.checkin.geo,
+          }}
         />
       </div>
     </div>
