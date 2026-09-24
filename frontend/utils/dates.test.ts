@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ageOn, daysSince, formatDate } from "./dates";
+import { ageOn, daysSince, formatDate, todayIn } from "./dates";
 
 describe("formatDate", () => {
   it("renders a date column as dd/mm/yyyy", () => {
@@ -54,5 +54,21 @@ describe("ageOn", () => {
 
   it("is null without a birth date", () => {
     expect(ageOn(null, "2026-09-15")).toBeNull();
+  });
+});
+
+describe("todayIn", () => {
+  // 22:30 UTC on 24 September is already the 25th in Rome (UTC+2 in summer)
+  // and still the 24th in São Paulo (UTC-3).
+  const instant = new Date("2026-09-24T22:30:00Z");
+
+  it("is the calendar day in the gym's timezone, not in UTC", () => {
+    expect(todayIn("Europe/Rome", instant)).toBe("2026-09-25");
+    expect(todayIn("America/Sao_Paulo", instant)).toBe("2026-09-24");
+  });
+
+  it("follows daylight saving time", () => {
+    // 23:30 UTC on 15 January is 00:30 on the 16th in Rome (UTC+1 in winter).
+    expect(todayIn("Europe/Rome", new Date("2026-01-15T23:30:00Z"))).toBe("2026-01-16");
   });
 });

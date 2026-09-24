@@ -13,7 +13,7 @@
 // has a single source of truth instead of two copies that can drift apart.
 import { ADULT_BELTS, BELT_ORDER, KID_BELTS, isKidBelt } from "./supabase/profile";
 import { ageOn, daysSince } from "./dates";
-import { clockHours, estimatedHours } from "./hours";
+import { clockHours, estimatedHours, type HoursOptions } from "./hours";
 
 export type Belt = (typeof BELT_ORDER)[number];
 
@@ -120,7 +120,7 @@ export type PromotionInput = {
 export type PromotionStatus = {
   /** The grade being measured against, or null when none is modelled. */
   next: Step | null;
-  /** Clock hours, both sides — see SESSION_LENGTH_HOURS. */
+  /** Clock hours, both sides — see HoursSettings.sessionLengthHours. */
   requiredHours: number;
   currentHours: number;
   requiredDays: number;
@@ -160,7 +160,7 @@ function laterOf(a: string, b: string): string {
 export function promotionStatus(
   person: PromotionInput,
   criteria: Criterion[],
-  options: { today?: string; trackingStartedOn?: string } = {},
+  options: HoursOptions,
 ): PromotionStatus {
   const today =
     options.today ?? new Date(Date.now()).toISOString().slice(0, 10);
@@ -200,11 +200,11 @@ export function promotionStatus(
     : person.lessons_since_stripe;
 
   const estimated = estimatedHours(laterOf(person.joined_at, anchor), {
-    trackingStartedOn: options.trackingStartedOn,
+    ...options,
     today,
   });
 
-  const currentHours = clockHours(lessons + estimated);
+  const currentHours = clockHours(lessons + estimated, options);
   const currentDays = daysSince(anchor, today) ?? 0;
 
   const blockers: Blocker[] = [];
