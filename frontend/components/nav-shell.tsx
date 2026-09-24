@@ -210,7 +210,7 @@ export function NavShell({
           anywhere, signed in or not, and a footer is where people look for it.
           Extra bottom padding on small screens so the mobile tab bar does not
           cover it. */}
-      <footer className="mx-auto w-full max-w-5xl px-4 pb-24 sm:px-8 sm:pb-8">
+      <footer className="mx-auto w-full max-w-5xl px-4 pb-24 sm:px-8 sm:pb-8 print:hidden">
         <div className="border-t border-border pt-4 text-xs text-foreground/55">
           <Link href="/privacy" className="hover:text-foreground">
             {labels.privacy}

@@ -97,7 +97,7 @@ export default async function MyGymPage({
         </form>
       </section>
 
-      <section className={sectionClass}>
+      <section className={`${sectionClass} print:border-0 print:p-0`}>
         <h2 className="font-heading text-base font-semibold sm:text-lg print:hidden">
           {t.myGym.qrSection}
         </h2>
