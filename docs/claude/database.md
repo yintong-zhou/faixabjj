@@ -9,7 +9,7 @@ Plain SQL migrations in `supabase/migrations/` (Supabase CLI layout). Supabase (
 - `20260911000000_account_management.sql` — profile trigger on `auth.users` insert + backfill, first `can_manage_users()`, anti-self-promotion guards.
 - `20260911120000_role_based_access.sql` — **the current permission model** (adds `admin`, per-role policies). Read first when reasoning about access.
 - `20260925000000`–`20260925050000` — multi-gym tenancy (`040000`: who may set `person.auth_user_id`; `050000`: auth trigger also on the app_metadata update). Read `docs/claude/gyms.md` first.
-- `20260926000000_gym_location_checkin.sql` — `gym.latitude`/`longitude`, `attendance.gym_distance_m`, `check_in(session, lat, lng, accuracy)` RPC, `set_gym_location(latitude, longitude)` RPC. Read `docs/claude/attendance-and-dashboard.md` (Check-in) and `docs/claude/gyms.md` (Per-gym settings).
+- `20260926000000_gym_location_checkin.sql` — `gym.latitude`/`longitude`, `gym_distance_m()` function, `check_in(session, lat, lng, accuracy)` RPC, `set_gym_location(latitude, longitude)` RPC. Read `docs/claude/attendance-and-dashboard.md` (Check-in) and `docs/claude/gyms.md` (Per-gym settings).
 - `20260926010000_drop_direct_checkin.sql` — drops the RLS insert policy allowing direct member check-in; **applies only after the app calling `check_in()` is deployed**. Prevents bypass via direct insert.
 
 ## Applying migrations
