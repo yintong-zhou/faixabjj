@@ -11,6 +11,7 @@ import {
 } from "@/utils/supabase/require-admin";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { getDictionary } from "@/utils/i18n/server";
+import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE } from "@/utils/members";
 import { BELT_ORDER } from "@/utils/supabase/profile";
 
@@ -77,16 +78,35 @@ const number = (formData: FormData, key: string): number | null => {
 // every action asks the *user's* client whether the target is one of the
 // caller's own people. RLS answers only inside the caller's gym: a user_id or
 // person_id from another gym, typed into a crafted POST, comes back empty.
+//
+// Selects email/full_name too, not just id/auth_user_id: inviteToPortal reads
+// the invite address and name off this row rather than trusting the form's
+// own fields, which a caller could otherwise set to someone else's address.
 async function personInMyGym(
   supabase: SupabaseClient,
   filter: { authUserId: string } | { personId: string },
-): Promise<{ id: string; auth_user_id: string | null } | null> {
-  const query = supabase.from("person").select("id, auth_user_id");
-  const { data } = await ("authUserId" in filter
+): Promise<{
+  id: string;
+  auth_user_id: string | null;
+  email: string | null;
+  full_name: string | null;
+} | null> {
+  const query = supabase
+    .from("person")
+    .select("id, auth_user_id, email, full_name");
+  const { data, error } = await ("authUserId" in filter
     ? query.eq("auth_user_id", filter.authUserId)
     : query.eq("id", filter.personId)
   ).maybeSingle();
-  return (data as { id: string; auth_user_id: string | null } | null) ?? null;
+  if (error) logDbError("members", "personInMyGym", error);
+  return (
+    (data as {
+      id: string;
+      auth_user_id: string | null;
+      email: string | null;
+      full_name: string | null;
+    } | null) ?? null
+  );
 }
 
 // Adds a member to the registry *and* creates their login account in one act.
@@ -150,7 +170,8 @@ export async function addPerson(formData: FormData) {
 
   // The new account belongs to the caller's gym, named in app_metadata where
   // the member cannot change it; the auth trigger creates the person row there.
-  const { data: gymId } = await supabase.rpc("current_gym_id");
+  const { data: gymId, error: gymIdError } = await supabase.rpc("current_gym_id");
+  if (gymIdError) logDbError("members", "addPerson:current_gym_id", gymIdError);
   if (!gymId) {
     back({ error: t.msg.accountNotCreated }, query);
     return;
@@ -265,24 +286,26 @@ export async function inviteToPortal(formData: FormData) {
   const { supabase } = await requireUserManager(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
-  const email = (formData.get("email") as string | null)?.trim();
-  const fullName = (formData.get("full_name") as string | null)?.trim();
   const personId = (formData.get("person_id") as string | null) ?? "";
 
-  if (!email) {
-    back(
-      { error: t.msg.emailNeededToInvite },
-      query,
-    );
-    return;
-  }
-
+  // The address and name come from the looked-up row, never from the form:
+  // the form's own `email`/`full_name` fields are only ever a display copy,
+  // and trusting them would let a caller post an account-less own-gym
+  // person_id together with a *different* person's email address.
   const target = personId ? await personInMyGym(supabase, { personId }) : null;
-  const { data: gymId } = await supabase.rpc("current_gym_id");
+  const { data: gymId, error: gymIdError } = await supabase.rpc("current_gym_id");
+  if (gymIdError) logDbError("members", "inviteToPortal:current_gym_id", gymIdError);
   if (!target || target.auth_user_id || !gymId) {
     back({ error: t.msg.userNotInGym }, query);
     return;
   }
+
+  const email = target.email;
+  if (!email) {
+    back({ error: t.msg.emailNeededToInvite }, query);
+    return;
+  }
+  const fullName = target.full_name ?? "";
 
   let admin;
   try {
@@ -301,7 +324,7 @@ export async function inviteToPortal(formData: FormData) {
   }
 
   const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: fullName ?? "" },
+    data: { full_name: fullName },
     redirectTo: `${await origin()}/reset-password`,
   });
 
@@ -310,24 +333,71 @@ export async function inviteToPortal(formData: FormData) {
     return;
   }
 
+  // For an unconfirmed existing user, GoTrue's inviteUserByEmail re-sends the
+  // invite and returns that same user instead of creating a new one. If that
+  // user already belongs to a gym (its own app_metadata, or a person row
+  // already pointing at it), it is not ours to touch — proceeding would move
+  // someone else's pending invitee into this gym.
+  const invitedGymId = (invited.user.app_metadata as { gym_id?: string } | undefined)
+    ?.gym_id;
+  if (invitedGymId && invitedGymId !== gymId) {
+    console.error(
+      "[members] inviteToPortal refused: invited user already belongs to another gym",
+    );
+    back({ error: t.msg.inviteFailed }, query);
+    return;
+  }
+
+  const { data: existingPerson, error: existingPersonError } = await admin
+    .from("person")
+    .select("id")
+    .eq("auth_user_id", invited.user.id)
+    .maybeSingle();
+  if (existingPersonError) {
+    logDbError("members", "inviteToPortal:existingPerson", existingPersonError);
+  }
+  if (existingPerson) {
+    console.error(
+      "[members] inviteToPortal refused: invited user is already linked to a person row",
+    );
+    back({ error: t.msg.inviteFailed }, query);
+    return;
+  }
+
   // inviteUserByEmail cannot set app_metadata, so the auth trigger saw no gym
-  // and made no profile. The link is made here instead: the gym goes into
-  // app_metadata, and the registry row the maestro already has is pointed at
-  // the new account — only if it is still account-less, only in this gym.
-  const { error: metaError } = await admin.auth.admin.updateUserById(invited.user.id, {
-    app_metadata: { gym_id: gymId },
-  });
-  const { error: linkError } = await admin
+  // and made no profile. The link is made here instead: the registry row the
+  // maestro already has is pointed at the new account — only if it is still
+  // account-less, only in this gym — and only once that succeeds does the gym
+  // go into app_metadata, so a failed link never leaves the metadata rewritten
+  // on a user this gym was not entitled to touch.
+  const { data: linked, error: linkError } = await admin
     .from("person")
     .update({ auth_user_id: invited.user.id })
     .eq("id", target.id)
     .eq("gym_id", gymId as string)
-    .is("auth_user_id", null);
+    .is("auth_user_id", null)
+    .select("id");
 
-  if (metaError || linkError) {
-    console.error(
-      `[members] inviteToPortal link failed: ${metaError?.code ?? ""} ${linkError?.code ?? ""}`.trim(),
+  // `.update()` reports no error when the filter matches nothing, so an empty
+  // result — the row got linked by someone else between the check above and
+  // here — must be treated as a failure explicitly, or a lost race would show
+  // "invitation sent" while leaving an orphan auth user.
+  if (linkError || !linked || linked.length === 0) {
+    logDbError(
+      "members",
+      "inviteToPortal:link",
+      linkError ?? { code: "no-rows", message: "link matched no rows" },
     );
+    back({ error: t.msg.inviteFailed }, query);
+    return;
+  }
+
+  const { error: metaError } = await admin.auth.admin.updateUserById(invited.user.id, {
+    app_metadata: { gym_id: gymId },
+  });
+
+  if (metaError) {
+    logDbError("members", "inviteToPortal:meta", metaError);
     back({ error: t.msg.inviteFailed }, query);
     return;
   }
