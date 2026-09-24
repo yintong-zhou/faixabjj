@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { clockHours, estimatedHours, hoursFor, SESSION_LENGTH_HOURS } from "./hours";
+import { clockHours, estimatedHours, hoursFor } from "./hours";
 
-// A fixed cutoff and a fixed "today", so the tests do not drift with the clock.
-const opts = { trackingStartedOn: "2026-09-13", today: "2026-12-01" };
+// ASD Little Gym's figures, and a fixed "today", so the tests do not drift.
+const ASD_LITTLE_GYM = { trackingStartedOn: "2026-09-13", lessonsPerWeek: 3, sessionLengthHours: 1 };
+const opts = { ...ASD_LITTLE_GYM, today: "2026-12-01" };
 
 describe("estimatedHours", () => {
   it("counts three hours per whole week before the cutoff", () => {
@@ -33,10 +34,12 @@ describe("estimatedHours", () => {
   it("is frozen once tracking has started", () => {
     const joined = "2026-01-01";
     const first = estimatedHours(joined, {
+      ...ASD_LITTLE_GYM,
       trackingStartedOn: "2026-09-13",
       today: "2026-09-14",
     });
     const muchLater = estimatedHours(joined, {
+      ...ASD_LITTLE_GYM,
       trackingStartedOn: "2026-09-13",
       today: "2029-04-22",
     });
@@ -49,6 +52,7 @@ describe("estimatedHours", () => {
   it("never estimates beyond today", () => {
     expect(
       estimatedHours("2026-09-01", {
+        ...ASD_LITTLE_GYM,
         trackingStartedOn: "2027-01-01",
         today: "2026-09-15",
       }),
@@ -86,17 +90,32 @@ describe("clockHours", () => {
   // attendance and calls each row an hour. This is the only conversion —
   // currently the identity, since this gym's lesson lasts one hour.
   it("turns counted lessons into the clock hours the criteria use", () => {
-    expect(clockHours(100)).toBe(100);
-    expect(SESSION_LENGTH_HOURS).toBe(1);
+    expect(clockHours(100, ASD_LITTLE_GYM)).toBe(100);
   });
 
   // A lessons value with two decimal places, so this still fails if the
   // multiply-and-round step were dropped rather than merely re-scaled.
   it("keeps one decimal, like every other hour figure in the app", () => {
-    expect(clockHours(4.36)).toBe(4.4);
+    expect(clockHours(4.36, ASD_LITTLE_GYM)).toBe(4.4);
   });
 
   it("is zero for zero", () => {
-    expect(clockHours(0)).toBe(0);
+    expect(clockHours(0, ASD_LITTLE_GYM)).toBe(0);
+  });
+});
+
+describe("per-gym settings", () => {
+  it("scales the estimate with the gym's lessons per week", () => {
+    // 14 days before the cutoff at 2 lessons a week = 4.
+    expect(estimatedHours("2026-08-30", { ...opts, lessonsPerWeek: 2 })).toBe(4);
+  });
+
+  it("moves the cutoff with the gym's own go-live date", () => {
+    // Joined 2026-08-30, another gym went live on 2026-09-06: one week, 3 h.
+    expect(estimatedHours("2026-08-30", { ...opts, trackingStartedOn: "2026-09-06" })).toBe(3);
+  });
+
+  it("converts lessons with the gym's lesson length", () => {
+    expect(clockHours(10, { sessionLengthHours: 1.5 })).toBe(15);
   });
 });

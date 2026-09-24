@@ -50,6 +50,10 @@ comment on column public.promotion_criteria.min_time_at_rank_days is
 -- ---------------------------------------------------------------------------
 -- `on conflict do nothing` on purpose: re-running this migration must never
 -- overwrite numbers the gym has since tuned from the app.
+--
+-- `on conflict do nothing` without a target: since 20260925000000 the key is
+-- (gym_id, belt, stripe), and naming (belt, stripe) would make a replay fail.
+-- On a replay these rows land in the first gym (see gym_scope()) and conflict.
 insert into public.promotion_criteria
   (belt, stripe, min_hours, min_time_at_rank_days, min_age_years, notes)
 values
@@ -57,7 +61,7 @@ values
   ('purple', 0, 288, 730, null, 'blue_to_purple: IBJJF minimum 2 years, 288 h at 3x/week (belt-criteria.md)'),
   ('brown',  0, 216, 548, null, 'purple_to_brown: IBJJF minimum 1.5 years, 216 h at 3x/week (belt-criteria.md)'),
   ('black',  0, 144, 365,   19, 'brown_to_black: IBJJF minimum 1 year and 19 years of age, 144 h at 3x/week (belt-criteria.md)')
-on conflict (belt, stripe) do nothing;
+on conflict do nothing;
 
 -- ---------------------------------------------------------------------------
 -- Stripes — NOT from the document
@@ -84,7 +88,7 @@ from (values
   ('brown'::belt_rank,  53, 122)
 ) as b(belt, hours, days)
 cross join generate_series(1, 4) as s(stripe)
-on conflict (belt, stripe) do nothing;
+on conflict do nothing;
 
 -- ---------------------------------------------------------------------------
 -- Reading the criteria is staff business

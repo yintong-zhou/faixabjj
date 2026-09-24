@@ -15,6 +15,7 @@ import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLES } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
 import { ADULT_BELTS, BELT_ORDER, beltLabel } from "@/utils/supabase/profile";
+import type { GymSettings } from "@/utils/supabase/gym";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { addDays, formatTime, monthStart, shiftMonth } from "@/utils/schedule";
 import { Section, Stat } from "./stat";
@@ -56,10 +57,12 @@ type Session = {
 export async function StaffDashboard({
   supabase,
   today,
+  gym,
   t,
 }: {
   supabase: SupabaseClient;
   today: string;
+  gym: GymSettings;
   t: Dictionary;
 }) {
   const from = monthStart(today);
@@ -120,7 +123,7 @@ export async function StaffDashboard({
 
   const active = members.filter((m) => m.is_active);
   const withoutAccount = members.filter((m) => !m.auth_user_id);
-  const recent = members.filter((m) => (daysSince(m.joined_at) ?? 999) <= NEW_MEMBER_DAYS);
+  const recent = members.filter((m) => (daysSince(m.joined_at, today) ?? 999) <= NEW_MEMBER_DAYS);
 
   // Same computation the Registro's summary line runs, over the same rows
   // (active members only) — this count and the one on the Registro must
@@ -147,6 +150,7 @@ export async function StaffDashboard({
         lessons_since_stripe: Number(counted?.lessons_since_stripe ?? 0),
       },
       criteria,
+      { ...gym, today },
     );
     return status.eligible;
   }).length;
@@ -185,7 +189,7 @@ export async function StaffDashboard({
   // Total hours across the gym, opening balances included, so the figure is
   // not "zero" for a school that has trained for years.
   const gymHours = members.reduce(
-    (sum, m) => sum + hoursFor(m.joined_at, m.total_hours).total,
+    (sum, m) => sum + hoursFor(m.joined_at, m.total_hours, { ...gym, today }).total,
     0,
   );
 

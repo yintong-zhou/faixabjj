@@ -108,3 +108,20 @@ export function formatDays(days: number | null, t: Dictionary = en): string {
 
   return t.dates.days(days);
 }
+
+/**
+ * Today's calendar date (YYYY-MM-DD) in a gym's timezone.
+ *
+ * The rest of this module works in UTC whole days, which is right for
+ * durations. "Which day is it at the gym" is a different question: between
+ * 22:00 and midnight UTC, Rome is already on tomorrow. `en-CA` formats as
+ * YYYY-MM-DD.
+ */
+export function todayIn(timeZone: string, now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}

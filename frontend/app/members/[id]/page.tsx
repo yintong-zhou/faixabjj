@@ -5,8 +5,10 @@ import { Belt } from "@/components/belt";
 import { beltLabel, roleLabel } from "@/utils/supabase/profile";
 import { getDictionary } from "@/utils/i18n/server";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
-import { daysSince, formatDate, formatDays } from "@/utils/dates";
-import { LESSONS_PER_WEEK, TRACKING_STARTED_ON, formatHours, hoursFor } from "@/utils/hours";
+import { requireGymSettings } from "@/utils/supabase/gym";
+import { daysSince, formatDate, formatDays, todayIn } from "@/utils/dates";
+import { formatHours, hoursFor } from "@/utils/hours";
+import { isPortalOnly } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
 import { correctRankDates } from "../actions";
 import { PromotePanel } from "./promote-panel";
@@ -97,6 +99,10 @@ export default async function MemberDetailPage({
   const { t } = await getDictionary();
   // Same gate as the list: staff only, 404 for everyone else.
   const { supabase, access } = await requireRegistryViewer(`/members/${id}`);
+  const gym = await requireGymSettings();
+  // The gym's own calendar day: ages, days at rank and the estimate cutoff are
+  // all measured to it, and it bounds the date inputs below.
+  const today = todayIn(gym.timezone);
 
   // Read from `person`, not from `member_overview`: a single record needs no
   // pre-joined roles array, and the table carries `notes`, which the list view
@@ -124,7 +130,7 @@ export default async function MemberDetailPage({
   // The detail page breaks the total open: on a record that decides a
   // promotion, "18 ore" is not enough — you need to know how much of it the
   // gym actually saw.
-  const training = hoursFor(member.joined_at, hours?.total_hours);
+  const training = hoursFor(member.joined_at, hours?.total_hours, { ...gym, today });
 
   // The full history, closed assignments included — the registry is meant to
   // show that a person's role changed over time, not just what it is today.
@@ -135,6 +141,16 @@ export default async function MemberDetailPage({
     .order("start_date", { ascending: false });
 
   const roles = (roleRows ?? []) as RoleRow[];
+
+  // A portal-only admin runs the app and does not train: no belt, no dates, no
+  // hours, no promotion. Their `person` row still carries the rank columns'
+  // defaults, which is precisely why none of that block may be drawn — it would
+  // show a white belt nobody was ever given and invite a promotion for it.
+  // Only the *active* roles decide: a closed admin assignment says nothing
+  // about somebody who trains today.
+  const portalOnly = isPortalOnly(
+    roles.filter((r) => !r.end_date).map((r) => r.role),
+  );
 
   // Counted lessons since the current belt/stripe, and the configured
   // thresholds — the same two queries the Registro runs, just for one person
@@ -182,10 +198,10 @@ export default async function MemberDetailPage({
       lessons_since_stripe: Number(rankHours?.lessons_since_stripe ?? 0),
     },
     criteria,
+    { ...gym, today },
   );
 
   const promotions = (promotionRows ?? []) as PromotionRow[];
-  const today = new Date().toISOString().slice(0, 10);
 
   // Carries the list's filters and page back, so closing the detail view
   // returns to exactly the list you opened it from.
@@ -207,7 +223,9 @@ export default async function MemberDetailPage({
         </h1>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Belt belt={member.current_belt} stripes={member.current_stripes} size="md" />
+          {portalOnly ? null : (
+            <Belt belt={member.current_belt} stripes={member.current_stripes} size="md" />
+          )}
           {member.auth_user_id ? null : (
             <span className="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground/55">
               {t.registro.noAccount}
@@ -246,186 +264,190 @@ export default async function MemberDetailPage({
         </dl>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
-        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
-          <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-          {t.registro.pathSection}
-        </h2>
-        <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-          {/* Colour and stripes are one thing on a belt, so they are one
-              field: the belt drawn, rather than a name and a number to
-              recombine mentally. */}
-          <Field label={t.account.belt}>
-            <Belt
-              belt={member.current_belt}
-              stripes={member.current_stripes}
-              size="md"
-              className="mt-0.5"
+      {portalOnly ? null : (
+        <>
+        <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+            <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+            {t.registro.pathSection}
+          </h2>
+          <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+            {/* Colour and stripes are one thing on a belt, so they are one
+                field: the belt drawn, rather than a name and a number to
+                recombine mentally. */}
+            <Field label={t.account.belt}>
+              <Belt
+                belt={member.current_belt}
+                stripes={member.current_stripes}
+                size="md"
+                className="mt-0.5"
+              />
+            </Field>
+            <Field label={t.account.beltSince} value={formatDate(member.rank_since)} />
+            <Field label={t.account.stripeSince} value={formatDate(member.stripe_since)} />
+            <Field
+              label={t.registro.trainingTime}
+              value={formatDays(daysSince(member.joined_at, today), t)}
             />
-          </Field>
-          <Field label={t.account.beltSince} value={formatDate(member.rank_since)} />
-          <Field label={t.account.stripeSince} value={formatDate(member.stripe_since)} />
-          <Field
-            label={t.registro.trainingTime}
-            value={formatDays(daysSince(member.joined_at), t)}
-          />
-          <Field
-            label={t.registro.beltTime}
-            value={formatDays(daysSince(member.rank_since), t)}
-          />
-          <Field
-            label={t.registro.stripeTime}
-            value={formatDays(daysSince(member.stripe_since), t)}
-          />
-          <Field label={t.registro.totalHours} value={formatHours(training.total, t)} />
-          <Field
-            label={t.registro.recordedHours}
-            value={formatHours(training.recorded, t)}
-          />
-          <Field
-            label={t.registro.openingHours}
-            value={formatHours(training.estimated, t)}
-          />
-        </dl>
+            <Field
+              label={t.registro.beltTime}
+              value={formatDays(daysSince(member.rank_since, today), t)}
+            />
+            <Field
+              label={t.registro.stripeTime}
+              value={formatDays(daysSince(member.stripe_since, today), t)}
+            />
+            <Field label={t.registro.totalHours} value={formatHours(training.total, t)} />
+            <Field
+              label={t.registro.recordedHours}
+              value={formatHours(training.recorded, t)}
+            />
+            <Field
+              label={t.registro.openingHours}
+              value={formatHours(training.estimated, t)}
+            />
+          </dl>
 
-        {training.isPartlyEstimated ? (
-          <p className="text-xs leading-relaxed text-foreground/55">
-            {t.registro.openingBalanceExplained(
-              formatDate(TRACKING_STARTED_ON),
-              LESSONS_PER_WEEK,
-            )}
-          </p>
-        ) : null}
+          {training.isPartlyEstimated ? (
+            <p className="text-xs leading-relaxed text-foreground/55">
+              {t.registro.openingBalanceExplained(
+                formatDate(gym.trackingStartedOn),
+                gym.lessonsPerWeek,
+              )}
+            </p>
+          ) : null}
 
-        {/* Correcting the two dates, for a maestro or an admin only.
-            `guard_person_auth_link` has always let a registry editor through —
-            it freezes these columns against everybody else, which is what keeps
-            promotion from becoming self-service — but there was nowhere in the
-            app to do it from, so a date typed wrong on the join form could only
-            be moved by recording a promotion that never happened.
+          {/* Correcting the two dates, for a maestro or an admin only.
+              `guard_person_auth_link` has always let a registry editor through —
+              it freezes these columns against everybody else, which is what keeps
+              promotion from becoming self-service — but there was nowhere in the
+              app to do it from, so a date typed wrong on the join form could only
+              be moved by recording a promotion that never happened.
 
-            Collapsed, and inside the section whose figures it governs rather
-            than as a panel of its own: it is a repair, reached deliberately,
-            not something to meet while reading somebody's record. */}
-        {access.canEditRegistry ? (
-          <details className="group rounded-xl border border-border">
-            <summary className="flex min-h-11 cursor-pointer select-none list-none items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden">
-              <PencilIcon className="h-4 w-4 shrink-0 text-accent" />
-              <span>{t.registro.correctDates}</span>
-              <ChevronRightIcon className="h-4 w-4 shrink-0 text-foreground/40 transition-transform group-open:rotate-90" />
-            </summary>
+              Collapsed, and inside the section whose figures it governs rather
+              than as a panel of its own: it is a repair, reached deliberately,
+              not something to meet while reading somebody's record. */}
+          {access.canEditRegistry ? (
+            <details className="group rounded-xl border border-border">
+              <summary className="flex min-h-11 cursor-pointer select-none list-none items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden">
+                <PencilIcon className="h-4 w-4 shrink-0 text-accent" />
+                <span>{t.registro.correctDates}</span>
+                <ChevronRightIcon className="h-4 w-4 shrink-0 text-foreground/40 transition-transform group-open:rotate-90" />
+              </summary>
 
-            <form
-              action={correctRankDates}
-              className="flex flex-col gap-3 border-t border-border px-3 pb-4 pt-3 sm:flex-row sm:flex-wrap sm:items-end"
-            >
-              <input type="hidden" name="person_id" value={member.id} />
-              {/* Carried so the back link at the top of this page still leads
-                  to the list the member was opened from. */}
-              <input type="hidden" name="_from" value={from ?? ""} />
-
-              <label className="flex flex-col gap-1 text-xs text-foreground/65">
-                {t.account.beltSince}
-                {/* ISO on purpose: it is what the element accepts and posts
-                    back. `max` blocks a future date in the browser; the action
-                    checks it again, since a crafted POST is not bound by it. */}
-                <input
-                  type="date"
-                  name="rank_since"
-                  defaultValue={member.rank_since}
-                  max={today}
-                  required
-                  className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm sm:w-44"
-                />
-              </label>
-
-              <label className="flex flex-col gap-1 text-xs text-foreground/65">
-                {t.account.stripeSince}
-                <input
-                  type="date"
-                  name="stripe_since"
-                  // Falls back to the belt date when the column is empty, the
-                  // same way promotionStatus() reads it: an empty date input
-                  // posts nothing and `required` would block the form.
-                  defaultValue={member.stripe_since ?? member.rank_since}
-                  max={today}
-                  required
-                  className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm sm:w-44"
-                />
-              </label>
-
-              <button
-                type="submit"
-                className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto"
+              <form
+                action={correctRankDates}
+                className="flex flex-col gap-3 border-t border-border px-3 pb-4 pt-3 sm:flex-row sm:flex-wrap sm:items-end"
               >
-                {t.common.saveChanges}
-              </button>
+                <input type="hidden" name="person_id" value={member.id} />
+                {/* Carried so the back link at the top of this page still leads
+                    to the list the member was opened from. */}
+                <input type="hidden" name="_from" value={from ?? ""} />
 
-              <p className="text-xs leading-relaxed text-foreground/55 sm:w-full">
-                {t.registro.correctDatesNote}
-              </p>
-            </form>
-          </details>
-        ) : null}
-      </section>
+                <label className="flex flex-col gap-1 text-xs text-foreground/65">
+                  {t.account.beltSince}
+                  {/* ISO on purpose: it is what the element accepts and posts
+                      back. `max` blocks a future date in the browser; the action
+                      checks it again, since a crafted POST is not bound by it. */}
+                  <input
+                    type="date"
+                    name="rank_since"
+                    defaultValue={member.rank_since}
+                    max={today}
+                    required
+                    className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm sm:w-44"
+                  />
+                </label>
 
-      {access.canEditRegistry ? (
-        <PromotePanel
-          personId={member.id}
-          personName={member.full_name}
-          status={status}
-          today={today}
-          t={t}
-        />
-      ) : null}
+                <label className="flex flex-col gap-1 text-xs text-foreground/65">
+                  {t.account.stripeSince}
+                  <input
+                    type="date"
+                    name="stripe_since"
+                    // Falls back to the belt date when the column is empty, the
+                    // same way promotionStatus() reads it: an empty date input
+                    // posts nothing and `required` would block the form.
+                    defaultValue={member.stripe_since ?? member.rank_since}
+                    max={today}
+                    required
+                    className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm sm:w-44"
+                  />
+                </label>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
-        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
-          <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-          {t.promotions.history}
-        </h2>
-
-        {promotions.length === 0 ? (
-          <p className="text-sm text-foreground/60">{t.promotions.historyEmpty}</p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-border">
-            {promotions.map((row) => {
-              const promoter = promoterName(row);
-              return (
-                <li
-                  key={row.id}
-                  className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                <button
+                  type="submit"
+                  className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto"
                 >
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-sm font-medium">
-                      {t.promotions.historyEntry(
-                        t.belts.label(beltLabel(row.from_belt, t), row.from_stripes),
-                        t.belts.label(beltLabel(row.to_belt, t), row.to_stripes),
-                      )}
+                  {t.common.saveChanges}
+                </button>
+
+                <p className="text-xs leading-relaxed text-foreground/55 sm:w-full">
+                  {t.registro.correctDatesNote}
+                </p>
+              </form>
+            </details>
+          ) : null}
+        </section>
+
+        {access.canEditRegistry ? (
+          <PromotePanel
+            personId={member.id}
+            personName={member.full_name}
+            status={status}
+            today={today}
+            t={t}
+          />
+        ) : null}
+
+        <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+            <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+            {t.promotions.history}
+          </h2>
+
+          {promotions.length === 0 ? (
+            <p className="text-sm text-foreground/60">{t.promotions.historyEmpty}</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-border">
+              {promotions.map((row) => {
+                const promoter = promoterName(row);
+                return (
+                  <li
+                    key={row.id}
+                    className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                  >
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className="text-sm font-medium">
+                        {t.promotions.historyEntry(
+                          t.belts.label(beltLabel(row.from_belt, t), row.from_stripes),
+                          t.belts.label(beltLabel(row.to_belt, t), row.to_stripes),
+                        )}
+                      </span>
+                      {promoter ? (
+                        <span className="text-xs text-foreground/55">
+                          {t.promotions.promotedBy(promoter)}
+                        </span>
+                      ) : null}
+                      {/* The note was stored and never shown. A promotion the
+                        instructor explained is exactly the entry somebody
+                        re-reads years later. */}
+                      {row.notes ? (
+                        <span className="text-xs leading-relaxed text-foreground/70">
+                          {row.notes}
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="shrink-0 text-xs text-foreground/55">
+                      {formatDate(row.promoted_on)}
                     </span>
-                    {promoter ? (
-                      <span className="text-xs text-foreground/55">
-                        {t.promotions.promotedBy(promoter)}
-                      </span>
-                    ) : null}
-                    {/* The note was stored and never shown. A promotion the
-                      instructor explained is exactly the entry somebody
-                      re-reads years later. */}
-                    {row.notes ? (
-                      <span className="text-xs leading-relaxed text-foreground/70">
-                        {row.notes}
-                      </span>
-                    ) : null}
-                  </div>
-                  <span className="shrink-0 text-xs text-foreground/55">
-                    {formatDate(row.promoted_on)}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+        </>
+      )}
 
       <section className="flex flex-col gap-2 rounded-xl border border-border p-4 sm:gap-3 sm:p-5">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">

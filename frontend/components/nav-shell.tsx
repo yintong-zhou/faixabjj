@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import {
+  BuildingIcon,
   CalendarCheckIcon,
   CalendarPlusIcon,
   DashboardIcon,
@@ -27,6 +28,7 @@ export type NavLabels = {
   corsi: string;
   registro: string;
   account: string;
+  gyms: string;
   signIn: string;
   signOut: string;
   language: string;
@@ -49,6 +51,7 @@ const DASHBOARD_ITEM = {
   icon: DashboardIcon,
 } as const;
 const ACCOUNT_ITEM = { href: "/account", key: "account", icon: UserIcon } as const;
+const GYMS_ITEM = { href: "/gyms", key: "gyms", icon: BuildingIcon } as const;
 
 // Only so the list below has a type wide enough to hold every item: an array
 // literal of two entries infers those two `href` strings and rejects the third.
@@ -58,7 +61,8 @@ type NavItem =
   | typeof PRESENZE_ITEM
   | typeof CORSI_ITEM
   | typeof REGISTRO_ITEM
-  | typeof ACCOUNT_ITEM;
+  | typeof ACCOUNT_ITEM
+  | typeof GYMS_ITEM;
 
 // Hiding a link is a convenience, never the access control: /members, /courses
 // and /attendance each verify the privilege themselves, and the RLS policies
@@ -67,11 +71,18 @@ function navItemsFor(
   isLoggedIn: boolean,
   canViewRegistry: boolean,
   canManageClasses: boolean,
+  isPlatformAdmin: boolean,
 ) {
   if (!isLoggedIn) {
     // Home is the whole menu for a visitor: every other section requires a
     // session, so offering them only produces a bounce through /login.
     return [HOME_ITEM];
+  }
+
+  // The platform superadmin belongs to no gym: their whole portal is the list
+  // of gyms and their own account.
+  if (isPlatformAdmin) {
+    return [GYMS_ITEM, ACCOUNT_ITEM];
   }
 
   // Home is deliberately absent for *every* signed-in user, staff included —
@@ -103,6 +114,8 @@ export function NavShell({
   isLoggedIn,
   canViewRegistry,
   canManageClasses,
+  isPlatformAdmin,
+  gymName,
   locale,
   labels,
 }: {
@@ -110,20 +123,23 @@ export function NavShell({
   isLoggedIn: boolean;
   canViewRegistry: boolean;
   canManageClasses: boolean;
+  isPlatformAdmin: boolean;
+  gymName: string | null;
   locale: Locale;
   labels: NavLabels;
 }) {
   const pathname = usePathname();
-  const navItems = navItemsFor(isLoggedIn, canViewRegistry, canManageClasses);
+  const navItems = navItemsFor(isLoggedIn, canViewRegistry, canManageClasses, isPlatformAdmin);
 
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5 sm:px-8 sm:py-4">
           {/* Signed in, the logo goes to the dashboard rather than to "/",
-              which would only bounce through the proxy's redirect. */}
+              which would only bounce through the proxy's redirect — except for
+              the platform superadmin, whose dashboard is the list of gyms. */}
           <Link
-            href={isLoggedIn ? "/dashboard" : "/"}
+            href={!isLoggedIn ? "/" : isPlatformAdmin ? "/gyms" : "/dashboard"}
             className="flex items-center gap-2"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary p-1.5">
@@ -141,6 +157,11 @@ export function NavShell({
             <span className="font-heading text-lg font-bold tracking-tight">
               {SITE_NAME}
             </span>
+            {gymName ? (
+              <span className="hidden max-w-[12rem] truncate border-l border-border pl-2 text-sm text-foreground/60 sm:inline">
+                {gymName}
+              </span>
+            ) : null}
           </Link>
           <div className="flex items-center gap-2">
             <nav className="hidden gap-1 sm:flex">

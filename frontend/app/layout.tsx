@@ -7,6 +7,7 @@ import { CookieNotice } from "@/components/cookie-notice";
 import { NavShell } from "@/components/nav-shell";
 import { createClient } from "@/utils/supabase/server";
 import { getAccess } from "@/utils/supabase/require-admin";
+import { getGymSettings } from "@/utils/supabase/gym";
 import { SITE_NAME, SITE_URL } from "@/utils/site";
 import { getDictionary } from "@/utils/i18n/server";
 import { LOCALE_TAG } from "@/utils/i18n/locales";
@@ -104,6 +105,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const access = isLoggedIn ? await getAccess(supabase) : null;
   const canViewRegistry = access?.canViewRegistry ?? false;
   const canManageClasses = access?.canManageClasses ?? false;
+  const isPlatformAdmin = access?.isPlatformAdmin ?? false;
+  // The gym's own name next to the product's logo — never instead of it.
+  const gymName = isLoggedIn && !isPlatformAdmin ? (await getGymSettings())?.name ?? null : null;
 
   return (
     <html
@@ -129,6 +133,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           isLoggedIn={isLoggedIn}
           canViewRegistry={canViewRegistry}
           canManageClasses={canManageClasses}
+          isPlatformAdmin={isPlatformAdmin}
+          gymName={gymName}
           locale={locale}
           labels={{
             home: t.nav.home,
@@ -137,6 +143,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             corsi: t.nav.corsi,
             registro: t.nav.registro,
             account: t.nav.account,
+            gyms: t.nav.gyms,
             signIn: t.nav.signIn,
             signOut: t.nav.signOut,
             language: t.nav.language,

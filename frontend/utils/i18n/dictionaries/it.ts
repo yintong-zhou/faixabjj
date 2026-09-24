@@ -32,6 +32,7 @@ export const it = {
     corsi: "Corsi",
     registro: "Registro",
     account: "Account",
+    gyms: "Palestre",
     signIn: "Accedi",
     signOut: "Esci",
     menu: "Menu",
@@ -231,6 +232,8 @@ export const it = {
     lead: "Gestisci i tuoi dati personali e le credenziali di accesso.",
     profileUnavailable:
       "Il tuo profilo non è disponibile. Se il problema persiste, controlla che le migration del database siano state applicate.",
+    platformAdmin:
+      "Account di amministrazione del portale: non appartiene a nessuna palestra e non ha una cintura.",
 
     personalData: "Dati personali",
     fullName: "Nome e cognome",
@@ -257,6 +260,13 @@ export const it = {
     updatePassword: "Aggiorna password",
     passwordMinimum: "Almeno 8 caratteri.",
     estimateSuffix: "(stima)",
+  },
+
+  suspended: {
+    title: "Palestra sospesa",
+    body: "L'accesso a questa palestra è stato sospeso dall'amministrazione del portale. I dati sono conservati e torneranno disponibili se la palestra viene riattivata. Per informazioni rivolgiti a chi gestisce la tua palestra.",
+    noGymTitle: "Account senza palestra",
+    noGymBody: "Questo account non appartiene a nessuna palestra, quindi non c'è nulla da mostrare. Per informazioni rivolgiti a chi gestisce la tua palestra.",
   },
 
   dashboard: {
@@ -404,6 +414,8 @@ export const it = {
       "— comunicala alla persona. Al primo accesso le verrà chiesto di sostituirla prima di poter usare il resto dell'app.",
     select: "Seleziona…",
     stripes: "Tacche",
+    beltNotForAdmin:
+      "Non si applica a un account solo amministrativo: un admin non ha grado.",
     todayIfEmpty: "(oggi se vuoto)",
     role: "Ruolo",
 
@@ -495,6 +507,7 @@ export const it = {
     joinDateRequired: "La data di iscrizione è obbligatoria.",
     stripesRange: "Le tacche devono essere un numero da 0 a 4.",
     userNotSpecified: "Utente non specificato.",
+    userNotInGym: "Questa persona non fa parte della tua palestra.",
     adminClientMissing: "Client di amministrazione non disponibile.",
     secretMissingCreate:
       "SUPABASE_SECRET_KEY non è configurata: non è possibile creare account.",
@@ -715,6 +728,7 @@ export const it = {
         paragraphs: [
           "Titolare del trattamento è [NOME DELLA PALESTRA], con sede in [INDIRIZZO COMPLETO], contattabile all'indirizzo [EMAIL DI CONTATTO].",
           "Non è stato nominato un Responsabile della protezione dei dati (DPO): il trattamento non rientra fra i casi in cui l'articolo 37 del GDPR lo rende obbligatorio. Se la palestra decide di nominarlo, i suoi contatti vanno aggiunti qui.",
+          "Faixa BJJ ospita più palestre. Ogni palestra è titolare dei dati dei propri iscritti; il gestore del portale li tratta per conto della palestra (responsabile del trattamento) e non accede ai dati di allievi, presenze o promozioni.",
         ],
       },
       {
@@ -809,6 +823,88 @@ export const it = {
     ],
     cookieRemoval:
       "Puoi cancellare cookie e archiviazione locale dalle impostazioni del browser. Cancellando il cookie di sessione verrai disconnesso; cancellando gli altri l'applicazione continua a funzionare e torna alle impostazioni predefinite.",
+  },
+  gyms: {
+    title: "Palestre",
+    subtitle: "Le palestre ospitate dal portale. Qui vedi i dati della palestra e i suoi gestori, mai allievi, presenze o promozioni.",
+    newGym: "Nuova palestra",
+    search: "Cerca per nome",
+    filter: "Filtra",
+    allStatuses: "Tutti gli stati",
+    status: { active: "Attiva", suspended: "Sospesa" },
+    empty: "Nessuna palestra trovata.",
+    counts: (people: number, courses: number, managers: number) =>
+      `${people} persone attive · ${courses} corsi · ${managers} gestori`,
+    createdOn: (date: string) => `Creata il ${date}`,
+    rowMenu: "Azioni palestra",
+    details: "Dettagli",
+    suspend: "Sospendi",
+    reactivate: "Riattiva",
+    confirmSuspend: (name: string) =>
+      `Sospendere ${name}? Nessuno dei suoi account potrà usare il portale finché non la riattivi.`,
+    confirmReactivate: (name: string) => `Riattivare ${name}?`,
+    back: "Palestre",
+    fields: {
+      name: "Nome della palestra",
+      timezone: "Fuso orario",
+      trackingStartedOn: "Avvio del registro presenze",
+      trackingHelp: "Prima di questa data le ore si stimano, da questa data si contano le presenze. Non può essere nel futuro.",
+      sessionLengthHours: "Durata di una lezione (ore)",
+      lessonsPerWeek: "Lezioni a settimana, per la stima delle ore pregresse",
+    },
+    create: "Crea palestra",
+    settings: "Impostazioni",
+    settingsWarning: "Cambiare fuso orario o data di avvio sposta le finestre di check-in e le ore stimate di tutti i membri di questa palestra.",
+    save: "Salva impostazioni",
+    managers: "Gestori",
+    managersHelp: "I gestori amministrano la palestra: creano maestri, istruttori e allievi. Non hanno una cintura.",
+    noManagers: "Nessun gestore: per ora nessuno può entrare in questa palestra.",
+    addManager: "Aggiungi gestore",
+    managerName: "Nome e cognome",
+    managerEmail: "Email",
+    managerMenu: "Azioni gestore",
+    managerSince: (date: string) => `Gestore dal ${date}`,
+    noAccount: "senza account",
+    resetPassword: "Reimposta password",
+    confirmReset: (email: string) =>
+      `Reimpostare la password di ${email} a quella predefinita? Dovrà cambiarla al prossimo accesso.`,
+    revoke: "Revoca accesso",
+    confirmRevoke: (email: string) =>
+      `Revocare l'accesso di ${email}? L'account viene eliminato; la persona resta nel registro della palestra.`,
+    danger: "Zona pericolosa",
+    dangerHelp: "L'eliminazione cancella la palestra, tutti i suoi dati (persone, corsi, presenze, promozioni) e tutti i suoi account. Non si può annullare.",
+    dangerNeedsSuspension: "Per eliminare la palestra devi prima sospenderla.",
+    confirmName: (name: string) => `Scrivi «${name}» per confermare`,
+    delete: "Elimina definitivamente",
+    confirmDelete: (name: string) => `Eliminare definitivamente ${name} e tutti i suoi dati?`,
+    invalid: {
+      name: "Il nome è obbligatorio (massimo 120 caratteri).",
+      timezone: "Scegli un fuso orario dall'elenco.",
+      trackingStartedOn: "La data di avvio deve essere una data valida, non nel futuro.",
+      sessionLengthHours: "La durata della lezione deve essere tra 0 e 8 ore.",
+      lessonsPerWeek: "Le lezioni a settimana devono essere tra 0 e 14.",
+    },
+    msg: {
+      created: (name: string) => `${name} creata. Aggiungi ora il suo primo gestore.`,
+      saved: "Impostazioni salvate.",
+      nameTaken: "Esiste già una palestra con questo nome.",
+      failed: "Operazione non riuscita. Riprova.",
+      suspended: (name: string) => `${name} è sospesa.`,
+      reactivated: (name: string) => `${name} è di nuovo attiva.`,
+      deleted: (name: string) => `${name} è stata eliminata.`,
+      deleteNeedsSuspension: "Sospendi la palestra prima di eliminarla.",
+      deleteNameMismatch: "Il nome digitato non corrisponde.",
+      accountsNotDeleted: (n: number) =>
+        `Palestra eliminata, ma ${n} account non sono stati rimossi: eliminali dal pannello di Supabase.`,
+      managerAdded: (email: string, password: string) =>
+        `Gestore ${email} creato con la password predefinita ${password}: la cambierà al primo accesso.`,
+      managerFailed: "Impossibile creare il gestore: l'email potrebbe essere già in uso.",
+      managerMissing: "Nome ed email sono obbligatori.",
+      notAManager: "Questa persona non è un gestore di questa palestra.",
+      passwordReset: (email: string) => `Password di ${email} reimpostata.`,
+      revoked: (email: string) => `Accesso di ${email} revocato.`,
+      secretMissing: "Chiave di servizio non configurata: operazione sugli account non disponibile.",
+    },
   },
 };
 

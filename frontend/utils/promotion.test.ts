@@ -56,7 +56,12 @@ describe("nextStep", () => {
 });
 
 // Fixed dates everywhere, so nothing drifts with the clock.
-const opts = { today: "2026-09-18", trackingStartedOn: "2026-09-13" };
+const opts = {
+  today: "2026-09-18",
+  trackingStartedOn: "2026-09-13",
+  lessonsPerWeek: 3,
+  sessionLengthHours: 1,
+};
 
 const CRITERIA: Criterion[] = [
   { belt: "blue", stripe: 0, min_hours: 108, min_time_at_rank_days: 183, min_age_years: null },
@@ -253,5 +258,16 @@ describe("promotionStatus", () => {
     expect(status.next).toEqual({ belt: "purple", stripe: 1 });
     expect(status.eligible).toBe(false);
     expect(status.blockers).toEqual(["no-criterion"]);
+  });
+
+  it("measures hours with the gym's lesson length", () => {
+    // 30 lessons of 1.5 h are 45 clock hours, past the 40 required.
+    const status = promotionStatus(
+      person({ stripe_since: "2026-06-01", lessons_since_stripe: 30, lessons_since_rank: 99 }),
+      CRITERIA,
+      { ...opts, sessionLengthHours: 1.5 },
+    );
+    expect(status.currentHours).toBe(45);
+    expect(status.eligible).toBe(true);
   });
 });

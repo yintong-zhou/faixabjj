@@ -28,6 +28,7 @@ export const ptBR: Dictionary = {
     corsi: "Aulas",
     registro: "Alunos",
     account: "Conta",
+    gyms: "Academias",
     signIn: "Entrar",
     signOut: "Sair",
     menu: "Menu",
@@ -219,6 +220,8 @@ export const ptBR: Dictionary = {
     lead: "Gerencie seus dados pessoais e as credenciais de acesso.",
     profileUnavailable:
       "Seu perfil não está disponível. Se o problema persistir, verifique se as migrações do banco de dados foram aplicadas.",
+    platformAdmin:
+      "Conta de administração do portal: não pertence a nenhuma academia e não tem faixa.",
 
     personalData: "Dados pessoais",
     fullName: "Nome completo",
@@ -245,6 +248,13 @@ export const ptBR: Dictionary = {
     updatePassword: "Atualizar senha",
     passwordMinimum: "Pelo menos 8 caracteres.",
     estimateSuffix: "(estimativa)",
+  },
+
+  suspended: {
+    title: "Academia suspensa",
+    body: "O acesso a esta academia foi suspenso pela administração do portal. Os dados são mantidos e voltarão a ficar disponíveis se a academia for reativada. Para informações, fale com quem administra a sua academia.",
+    noGymTitle: "Conta sem academia",
+    noGymBody: "Esta conta não pertence a nenhuma academia, por isso não há nada para mostrar. Para informações, fale com quem administra a sua academia.",
   },
 
   dashboard: {
@@ -390,6 +400,8 @@ export const ptBR: Dictionary = {
       "— informe-a à pessoa. No primeiro acesso será pedido que ela a substitua antes de poder usar o restante do aplicativo.",
     select: "Selecione…",
     stripes: "Graus",
+    beltNotForAdmin:
+      "Não se aplica a uma conta apenas administrativa: um admin não tem graduação.",
     todayIfEmpty: "(hoje, se vazio)",
     role: "Função",
 
@@ -479,6 +491,7 @@ export const ptBR: Dictionary = {
     joinDateRequired: "A data de matrícula é obrigatória.",
     stripesRange: "Os graus devem ser um número de 0 a 4.",
     userNotSpecified: "Usuário não especificado.",
+    userNotInGym: "Esta pessoa não faz parte da sua academia.",
     adminClientMissing: "Cliente de administração indisponível.",
     secretMissingCreate:
       "SUPABASE_SECRET_KEY não está configurada: não é possível criar contas.",
@@ -692,6 +705,7 @@ export const ptBR: Dictionary = {
         paragraphs: [
           "O controlador dos dados é [NOME DA ACADEMIA], com sede em [ENDEREÇO COMPLETO], contactável em [E-MAIL DE CONTATO].",
           "Não foi nomeado um Encarregado da proteção de dados (DPO): o tratamento não se enquadra nos casos em que o artigo 37 do GDPR o torna obrigatório. Se a academia nomear um, os contatos dele entram aqui.",
+          "O Faixa BJJ hospeda várias academias. Cada academia é a controladora dos dados dos seus membros; o operador do portal os trata em nome da academia (operador) e não acessa dados de alunos, presenças ou graduações.",
         ],
       },
       {
@@ -786,5 +800,87 @@ export const ptBR: Dictionary = {
     ],
     cookieRemoval:
       "Você pode apagar cookies e armazenamento local nas configurações do navegador. Apagar o cookie de sessão desconecta você; apagar os demais mantém o aplicativo funcionando e de volta às configurações padrão.",
+  },
+  gyms: {
+    title: "Academias",
+    subtitle: "As academias hospedadas pelo portal. Aqui você vê os dados de cada academia e os seus gestores, nunca alunos, presenças ou graduações.",
+    newGym: "Nova academia",
+    search: "Buscar por nome",
+    filter: "Filtrar",
+    allStatuses: "Todos os status",
+    status: { active: "Ativa", suspended: "Suspensa" },
+    empty: "Nenhuma academia encontrada.",
+    counts: (people: number, courses: number, managers: number) =>
+      `${people} pessoas ativas · ${courses} turmas · ${managers} gestores`,
+    createdOn: (date: string) => `Criada em ${date}`,
+    rowMenu: "Ações da academia",
+    details: "Detalhes",
+    suspend: "Suspender",
+    reactivate: "Reativar",
+    confirmSuspend: (name: string) =>
+      `Suspender ${name}? Nenhuma das suas contas poderá usar o portal até você reativá-la.`,
+    confirmReactivate: (name: string) => `Reativar ${name}?`,
+    back: "Academias",
+    fields: {
+      name: "Nome da academia",
+      timezone: "Fuso horário",
+      trackingStartedOn: "Início do registro de presenças",
+      trackingHelp: "Antes desta data as horas são estimadas; a partir dela as presenças são contadas. Não pode estar no futuro.",
+      sessionLengthHours: "Duração de uma aula (horas)",
+      lessonsPerWeek: "Aulas por semana, para estimar as horas anteriores",
+    },
+    create: "Criar academia",
+    settings: "Configurações",
+    settingsWarning: "Mudar o fuso horário ou a data de início desloca as janelas de check-in e as horas estimadas de todos os membros desta academia.",
+    save: "Salvar configurações",
+    managers: "Gestores",
+    managersHelp: "Os gestores administram a academia: criam mestres, instrutores e alunos. Não têm faixa.",
+    noManagers: "Nenhum gestor: por enquanto ninguém consegue entrar nesta academia.",
+    addManager: "Adicionar gestor",
+    managerName: "Nome completo",
+    managerEmail: "E-mail",
+    managerMenu: "Ações do gestor",
+    managerSince: (date: string) => `Gestor desde ${date}`,
+    noAccount: "sem conta",
+    resetPassword: "Redefinir senha",
+    confirmReset: (email: string) =>
+      `Redefinir a senha de ${email} para a padrão? Será preciso trocá-la no próximo acesso.`,
+    revoke: "Revogar acesso",
+    confirmRevoke: (email: string) =>
+      `Revogar o acesso de ${email}? A conta é excluída; a pessoa continua no cadastro da academia.`,
+    danger: "Zona de perigo",
+    dangerHelp: "A exclusão apaga a academia, todos os seus dados (pessoas, turmas, presenças, graduações) e todas as suas contas. Não pode ser desfeita.",
+    dangerNeedsSuspension: "Suspenda a academia antes de poder excluí-la.",
+    confirmName: (name: string) => `Digite “${name}” para confirmar`,
+    delete: "Excluir definitivamente",
+    confirmDelete: (name: string) => `Excluir definitivamente ${name} e todos os seus dados?`,
+    invalid: {
+      name: "O nome é obrigatório (no máximo 120 caracteres).",
+      timezone: "Escolha um fuso horário da lista.",
+      trackingStartedOn: "A data de início deve ser uma data válida, não no futuro.",
+      sessionLengthHours: "A duração da aula deve estar entre 0 e 8 horas.",
+      lessonsPerWeek: "As aulas por semana devem estar entre 0 e 14.",
+    },
+    msg: {
+      created: (name: string) => `${name} criada. Agora adicione o seu primeiro gestor.`,
+      saved: "Configurações salvas.",
+      nameTaken: "Já existe uma academia com este nome.",
+      failed: "A operação não foi concluída. Tente novamente.",
+      suspended: (name: string) => `${name} está suspensa.`,
+      reactivated: (name: string) => `${name} está ativa novamente.`,
+      deleted: (name: string) => `${name} foi excluída.`,
+      deleteNeedsSuspension: "Suspenda a academia antes de excluí-la.",
+      deleteNameMismatch: "O nome digitado não confere.",
+      accountsNotDeleted: (n: number) =>
+        `Academia excluída, mas ${n} contas não foram removidas: exclua-as pelo painel do Supabase.`,
+      managerAdded: (email: string, password: string) =>
+        `Gestor ${email} criado com a senha padrão ${password}: ele vai trocá-la no primeiro acesso.`,
+      managerFailed: "Não foi possível criar o gestor: o e-mail pode já estar em uso.",
+      managerMissing: "Nome e e-mail são obrigatórios.",
+      notAManager: "Esta pessoa não é gestora desta academia.",
+      passwordReset: (email: string) => `A senha de ${email} foi redefinida.`,
+      revoked: (email: string) => `O acesso de ${email} foi revogado.`,
+      secretMissing: "Chave de serviço não configurada: operações de conta indisponíveis.",
+    },
   },
 };

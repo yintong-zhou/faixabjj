@@ -5,9 +5,10 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@/components/icons";
-import { formatDate } from "@/utils/dates";
+import { formatDate, todayIn } from "@/utils/dates";
 import { getOrCreateProfile } from "@/utils/supabase/profile";
 import { getAccess, requireAdmin } from "@/utils/supabase/require-admin";
+import { requireGymSettings } from "@/utils/supabase/gym";
 import { getDictionary } from "@/utils/i18n/server";
 import {
   addDays,
@@ -83,7 +84,7 @@ export default async function PresenzePage({
   const access = await getAccess(supabase);
   const isStaff = access.canManageClasses;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIn((await requireGymSettings()).timezone);
   const isGrid = search.v === GRID;
   const anchor = ISO_DATE.test(search.da ?? "") ? search.da! : today;
 

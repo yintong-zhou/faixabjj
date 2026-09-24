@@ -1,8 +1,8 @@
 // Promotion eligibility: what the next grade is, and what is still missing.
 //
 // Pure on purpose, like schedule.ts and hours.ts. It reads no cookie and makes
-// no query: the caller passes the person, the criteria rows and — in tests —
-// a fixed "today". The database holds the numbers; this module holds the rule.
+// no query: the caller passes the person, the criteria rows and the gym's
+// own "today" (`todayIn(gym.timezone)`), which tests pin. The database holds the numbers; this module holds the rule.
 //
 // It never decides a promotion. Reaching the minimums is necessary and never
 // sufficient: belt-criteria.md puts the instructor's discretion above the
@@ -13,7 +13,7 @@
 // has a single source of truth instead of two copies that can drift apart.
 import { ADULT_BELTS, BELT_ORDER, KID_BELTS, isKidBelt } from "./supabase/profile";
 import { ageOn, daysSince } from "./dates";
-import { clockHours, estimatedHours } from "./hours";
+import { clockHours, estimatedHours, type HoursOptions } from "./hours";
 
 export type Belt = (typeof BELT_ORDER)[number];
 
@@ -120,7 +120,7 @@ export type PromotionInput = {
 export type PromotionStatus = {
   /** The grade being measured against, or null when none is modelled. */
   next: Step | null;
-  /** Clock hours, both sides — see SESSION_LENGTH_HOURS. */
+  /** Clock hours, both sides — see HoursSettings.sessionLengthHours. */
   requiredHours: number;
   currentHours: number;
   requiredDays: number;
@@ -160,10 +160,9 @@ function laterOf(a: string, b: string): string {
 export function promotionStatus(
   person: PromotionInput,
   criteria: Criterion[],
-  options: { today?: string; trackingStartedOn?: string } = {},
+  options: HoursOptions,
 ): PromotionStatus {
-  const today =
-    options.today ?? new Date(Date.now()).toISOString().slice(0, 10);
+  const today = options.today;
 
   // Read once, and before the ladder is chosen: white is on both ladders, and
   // the age is what says which one this person is climbing.
@@ -199,12 +198,9 @@ export function promotionStatus(
     ? person.lessons_since_rank
     : person.lessons_since_stripe;
 
-  const estimated = estimatedHours(laterOf(person.joined_at, anchor), {
-    trackingStartedOn: options.trackingStartedOn,
-    today,
-  });
+  const estimated = estimatedHours(laterOf(person.joined_at, anchor), options);
 
-  const currentHours = clockHours(lessons + estimated);
+  const currentHours = clockHours(lessons + estimated, options);
   const currentDays = daysSince(anchor, today) ?? 0;
 
   const blockers: Blocker[] = [];

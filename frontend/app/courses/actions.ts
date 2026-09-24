@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { todayIn } from "@/utils/dates";
+import { requireGymSettings } from "@/utils/supabase/gym";
 import { requireClassManager } from "@/utils/supabase/require-admin";
 import { addDays, expandWeekdays, parseWeekdays } from "@/utils/schedule";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
@@ -14,8 +16,11 @@ const PATH = "/courses";
 // that editing a course does not have to rewrite a year of calendar.
 const HORIZON_DAYS = 56;
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
+// The gym's own calendar day, not the UTC one: between 22:00 and midnight UTC
+// a gym in Rome is already on tomorrow, and a course started "today" or a
+// calendar generated "from today" must mean the day at the gym.
+async function gymToday(): Promise<string> {
+  return todayIn((await requireGymSettings()).timezone);
 }
 
 function back(params: Record<string, string>, query?: string) {
@@ -65,6 +70,7 @@ function readTime(formData: FormData, prefix: string): string | null {
 function readCourseForm(
   formData: FormData,
   t: Dictionary,
+  today: string,
 ): { error: string } | { values: CourseValues } {
   const name = text(formData, "name");
   if (!name) return { error: t.msg.courseNameRequired };
@@ -111,7 +117,7 @@ function readCourseForm(
       weekdays,
       start_time: startTime,
       end_time: endTime,
-      starts_on: startsOn ?? today(),
+      starts_on: startsOn ?? today,
       ends_on: endsOn,
       // The course's default instructor. sync_course_sessions() copies it onto
       // the sessions it creates, and leaves an existing session's instructor
@@ -134,9 +140,13 @@ type SyncTarget = {
 // receives the resulting list of dates, so the calendar maths has one home.
 // What SQL does is the part only SQL can do atomically — drop the future
 // sessions the new schedule supersedes, but only where nobody was recorded.
-async function syncSessions(supabase: SupabaseClient, course: SyncTarget) {
-  const from = course.starts_on > today() ? course.starts_on : today();
-  const horizon = addDays(today(), HORIZON_DAYS);
+async function syncSessions(
+  supabase: SupabaseClient,
+  course: SyncTarget,
+  today: string,
+) {
+  const from = course.starts_on > today ? course.starts_on : today;
+  const horizon = addDays(today, HORIZON_DAYS);
   const until = course.ends_on && course.ends_on < horizon ? course.ends_on : horizon;
 
   const dates = expandWeekdays({ weekdays: course.weekdays, from, until });
@@ -155,7 +165,8 @@ export async function addCourse(formData: FormData) {
   const { supabase } = await requireClassManager(PATH);
   const query = (formData.get("_query") as string | null) ?? "";
 
-  const parsed = readCourseForm(formData, t);
+  const today = await gymToday();
+  const parsed = readCourseForm(formData, t, today);
   if ("error" in parsed) {
     back({ error: parsed.error }, query);
     return;
@@ -172,7 +183,7 @@ export async function addCourse(formData: FormData) {
     return;
   }
 
-  const synced = await syncSessions(supabase, data as SyncTarget);
+  const synced = await syncSessions(supabase, data as SyncTarget, today);
   revalidatePath(PATH);
   revalidatePath("/attendance");
 
@@ -197,7 +208,8 @@ export async function updateCourse(formData: FormData) {
     return;
   }
 
-  const parsed = readCourseForm(formData, t);
+  const today = await gymToday();
+  const parsed = readCourseForm(formData, t, today);
   if ("error" in parsed) {
     back({ error: parsed.error }, query);
     return;
@@ -217,7 +229,7 @@ export async function updateCourse(formData: FormData) {
 
   // Lessons already attended keep their old time: that rule lives in
   // sync_course_sessions, not here.
-  const synced = await syncSessions(supabase, data as SyncTarget);
+  const synced = await syncSessions(supabase, data as SyncTarget, today);
   revalidatePath(PATH);
   revalidatePath("/attendance");
 
@@ -246,7 +258,7 @@ export async function extendCalendar(formData: FormData) {
     return;
   }
 
-  const synced = await syncSessions(supabase, data as SyncTarget);
+  const synced = await syncSessions(supabase, data as SyncTarget, await gymToday());
   revalidatePath(PATH);
   revalidatePath("/attendance");
 

@@ -27,6 +27,7 @@ export const en: Dictionary = {
     corsi: "Classes",
     registro: "Members",
     account: "Account",
+    gyms: "Gyms",
     signIn: "Sign in",
     signOut: "Sign out",
     menu: "Menu",
@@ -217,6 +218,8 @@ export const en: Dictionary = {
     lead: "Manage your personal details and sign-in credentials.",
     profileUnavailable:
       "Your profile is not available. If the problem persists, check that the database migrations have been applied.",
+    platformAdmin:
+      "Portal administration account: it belongs to no gym and holds no belt.",
 
     personalData: "Personal details",
     fullName: "Full name",
@@ -243,6 +246,13 @@ export const en: Dictionary = {
     updatePassword: "Update password",
     passwordMinimum: "At least 8 characters.",
     estimateSuffix: "(estimate)",
+  },
+
+  suspended: {
+    title: "Gym suspended",
+    body: "Access to this gym has been suspended by the portal's administration. Its data is kept and will be available again if the gym is reactivated. For information, ask whoever runs your gym.",
+    noGymTitle: "Account without a gym",
+    noGymBody: "This account does not belong to any gym, so there is nothing to show. For information, ask whoever runs your gym.",
   },
 
   dashboard: {
@@ -388,6 +398,8 @@ export const en: Dictionary = {
       "— pass it on to the person. They will be asked to replace it on first sign-in, before anything else in the app opens.",
     select: "Select…",
     stripes: "Stripes",
+    beltNotForAdmin:
+      "Does not apply to a portal-only admin account: an admin holds no rank.",
     todayIfEmpty: "(today if empty)",
     role: "Role",
 
@@ -477,6 +489,7 @@ export const en: Dictionary = {
     joinDateRequired: "The join date is required.",
     stripesRange: "Stripes must be a number from 0 to 4.",
     userNotSpecified: "No user specified.",
+    userNotInGym: "This person is not part of your gym.",
     adminClientMissing: "The admin client is not available.",
     secretMissingCreate:
       "SUPABASE_SECRET_KEY is not configured: accounts cannot be created.",
@@ -690,6 +703,7 @@ export const en: Dictionary = {
         paragraphs: [
           "The data controller is [GYM NAME], with registered office at [FULL ADDRESS], reachable at [CONTACT EMAIL].",
           "No Data Protection Officer has been appointed: the processing does not fall within the cases where Article 37 GDPR makes one mandatory. If the gym appoints one, their contact details belong here.",
+          "Faixa BJJ hosts several gyms. Each gym is the controller of its members' data; the portal's operator processes it on the gym's behalf (processor) and does not access students', attendance or promotion data.",
         ],
       },
       {
@@ -784,5 +798,87 @@ export const en: Dictionary = {
     ],
     cookieRemoval:
       "You can delete cookies and local storage from your browser settings. Deleting the session cookie signs you out; deleting the others leaves the application working and back on its defaults.",
+  },
+  gyms: {
+    title: "Gyms",
+    subtitle: "The gyms hosted by the portal. Here you see each gym's details and its managers, never students, attendance or promotions.",
+    newGym: "New gym",
+    search: "Search by name",
+    filter: "Filter",
+    allStatuses: "All statuses",
+    status: { active: "Active", suspended: "Suspended" },
+    empty: "No gyms found.",
+    counts: (people: number, courses: number, managers: number) =>
+      `${people} active people · ${courses} courses · ${managers} managers`,
+    createdOn: (date: string) => `Created on ${date}`,
+    rowMenu: "Gym actions",
+    details: "Details",
+    suspend: "Suspend",
+    reactivate: "Reactivate",
+    confirmSuspend: (name: string) =>
+      `Suspend ${name}? None of its accounts can use the portal until you reactivate it.`,
+    confirmReactivate: (name: string) => `Reactivate ${name}?`,
+    back: "Gyms",
+    fields: {
+      name: "Gym name",
+      timezone: "Timezone",
+      trackingStartedOn: "Attendance tracking start",
+      trackingHelp: "Before this date hours are estimated; from this date attendance is counted. It cannot be in the future.",
+      sessionLengthHours: "Lesson length (hours)",
+      lessonsPerWeek: "Lessons per week, for estimating earlier hours",
+    },
+    create: "Create gym",
+    settings: "Settings",
+    settingsWarning: "Changing the timezone or the start date moves the check-in windows and the estimated hours of every member of this gym.",
+    save: "Save settings",
+    managers: "Managers",
+    managersHelp: "Managers run the gym: they create head coaches, instructors and students. They hold no belt.",
+    noManagers: "No managers: nobody can get into this gym yet.",
+    addManager: "Add manager",
+    managerName: "Full name",
+    managerEmail: "Email",
+    managerMenu: "Manager actions",
+    managerSince: (date: string) => `Manager since ${date}`,
+    noAccount: "no account",
+    resetPassword: "Reset password",
+    confirmReset: (email: string) =>
+      `Reset ${email}'s password to the default one? They will have to change it at their next login.`,
+    revoke: "Revoke access",
+    confirmRevoke: (email: string) =>
+      `Revoke ${email}'s access? The account is deleted; the person stays in the gym's registry.`,
+    danger: "Danger zone",
+    dangerHelp: "Deleting erases the gym, all its data (people, courses, attendance, promotions) and all its accounts. It cannot be undone.",
+    dangerNeedsSuspension: "Suspend the gym before you can delete it.",
+    confirmName: (name: string) => `Type “${name}” to confirm`,
+    delete: "Delete permanently",
+    confirmDelete: (name: string) => `Permanently delete ${name} and all its data?`,
+    invalid: {
+      name: "The name is required (120 characters at most).",
+      timezone: "Choose a timezone from the list.",
+      trackingStartedOn: "The start date must be a valid date, not in the future.",
+      sessionLengthHours: "The lesson length must be between 0 and 8 hours.",
+      lessonsPerWeek: "Lessons per week must be between 0 and 14.",
+    },
+    msg: {
+      created: (name: string) => `${name} created. Now add its first manager.`,
+      saved: "Settings saved.",
+      nameTaken: "A gym with this name already exists.",
+      failed: "The operation did not succeed. Try again.",
+      suspended: (name: string) => `${name} is suspended.`,
+      reactivated: (name: string) => `${name} is active again.`,
+      deleted: (name: string) => `${name} has been deleted.`,
+      deleteNeedsSuspension: "Suspend the gym before deleting it.",
+      deleteNameMismatch: "The name you typed does not match.",
+      accountsNotDeleted: (n: number) =>
+        `Gym deleted, but ${n} accounts were not removed: delete them from the Supabase dashboard.`,
+      managerAdded: (email: string, password: string) =>
+        `Manager ${email} created with the default password ${password}: they will change it at first login.`,
+      managerFailed: "Could not create the manager: the email may already be in use.",
+      managerMissing: "Name and email are required.",
+      notAManager: "This person is not a manager of this gym.",
+      passwordReset: (email: string) => `${email}'s password has been reset.`,
+      revoked: (email: string) => `${email}'s access has been revoked.`,
+      secretMissing: "Service key not configured: account operations are unavailable.",
+    },
   },
 };

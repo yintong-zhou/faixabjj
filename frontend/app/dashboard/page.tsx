@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AlertCircleIcon } from "@/components/icons";
-import { getOrCreateProfile } from "@/utils/supabase/profile";
-import { getAccess, requireAdmin } from "@/utils/supabase/require-admin";
+import { isPortalOnly } from "@/utils/members";
+import { activeRoles, getOrCreateProfile } from "@/utils/supabase/profile";
+import { requireAdmin } from "@/utils/supabase/require-admin";
+import { requireGymSettings } from "@/utils/supabase/gym";
+import { todayIn } from "@/utils/dates";
 import { getDictionary } from "@/utils/i18n/server";
 import { MemberDashboard } from "./member-dashboard";
 import { StaffDashboard } from "./staff-dashboard";
@@ -26,8 +29,8 @@ export default async function DashboardPage({
   searchParams: Promise<Search>;
 }) {
   const { v } = await searchParams;
-  const { supabase, userId, email } = await requireAdmin("/dashboard");
-  const access = await getAccess(supabase);
+  const { supabase, userId, email, access } = await requireAdmin("/dashboard");
+  const gym = await requireGymSettings();
   const { t } = await getDictionary();
 
   // The same predicate that opens Corsi and the roll call: instructors,
@@ -45,15 +48,17 @@ export default async function DashboardPage({
   //
   // A member sees no control: there is nothing to switch to, and offering the
   // choice would hint at a view they cannot open.
-  const showingMine = !isStaff || v === MINE;
+  // A portal-only admin is the exception to that: they run the portal and do
+  // not train, so they hold no belt and collect no hours. There is nothing for
+  // a personal view to draw, so the control is not offered and `v=mia` is
+  // ignored — a white belt from the column default and a row of zeroes is not
+  // "their own figures", it is a rank nobody gave them.
+  const profile = await getOrCreateProfile(supabase, userId, email);
+  const portalOnly =
+    isStaff && profile ? isPortalOnly(await activeRoles(supabase, profile.id)) : false;
 
-  // Unchanged in substance: the split is still in which queries run, not in
-  // which cards render. A gym-wide query is issued only when the gym view is
-  // the one actually being drawn.
-  const profile = showingMine
-    ? await getOrCreateProfile(supabase, userId, email)
-    : null;
-  const today = new Date().toISOString().slice(0, 10);
+  const showingMine = !portalOnly && (!isStaff || v === MINE);
+  const today = todayIn(gym.timezone);
 
   return (
     <div className="flex w-full flex-col gap-6 sm:gap-10">
@@ -62,7 +67,7 @@ export default async function DashboardPage({
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             {t.dashboard.title}
           </h1>
-          {isStaff ? (
+          {isStaff && !portalOnly ? (
             <ViewToggle
               showingMine={showingMine}
               gymHref="/dashboard"
@@ -78,9 +83,9 @@ export default async function DashboardPage({
       </header>
 
       {!showingMine ? (
-        <StaffDashboard supabase={supabase} today={today} t={t} />
+        <StaffDashboard supabase={supabase} today={today} gym={gym} t={t} />
       ) : profile ? (
-        <MemberDashboard supabase={supabase} profile={profile} today={today} t={t} />
+        <MemberDashboard supabase={supabase} profile={profile} today={today} gym={gym} t={t} />
       ) : (
         <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />

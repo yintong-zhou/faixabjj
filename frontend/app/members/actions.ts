@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient, MissingSecretKeyError } from "@/utils/supabase/admin";
 import {
   requireRegistryEditor,
@@ -10,6 +11,10 @@ import {
 } from "@/utils/supabase/require-admin";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { getDictionary } from "@/utils/i18n/server";
+import { todayIn } from "@/utils/dates";
+import { logDbError } from "@/utils/log";
+import { PORTAL_ONLY_ROLE } from "@/utils/members";
+import { requireGymSettings } from "@/utils/supabase/gym";
 import { BELT_ORDER } from "@/utils/supabase/profile";
 
 const PATH = "/members";
@@ -71,6 +76,90 @@ const number = (formData: FormData, key: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+// The service-role client below bypasses RLS, so before acting on an account
+// every action asks the *user's* client whether the target is one of the
+// caller's own people. RLS answers only inside the caller's gym: a user_id or
+// person_id from another gym, typed into a crafted POST, comes back empty.
+//
+// Selects email/full_name too, not just id/auth_user_id: inviteToPortal reads
+// the invite address and name off this row rather than trusting the form's
+// own fields, which a caller could otherwise set to someone else's address.
+async function personInMyGym(
+  supabase: SupabaseClient,
+  filter: { authUserId: string } | { personId: string },
+): Promise<{
+  id: string;
+  auth_user_id: string | null;
+  email: string | null;
+  full_name: string | null;
+} | null> {
+  const query = supabase
+    .from("person")
+    .select("id, auth_user_id, email, full_name");
+  const { data, error } = await ("authUserId" in filter
+    ? query.eq("auth_user_id", filter.authUserId)
+    : query.eq("id", filter.personId)
+  ).maybeSingle();
+  if (error) logDbError("members", "personInMyGym", error);
+  return (
+    (data as {
+      id: string;
+      auth_user_id: string | null;
+      email: string | null;
+      full_name: string | null;
+    } | null) ?? null
+  );
+}
+
+// Belt and braces for the actions that change or delete an account with the
+// service role. personInMyGym() rests on person.auth_user_id, which the
+// database now refuses to point at somebody else's account
+// (guard_person_auth_user); this checks the account itself as well, so a row
+// linked by any other route still cannot reach it. The account must say it
+// belongs to the caller's gym in its own app_metadata — written only by the
+// service role — and must not be a platform superadmin.
+async function accountInMyGym(
+  supabase: SupabaseClient,
+  admin: ReturnType<typeof createAdminClient>,
+  targetId: string,
+): Promise<boolean> {
+  const { data: gymId, error: gymIdError } = await supabase.rpc("current_gym_id");
+  if (gymIdError) logDbError("members", "accountInMyGym:current_gym_id", gymIdError);
+  if (!gymId) return false;
+
+  const { data: platformAdmin, error: platformAdminError } = await admin
+    .from("platform_admin")
+    .select("auth_user_id")
+    .eq("auth_user_id", targetId)
+    .maybeSingle();
+  if (platformAdminError) {
+    logDbError("members", "accountInMyGym:platform_admin", platformAdminError);
+    return false;
+  }
+  if (platformAdmin) {
+    console.error("[members] account action refused: target is a platform admin");
+    return false;
+  }
+
+  const { data, error } = await admin.auth.admin.getUserById(targetId);
+  if (error || !data?.user) {
+    logDbError(
+      "members",
+      "accountInMyGym:getUserById",
+      error
+        ? { code: error.code ?? null, message: error.message }
+        : { code: "no-user", message: "no user returned" },
+    );
+    return false;
+  }
+  const accountGymId = (data.user.app_metadata as { gym_id?: string } | undefined)?.gym_id;
+  if (accountGymId !== gymId) {
+    console.error("[members] account action refused: account belongs to another gym");
+    return false;
+  }
+  return true;
+}
+
 // Adds a member to the registry *and* creates their login account in one act.
 //
 // The account is created with the shared default password, its address marked
@@ -107,21 +196,35 @@ export async function addPerson(formData: FormData) {
     return;
   }
 
+  const role = formData.get("role") as string;
+  if (!ASSIGNABLE_ROLES.includes(role as (typeof ASSIGNABLE_ROLES)[number])) {
+    back({ error: t.msg.pickRole }, query);
+    return;
+  }
+
+  // An admin runs the portal and does not train, so they hold no rank: the
+  // belt is neither asked for nor stored, and the rank columns keep their
+  // defaults. Asking for one would record a grade nobody was given.
+  const portalOnly = role === PORTAL_ONLY_ROLE;
+
   const belt = formData.get("current_belt") as string;
-  if (!isBelt(belt)) {
+  if (!portalOnly && !isBelt(belt)) {
     back({ error: t.msg.pickBelt }, query);
     return;
   }
 
   const stripes = Number.parseInt((formData.get("current_stripes") as string) ?? "0", 10);
-  if (!Number.isInteger(stripes) || stripes < 0 || stripes > 4) {
+  if (!portalOnly && (!Number.isInteger(stripes) || stripes < 0 || stripes > 4)) {
     back({ error: t.msg.stripesRange }, query);
     return;
   }
 
-  const role = formData.get("role") as string;
-  if (!ASSIGNABLE_ROLES.includes(role as (typeof ASSIGNABLE_ROLES)[number])) {
-    back({ error: t.msg.pickRole }, query);
+  // The new account belongs to the caller's gym, named in app_metadata where
+  // the member cannot change it; the auth trigger creates the person row there.
+  const { data: gymId, error: gymIdError } = await supabase.rpc("current_gym_id");
+  if (gymIdError) logDbError("members", "addPerson:current_gym_id", gymIdError);
+  if (!gymId) {
+    back({ error: t.msg.accountNotCreated }, query);
     return;
   }
 
@@ -150,7 +253,7 @@ export async function addPerson(formData: FormData) {
     user_metadata: { full_name: fullName },
     // app_metadata, not user_metadata: the member must not be able to clear
     // their own obligation by editing their profile.
-    app_metadata: { must_change_password: true },
+    app_metadata: { must_change_password: true, gym_id: gymId },
   });
 
   if (authError || !created?.user) {
@@ -171,12 +274,19 @@ export async function addPerson(formData: FormData) {
       birth_date: text(formData, "birth_date"),
       joined_at: joinedAt,
       // Optional: left to the column defaults (today) when the field is empty.
-      ...(text(formData, "rank_since") ? { rank_since: text(formData, "rank_since") } : {}),
-      ...(text(formData, "stripe_since")
-        ? { stripe_since: text(formData, "stripe_since") }
-        : {}),
-      current_belt: belt,
-      current_stripes: stripes,
+      // An admin-only account skips the whole rank block for the reason above.
+      ...(portalOnly
+        ? {}
+        : {
+            ...(text(formData, "rank_since")
+              ? { rank_since: text(formData, "rank_since") }
+              : {}),
+            ...(text(formData, "stripe_since")
+              ? { stripe_since: text(formData, "stripe_since") }
+              : {}),
+            current_belt: belt,
+            current_stripes: stripes,
+          }),
       notes: text(formData, "notes"),
     })
     .eq("auth_user_id", created.user.id)
@@ -224,19 +334,29 @@ export async function inviteToPortal(formData: FormData) {
   const { t } = await getDictionary();
   // The admin client below uses the secret key, which bypasses Row Level
   // Security entirely, so the database will not enforce the privilege here.
-  await requireUserManager(PATH);
+  const { supabase } = await requireUserManager(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
-  const email = (formData.get("email") as string | null)?.trim();
-  const fullName = (formData.get("full_name") as string | null)?.trim();
+  const personId = (formData.get("person_id") as string | null) ?? "";
 
-  if (!email) {
-    back(
-      { error: t.msg.emailNeededToInvite },
-      query,
-    );
+  // The address and name come from the looked-up row, never from the form:
+  // the form's own `email`/`full_name` fields are only ever a display copy,
+  // and trusting them would let a caller post an account-less own-gym
+  // person_id together with a *different* person's email address.
+  const target = personId ? await personInMyGym(supabase, { personId }) : null;
+  const { data: gymId, error: gymIdError } = await supabase.rpc("current_gym_id");
+  if (gymIdError) logDbError("members", "inviteToPortal:current_gym_id", gymIdError);
+  if (!target || target.auth_user_id || !gymId) {
+    back({ error: t.msg.userNotInGym }, query);
     return;
   }
+
+  const email = target.email;
+  if (!email) {
+    back({ error: t.msg.emailNeededToInvite }, query);
+    return;
+  }
+  const fullName = target.full_name ?? "";
 
   let admin;
   try {
@@ -254,16 +374,82 @@ export async function inviteToPortal(formData: FormData) {
     return;
   }
 
-  const { error } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: fullName ?? "" },
+  const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, {
+    data: { full_name: fullName },
     redirectTo: `${await origin()}/reset-password`,
   });
 
-  if (error) {
-    back(
-      { error: t.msg.inviteFailed },
-      query,
+  if (error || !invited?.user) {
+    back({ error: t.msg.inviteFailed }, query);
+    return;
+  }
+
+  // For an unconfirmed existing user, GoTrue's inviteUserByEmail re-sends the
+  // invite and returns that same user instead of creating a new one. If that
+  // user already belongs to a gym (its own app_metadata, or a person row
+  // already pointing at it), it is not ours to touch — proceeding would move
+  // someone else's pending invitee into this gym.
+  const invitedGymId = (invited.user.app_metadata as { gym_id?: string } | undefined)
+    ?.gym_id;
+  if (invitedGymId && invitedGymId !== gymId) {
+    console.error(
+      "[members] inviteToPortal refused: invited user already belongs to another gym",
     );
+    back({ error: t.msg.inviteFailed }, query);
+    return;
+  }
+
+  const { data: existingPerson, error: existingPersonError } = await admin
+    .from("person")
+    .select("id")
+    .eq("auth_user_id", invited.user.id)
+    .maybeSingle();
+  if (existingPersonError) {
+    logDbError("members", "inviteToPortal:existingPerson", existingPersonError);
+  }
+  if (existingPerson) {
+    console.error(
+      "[members] inviteToPortal refused: invited user is already linked to a person row",
+    );
+    back({ error: t.msg.inviteFailed }, query);
+    return;
+  }
+
+  // inviteUserByEmail cannot set app_metadata, so the auth trigger saw no gym
+  // and made no profile. The link is made here instead: the registry row the
+  // maestro already has is pointed at the new account — only if it is still
+  // account-less, only in this gym — and only once that succeeds does the gym
+  // go into app_metadata, so a failed link never leaves the metadata rewritten
+  // on a user this gym was not entitled to touch.
+  const { data: linked, error: linkError } = await admin
+    .from("person")
+    .update({ auth_user_id: invited.user.id })
+    .eq("id", target.id)
+    .eq("gym_id", gymId as string)
+    .is("auth_user_id", null)
+    .select("id");
+
+  // `.update()` reports no error when the filter matches nothing, so an empty
+  // result — the row got linked by someone else between the check above and
+  // here — must be treated as a failure explicitly, or a lost race would show
+  // "invitation sent" while leaving an orphan auth user.
+  if (linkError || !linked || linked.length === 0) {
+    logDbError(
+      "members",
+      "inviteToPortal:link",
+      linkError ?? { code: "no-rows", message: "link matched no rows" },
+    );
+    back({ error: t.msg.inviteFailed }, query);
+    return;
+  }
+
+  const { error: metaError } = await admin.auth.admin.updateUserById(invited.user.id, {
+    app_metadata: { gym_id: gymId },
+  });
+
+  if (metaError) {
+    logDbError("members", "inviteToPortal:meta", metaError);
+    back({ error: t.msg.inviteFailed }, query);
     return;
   }
 
@@ -279,13 +465,18 @@ export async function inviteToPortal(formData: FormData) {
 // Without that flag this would leave an account on a password everyone knows.
 export async function setTemporaryPassword(formData: FormData) {
   const { t } = await getDictionary();
-  await requireUserManager(PATH);
+  const { supabase } = await requireUserManager(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
   const targetId = formData.get("user_id") as string;
 
   if (!targetId) {
     back({ error: t.msg.userNotSpecified }, query);
+    return;
+  }
+
+  if (!(await personInMyGym(supabase, { authUserId: targetId }))) {
+    back({ error: t.msg.userNotInGym }, query);
     return;
   }
 
@@ -297,6 +488,11 @@ export async function setTemporaryPassword(formData: FormData) {
       { error: t.msg.secretMissingReset },
       query,
     );
+    return;
+  }
+
+  if (!(await accountInMyGym(supabase, admin, targetId))) {
+    back({ error: t.msg.userNotInGym }, query);
     return;
   }
 
@@ -320,7 +516,7 @@ export async function setTemporaryPassword(formData: FormData) {
 
 export async function revokeAccess(formData: FormData) {
   const { t } = await getDictionary();
-  const { userId: currentUserId } = await requireUserManager(PATH);
+  const { supabase, userId: currentUserId } = await requireUserManager(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
   const targetId = formData.get("user_id") as string;
@@ -337,6 +533,11 @@ export async function revokeAccess(formData: FormData) {
     return;
   }
 
+  if (!(await personInMyGym(supabase, { authUserId: targetId }))) {
+    back({ error: t.msg.userNotInGym }, query);
+    return;
+  }
+
   let admin;
   try {
     admin = createAdminClient();
@@ -345,6 +546,11 @@ export async function revokeAccess(formData: FormData) {
       { error: t.msg.secretMissingRevoke },
       query,
     );
+    return;
+  }
+
+  if (!(await accountInMyGym(supabase, admin, targetId))) {
+    back({ error: t.msg.userNotInGym }, query);
     return;
   }
 
@@ -453,7 +659,7 @@ export async function correctRankDates(formData: FormData) {
   // Compared as ISO strings, which sort chronologically, and against the gym's
   // own "today" rather than the browser's — the date arrives as text and a
   // crafted POST is not bound by the input's `max`.
-  const today = new Date(Date.now()).toISOString().slice(0, 10);
+  const today = todayIn((await requireGymSettings()).timezone);
   if (rankSince > today || stripeSince > today) {
     detail({ error: t.msg.dateInFuture });
     return;
