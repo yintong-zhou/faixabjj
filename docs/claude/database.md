@@ -8,6 +8,7 @@ Plain SQL migrations in `supabase/migrations/` (Supabase CLI layout). Supabase (
 - `20260910120000_admin_rls_policies.sql` — original flat policies. **Superseded**, history only.
 - `20260911000000_account_management.sql` — profile trigger on `auth.users` insert + backfill, first `can_manage_users()`, anti-self-promotion guards.
 - `20260911120000_role_based_access.sql` — **the current permission model** (adds `admin`, per-role policies). Read first when reasoning about access.
+- `20260925000000`–`20260925030000` — multi-gym tenancy. Read `docs/claude/gyms.md` first.
 
 ## Applying migrations
 
@@ -17,9 +18,10 @@ Plain SQL migrations in `supabase/migrations/` (Supabase CLI layout). Supabase (
 ## Idempotent ≠ order-independent
 
 Several objects are defined in more than one migration; only the **last one run** survives:
-- `current_access()`: `20260911120000`, `20260912010000`
+- `current_access()`: `20260911120000`, `20260912010000`, `20260925030000` (now the last definition — adds `isPlatformAdmin`, `gymStatus`)
 - `member_overview`: `20260911140000`, `20260911200000`, `20260912000000`
 - `person_hours`: `20260910000000`, `20260912000000`
+- `gym_timezone()`: was a constant, redefined in `20260925010000` to read the caller's gym; keeps its zero-argument signature
 
 Pasting an earlier file alone silently reverts the object. Both past failures looked like data problems (staff falling back to member view; dashboard of zeros). Repairs `20260920000000_restore_current_access.sql` and `20260920010000_restore_member_overview.sql` restate the final definitions and sort last.
 
@@ -37,8 +39,9 @@ Pasting in the SQL Editor records nothing in `supabase_migrations.schema_migrati
 Known limits (structural, don't "fix"):
 - `create table if not exists` skips a table with a different shape — not a substitute for a real migration.
 - `20260910000000` cannot be replayed over a migrated DB: `20260912000000` drops `attendance.class_date`/`duration_hours`. From empty the history applies cleanly (21/21). For branches cloned from live, register migrations in `schema_migrations` instead.
+- The `gym_scope` trigger's first-gym fallback (`docs/claude/gyms.md`) never applies to `person`. Re-running the old profile backfill migration (`20260911000000`) on the live project fails with "No gym for this row." once `admin@bjj.com` is recorded as the platform superadmin with no `person` row. The Docker replay can't catch this: the stub has no `auth.users` rows, so that backfill is a no-op there either way.
 
-**Verify history changes by replaying, not reading:** `docker run postgres:17-alpine`, stub Supabase (roles `anon`/`authenticated`/`service_role`, schema `auth`, `auth.users`, `auth.uid()`), run every file in name order with `psql -v ON_ERROR_STOP=1`, **twice**. This caught bugs reading the diff missed.
+**Verify history changes by replaying, not reading:** `bash supabase/tests/replay.sh [--isolation]` — runs `postgres:17-alpine` in Docker, stubs Supabase (roles `anon`/`authenticated`/`service_role`, schema `auth`, `auth.users`, `auth.uid()`), runs every file in name order with `psql -v ON_ERROR_STOP=1`, **twice**, and with `--isolation` also runs `supabase/tests/tenant-isolation.sql`. This caught bugs reading the diff missed. Never run anything in `supabase/tests/` against a real project.
 
 ## Views
 

@@ -36,8 +36,9 @@ Not flat. Role = an **active** `assigned_role` (`end_date is null`); no active r
 | `instructor` | read-only   | full                             | no             | no              |
 | `head_coach` | full        | full                             | yes            | yes             |
 | `admin`      | full        | full                             | yes            | yes             |
+| platform superadmin | not visible | not visible                | no              | only gym managers, from `/gyms` |
 
-`assistant` with `student` was an explicit decision. `admin` = runs the portal without teaching.
+`assistant` with `student` was an explicit decision. `admin` = runs the portal without teaching. The platform superadmin sits outside every gym — see `docs/claude/gyms.md` for `isPlatformAdmin`, `gymStatus` and the `/suspended` redirect.
 
 - SQL predicates: `can_view_registry()`, `can_edit_registry()`, `can_manage_users()`, `can_manage_classes()`; `current_access()` returns all four as JSON. Frontend uses `getAccess()`, `requireRegistryViewer()`, `requireRegistryEditor()`, `requireUserManager()`, `requireClassManager()` — never re-implement rules; one definition per privilege.
 - `getAccess()` **fails closed**: RPC error = no access.
@@ -51,7 +52,7 @@ Looks simplifiable, is not:
 - Trigger `guard_person_auth_link` on `person` freezes `auth_user_id` against non-managers and `current_belt`/`current_stripes`/`rank_since`/`stripe_since` against non-editors. RLS can't: a member legitimately UPDATEs their own row. It skips when `auth.uid()` is null (service role, and the FK `ON DELETE SET NULL` cascade — otherwise deleting a user fails).
 - `admin` is never a literal in migration SQL (`role::text = any(...)`): a freshly added enum value can't be used in the same transaction, breaking a from-scratch replay.
 
-**Bootstrap:** after migrations nobody has a role. The first `head_coach` is inserted by hand; the statement is commented out at the bottom of both migrations on purpose (no hidden privilege grants).
+**Bootstrap:** after migrations nobody has a role. The first `head_coach` is inserted by hand; the statement is commented out at the bottom of both migrations on purpose (no hidden privilege grants). The first platform superadmin is granted the same way, by hand: `supabase/scripts/bootstrap-platform-admin.sql` (not a migration — see `docs/claude/gyms.md`).
 
 ## Account management (`/account`, `/members`)
 

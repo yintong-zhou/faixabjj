@@ -701,6 +701,7 @@ export const en: Dictionary = {
         paragraphs: [
           "The data controller is [GYM NAME], with registered office at [FULL ADDRESS], reachable at [CONTACT EMAIL].",
           "No Data Protection Officer has been appointed: the processing does not fall within the cases where Article 37 GDPR makes one mandatory. If the gym appoints one, their contact details belong here.",
+          "Faixa BJJ hosts several gyms. Each gym is the controller of its members' data; the portal's operator processes it on the gym's behalf (processor) and does not access students', attendance or promotion data.",
         ],
       },
       {

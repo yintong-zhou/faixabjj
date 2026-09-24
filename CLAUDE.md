@@ -9,6 +9,7 @@ Guidance for Claude Code working in this repository. Details live in `docs/claud
 | `/members` (Registro), account actions, promotions, criteria, belt ladders  | `docs/claude/members-and-promotions.md`  |
 | `/courses`, `/attendance`, roll call, check-in, hours, `/dashboard`         | `docs/claude/attendance-and-dashboard.md`|
 | i18n, privacy/cookies, theme, nav, belts, icons, SEO                        | `docs/claude/frontend-ui.md`             |
+| Gyms, superadmin, tenancy, per-gym settings                                 | `docs/claude/gyms.md`                    |
 
 ## What this project is
 
@@ -60,6 +61,7 @@ Vitest covers pure functions in `frontend/utils/` only — no jsdom, no componen
 - **Promotion is never self-service**, and **a member never sees remaining hours, next grade or a verdict**. Eligibility is decided only in `promotionStatus()` (`utils/promotion.ts`).
 - **Hours are added only by check-in or roll call.** One attendance = one hour. Estimated hours are labelled as estimates. `utils/hours.ts` is the single definition.
 - **Service-role client** (`utils/supabase/admin.ts`, `server-only`) bypasses RLS: every action using it re-checks its guard.
+- **Every domain row belongs to a gym.** New table → gym_id + gym_scope trigger + restrictive "gym isolation" policy, then run supabase/tests/replay.sh --isolation. Faixa BJJ is the product name, never a gym's.
 - **No user-facing string hardcoded**; three languages (en default, it authoring, pt-BR). URL paths in English.
 - **Dates dd/mm/yyyy** via `formatDate()`, formatted in UTC; never render a raw date column.
 - **Belts shown as the `Belt` graphic**, never colour + stripe count.

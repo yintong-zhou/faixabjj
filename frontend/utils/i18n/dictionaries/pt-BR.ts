@@ -703,6 +703,7 @@ export const ptBR: Dictionary = {
         paragraphs: [
           "O controlador dos dados é [NOME DA ACADEMIA], com sede em [ENDEREÇO COMPLETO], contactável em [E-MAIL DE CONTATO].",
           "Não foi nomeado um Encarregado da proteção de dados (DPO): o tratamento não se enquadra nos casos em que o artigo 37 do GDPR o torna obrigatório. Se a academia nomear um, os contatos dele entram aqui.",
+          "O Faixa BJJ hospeda várias academias. Cada academia é a controladora dos dados dos seus membros; o operador do portal os trata em nome da academia (operador) e não acessa dados de alunos, presenças ou graduações.",
         ],
       },
       {

@@ -726,6 +726,7 @@ export const it = {
         paragraphs: [
           "Titolare del trattamento è [NOME DELLA PALESTRA], con sede in [INDIRIZZO COMPLETO], contattabile all'indirizzo [EMAIL DI CONTATTO].",
           "Non è stato nominato un Responsabile della protezione dei dati (DPO): il trattamento non rientra fra i casi in cui l'articolo 37 del GDPR lo rende obbligatorio. Se la palestra decide di nominarlo, i suoi contatti vanno aggiunti qui.",
+          "Faixa BJJ ospita più palestre. Ogni palestra è titolare dei dati dei propri iscritti; il gestore del portale li tratta per conto della palestra (responsabile del trattamento) e non accede ai dati di allievi, presenze o promozioni.",
         ],
       },
       {
