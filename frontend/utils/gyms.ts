@@ -9,7 +9,8 @@ export type GymFormError =
   | "timezone"
   | "trackingStartedOn"
   | "sessionLengthHours"
-  | "lessonsPerWeek";
+  | "lessonsPerWeek"
+  | "location";
 
 export type GymForm = {
   name: string;
@@ -17,18 +18,50 @@ export type GymForm = {
   trackingStartedOn: string;
   sessionLengthHours: number;
   lessonsPerWeek: number;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 export type GymFormInput = Record<
   "name" | "timezone" | "tracking_started_on" | "session_length_hours" | "lessons_per_week",
   string | null | undefined
->;
+> &
+  Partial<Record<"latitude" | "longitude", string | null | undefined>>;
 
 export type ParsedGymForm =
   | { ok: true; value: GymForm }
   | { ok: false; error: GymFormError };
 
+export type GymLocation = { latitude: number; longitude: number };
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+const trimmed = (raw: unknown) => (typeof raw === "string" ? raw.trim() : "");
+
+// Both or neither. A comma is read as the decimal point, the way an Italian or
+// Brazilian keyboard types it; the database re-checks the range
+// (gym_location_valid).
+export function parseLocation(
+  rawLat: unknown,
+  rawLng: unknown,
+): { ok: true; value: GymLocation | null } | { ok: false } {
+  const lat = trimmed(rawLat);
+  const lng = trimmed(rawLng);
+  if (lat === "" && lng === "") return { ok: true, value: null };
+  if (lat === "" || lng === "") return { ok: false };
+
+  const latitude = Number(lat.replace(",", "."));
+  const longitude = Number(lng.replace(",", "."));
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    Math.abs(latitude) > 90 ||
+    Math.abs(longitude) > 180
+  ) {
+    return { ok: false };
+  }
+  return { ok: true, value: { latitude, longitude } };
+}
 
 function isRealDate(value: string): boolean {
   if (!ISO_DATE.test(value)) return false;
@@ -64,9 +97,20 @@ export function parseGymForm(input: GymFormInput, today: string): ParsedGymForm 
   const lessonsPerWeek = inRange(input.lessons_per_week, 0, 14);
   if (lessonsPerWeek === null) return { ok: false, error: "lessonsPerWeek" };
 
+  const location = parseLocation(input.latitude, input.longitude);
+  if (!location.ok) return { ok: false, error: "location" };
+
   return {
     ok: true,
-    value: { name, timezone, trackingStartedOn, sessionLengthHours, lessonsPerWeek },
+    value: {
+      name,
+      timezone,
+      trackingStartedOn,
+      sessionLengthHours,
+      lessonsPerWeek,
+      latitude: location.value?.latitude ?? null,
+      longitude: location.value?.longitude ?? null,
+    },
   };
 }
 
