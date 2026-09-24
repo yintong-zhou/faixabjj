@@ -403,4 +403,37 @@ do $$ begin
   end if;
 end $$;
 
+-- T15: GoTrue's admin createUser inserts the auth user first and writes
+-- app_metadata in a second statement, so the gym only appears on UPDATE. The
+-- person must still be created (or an account-less one linked) in that gym,
+-- exactly once, and a later metadata change must not add another row.
+insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data) values
+  ('00000000-0000-0000-0000-0000000000e1', 'new-manager@test', '{"full_name":"New Manager"}', '{"provider":"email"}'),
+  ('00000000-0000-0000-0000-0000000000e2', 'relink@test', '{}', '{"provider":"email"}');
+insert into public.person (full_name, email, gym_id)
+values ('Relink', 'relink@test', current_setting('test.gym_a')::uuid);
+
+update auth.users
+   set raw_app_meta_data = raw_app_meta_data || jsonb_build_object('must_change_password', true, 'gym_id', current_setting('test.gym_a'))
+ where id in ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-0000000000e2');
+-- A later write that keeps the gym (setTemporaryPassword) changes nothing.
+update auth.users
+   set raw_app_meta_data = raw_app_meta_data || '{"must_change_password": true}'
+ where id = '00000000-0000-0000-0000-0000000000e1';
+
+do $$ begin
+  if (select count(*) from public.person
+       where auth_user_id = '00000000-0000-0000-0000-0000000000e1'
+         and gym_id = current_setting('test.gym_a')::uuid
+         and full_name = 'New Manager') <> 1 then
+    raise exception 'FAIL T15: a gym written after insert did not create exactly one person';
+  end if;
+  if (select count(*) from public.person where email = 'relink@test') <> 1
+     or not exists (select 1 from public.person
+                     where email = 'relink@test'
+                       and auth_user_id = '00000000-0000-0000-0000-0000000000e2') then
+    raise exception 'FAIL T15: a gym written after insert did not link the account-less person';
+  end if;
+end $$;
+
 select 'tenant isolation: all checks passed' as result;
