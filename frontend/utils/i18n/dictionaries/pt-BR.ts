@@ -28,6 +28,7 @@ export const ptBR: Dictionary = {
     corsi: "Aulas",
     registro: "Alunos",
     account: "Conta",
+    gyms: "Academias",
     signIn: "Entrar",
     signOut: "Sair",
     menu: "Menu",
@@ -245,6 +246,11 @@ export const ptBR: Dictionary = {
     updatePassword: "Atualizar senha",
     passwordMinimum: "Pelo menos 8 caracteres.",
     estimateSuffix: "(estimativa)",
+  },
+
+  suspended: {
+    title: "Academia suspensa",
+    body: "O acesso a esta academia foi suspenso pela administração do portal. Os dados são mantidos e voltarão a ficar disponíveis se a academia for reativada. Para informações, fale com quem administra a sua academia.",
   },
 
   dashboard: {

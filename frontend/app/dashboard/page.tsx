@@ -4,7 +4,7 @@ import Link from "next/link";
 import { AlertCircleIcon } from "@/components/icons";
 import { isPortalOnly } from "@/utils/members";
 import { activeRoles, getOrCreateProfile } from "@/utils/supabase/profile";
-import { getAccess, requireAdmin } from "@/utils/supabase/require-admin";
+import { requireAdmin } from "@/utils/supabase/require-admin";
 import { getDictionary } from "@/utils/i18n/server";
 import { MemberDashboard } from "./member-dashboard";
 import { StaffDashboard } from "./staff-dashboard";
@@ -27,8 +27,7 @@ export default async function DashboardPage({
   searchParams: Promise<Search>;
 }) {
   const { v } = await searchParams;
-  const { supabase, userId, email } = await requireAdmin("/dashboard");
-  const access = await getAccess(supabase);
+  const { supabase, userId, email, access } = await requireAdmin("/dashboard");
   const { t } = await getDictionary();
 
   // The same predicate that opens Corsi and the roll call: instructors,

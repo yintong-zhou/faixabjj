@@ -30,6 +30,16 @@ export function UsersIcon({ className }: IconProps) {
   );
 }
 
+export function BuildingIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <rect x="5" y="3.5" width="14" height="17" rx="1.5" />
+      <path d="M9 7.5h1.5M13.5 7.5H15M9 11h1.5M13.5 11H15M9 14.5h1.5M13.5 14.5H15" />
+      <path d="M10.5 20.5v-3h3v3" />
+    </svg>
+  );
+}
+
 export function CalendarCheckIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...strokeProps}>

@@ -32,6 +32,7 @@ export const it = {
     corsi: "Corsi",
     registro: "Registro",
     account: "Account",
+    gyms: "Palestre",
     signIn: "Accedi",
     signOut: "Esci",
     menu: "Menu",
@@ -257,6 +258,11 @@ export const it = {
     updatePassword: "Aggiorna password",
     passwordMinimum: "Almeno 8 caratteri.",
     estimateSuffix: "(stima)",
+  },
+
+  suspended: {
+    title: "Palestra sospesa",
+    body: "L'accesso a questa palestra è stato sospeso dall'amministrazione del portale. I dati sono conservati e torneranno disponibili se la palestra viene riattivata. Per informazioni rivolgiti a chi gestisce la tua palestra.",
   },
 
   dashboard: {

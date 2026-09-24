@@ -13,6 +13,7 @@ const PROTECTED_PREFIXES = [
   "/dashboard",
   "/account",
   "/change-password",
+  "/gyms",
 ];
 
 const PASSWORD_CHANGE_PATH = "/change-password";
@@ -49,7 +50,8 @@ export const updateSession = async (request: NextRequest) => {
   // the redirects below so there is only ever one hop. Signing out stays
   // reachable — otherwise the only way out would be clearing cookies — and so
   // does the privacy notice: a legal notice nobody can open is not a notice,
-  // and holding it hostage to a password change buys nothing.
+  // and holding it hostage to a password change buys nothing — and so does the
+  // page telling a suspended gym's members why they cannot get in.
   const appMetadata = claimsData?.claims?.app_metadata as
     | { must_change_password?: boolean }
     | undefined;
@@ -59,6 +61,7 @@ export const updateSession = async (request: NextRequest) => {
     appMetadata?.must_change_password === true &&
     pathname !== PASSWORD_CHANGE_PATH &&
     pathname !== "/privacy" &&
+    pathname !== "/suspended" &&
     !pathname.startsWith("/auth/")
   ) {
     const url = request.nextUrl.clone();

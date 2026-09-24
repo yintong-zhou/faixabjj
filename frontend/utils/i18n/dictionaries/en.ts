@@ -27,6 +27,7 @@ export const en: Dictionary = {
     corsi: "Classes",
     registro: "Members",
     account: "Account",
+    gyms: "Gyms",
     signIn: "Sign in",
     signOut: "Sign out",
     menu: "Menu",
@@ -243,6 +244,11 @@ export const en: Dictionary = {
     updatePassword: "Update password",
     passwordMinimum: "At least 8 characters.",
     estimateSuffix: "(estimate)",
+  },
+
+  suspended: {
+    title: "Gym suspended",
+    body: "Access to this gym has been suspended by the portal's administration. Its data is kept and will be available again if the gym is reactivated. For information, ask whoever runs your gym.",
   },
 
   dashboard: {
