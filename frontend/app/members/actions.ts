@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient, MissingSecretKeyError } from "@/utils/supabase/admin";
 import {
   requireRegistryEditor,
@@ -72,6 +73,22 @@ const number = (formData: FormData, key: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+// The service-role client below bypasses RLS, so before acting on an account
+// every action asks the *user's* client whether the target is one of the
+// caller's own people. RLS answers only inside the caller's gym: a user_id or
+// person_id from another gym, typed into a crafted POST, comes back empty.
+async function personInMyGym(
+  supabase: SupabaseClient,
+  filter: { authUserId: string } | { personId: string },
+): Promise<{ id: string; auth_user_id: string | null } | null> {
+  const query = supabase.from("person").select("id, auth_user_id");
+  const { data } = await ("authUserId" in filter
+    ? query.eq("auth_user_id", filter.authUserId)
+    : query.eq("id", filter.personId)
+  ).maybeSingle();
+  return (data as { id: string; auth_user_id: string | null } | null) ?? null;
+}
+
 // Adds a member to the registry *and* creates their login account in one act.
 //
 // The account is created with the shared default password, its address marked
@@ -131,6 +148,14 @@ export async function addPerson(formData: FormData) {
     return;
   }
 
+  // The new account belongs to the caller's gym, named in app_metadata where
+  // the member cannot change it; the auth trigger creates the person row there.
+  const { data: gymId } = await supabase.rpc("current_gym_id");
+  if (!gymId) {
+    back({ error: t.msg.accountNotCreated }, query);
+    return;
+  }
+
   let admin;
   try {
     admin = createAdminClient();
@@ -156,7 +181,7 @@ export async function addPerson(formData: FormData) {
     user_metadata: { full_name: fullName },
     // app_metadata, not user_metadata: the member must not be able to clear
     // their own obligation by editing their profile.
-    app_metadata: { must_change_password: true },
+    app_metadata: { must_change_password: true, gym_id: gymId },
   });
 
   if (authError || !created?.user) {
@@ -237,17 +262,25 @@ export async function inviteToPortal(formData: FormData) {
   const { t } = await getDictionary();
   // The admin client below uses the secret key, which bypasses Row Level
   // Security entirely, so the database will not enforce the privilege here.
-  await requireUserManager(PATH);
+  const { supabase } = await requireUserManager(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
   const email = (formData.get("email") as string | null)?.trim();
   const fullName = (formData.get("full_name") as string | null)?.trim();
+  const personId = (formData.get("person_id") as string | null) ?? "";
 
   if (!email) {
     back(
       { error: t.msg.emailNeededToInvite },
       query,
     );
+    return;
+  }
+
+  const target = personId ? await personInMyGym(supabase, { personId }) : null;
+  const { data: gymId } = await supabase.rpc("current_gym_id");
+  if (!target || target.auth_user_id || !gymId) {
+    back({ error: t.msg.userNotInGym }, query);
     return;
   }
 
@@ -267,16 +300,35 @@ export async function inviteToPortal(formData: FormData) {
     return;
   }
 
-  const { error } = await admin.auth.admin.inviteUserByEmail(email, {
+  const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, {
     data: { full_name: fullName ?? "" },
     redirectTo: `${await origin()}/reset-password`,
   });
 
-  if (error) {
-    back(
-      { error: t.msg.inviteFailed },
-      query,
+  if (error || !invited?.user) {
+    back({ error: t.msg.inviteFailed }, query);
+    return;
+  }
+
+  // inviteUserByEmail cannot set app_metadata, so the auth trigger saw no gym
+  // and made no profile. The link is made here instead: the gym goes into
+  // app_metadata, and the registry row the maestro already has is pointed at
+  // the new account — only if it is still account-less, only in this gym.
+  const { error: metaError } = await admin.auth.admin.updateUserById(invited.user.id, {
+    app_metadata: { gym_id: gymId },
+  });
+  const { error: linkError } = await admin
+    .from("person")
+    .update({ auth_user_id: invited.user.id })
+    .eq("id", target.id)
+    .eq("gym_id", gymId as string)
+    .is("auth_user_id", null);
+
+  if (metaError || linkError) {
+    console.error(
+      `[members] inviteToPortal link failed: ${metaError?.code ?? ""} ${linkError?.code ?? ""}`.trim(),
     );
+    back({ error: t.msg.inviteFailed }, query);
     return;
   }
 
@@ -292,13 +344,18 @@ export async function inviteToPortal(formData: FormData) {
 // Without that flag this would leave an account on a password everyone knows.
 export async function setTemporaryPassword(formData: FormData) {
   const { t } = await getDictionary();
-  await requireUserManager(PATH);
+  const { supabase } = await requireUserManager(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
   const targetId = formData.get("user_id") as string;
 
   if (!targetId) {
     back({ error: t.msg.userNotSpecified }, query);
+    return;
+  }
+
+  if (!(await personInMyGym(supabase, { authUserId: targetId }))) {
+    back({ error: t.msg.userNotInGym }, query);
     return;
   }
 
@@ -333,7 +390,7 @@ export async function setTemporaryPassword(formData: FormData) {
 
 export async function revokeAccess(formData: FormData) {
   const { t } = await getDictionary();
-  const { userId: currentUserId } = await requireUserManager(PATH);
+  const { supabase, userId: currentUserId } = await requireUserManager(PATH);
 
   const query = (formData.get("_query") as string | null) ?? "";
   const targetId = formData.get("user_id") as string;
@@ -347,6 +404,11 @@ export async function revokeAccess(formData: FormData) {
   // the last manager it would leave the portal with nobody able to invite.
   if (targetId === currentUserId) {
     back({ error: t.msg.cannotRevokeSelf }, query);
+    return;
+  }
+
+  if (!(await personInMyGym(supabase, { authUserId: targetId }))) {
+    back({ error: t.msg.userNotInGym }, query);
     return;
   }
 

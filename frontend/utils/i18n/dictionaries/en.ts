@@ -487,6 +487,7 @@ export const en: Dictionary = {
     joinDateRequired: "The join date is required.",
     stripesRange: "Stripes must be a number from 0 to 4.",
     userNotSpecified: "No user specified.",
+    userNotInGym: "This person is not part of your gym.",
     adminClientMissing: "The admin client is not available.",
     secretMissingCreate:
       "SUPABASE_SECRET_KEY is not configured: accounts cannot be created.",

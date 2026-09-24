@@ -505,6 +505,7 @@ export const it = {
     joinDateRequired: "La data di iscrizione è obbligatoria.",
     stripesRange: "Le tacche devono essere un numero da 0 a 4.",
     userNotSpecified: "Utente non specificato.",
+    userNotInGym: "Questa persona non fa parte della tua palestra.",
     adminClientMissing: "Client di amministrazione non disponibile.",
     secretMissingCreate:
       "SUPABASE_SECRET_KEY non è configurata: non è possibile creare account.",

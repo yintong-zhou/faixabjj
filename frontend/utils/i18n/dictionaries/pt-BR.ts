@@ -489,6 +489,7 @@ export const ptBR: Dictionary = {
     joinDateRequired: "A data de matrícula é obrigatória.",
     stripesRange: "Os graus devem ser um número de 0 a 4.",
     userNotSpecified: "Usuário não especificado.",
+    userNotInGym: "Esta pessoa não faz parte da sua academia.",
     adminClientMissing: "Cliente de administração indisponível.",
     secretMissingCreate:
       "SUPABASE_SECRET_KEY não está configurada: não é possível criar contas.",

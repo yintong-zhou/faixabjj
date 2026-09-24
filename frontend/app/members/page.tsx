@@ -612,6 +612,7 @@ export default async function RegistroPage({
                 {access.canEditRegistry && canInvite ? (
                     <form action={inviteToPortal}>
                       <input type="hidden" name="_query" value={currentQuery} />
+                      <input type="hidden" name="person_id" value={member.id} />
                       <input type="hidden" name="email" value={member.email ?? ""} />
                       <input type="hidden" name="full_name" value={member.full_name} />
                       <button type="submit" className={menuItemClass}>
