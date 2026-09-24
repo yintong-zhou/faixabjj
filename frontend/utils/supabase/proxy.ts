@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { underPath } from "@/utils/paths";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -14,6 +15,8 @@ const PROTECTED_PREFIXES = [
   "/account",
   "/change-password",
   "/gyms",
+  "/check-in",
+  "/gym",
 ];
 
 const PASSWORD_CHANGE_PATH = "/change-password";
@@ -43,7 +46,7 @@ export const updateSession = async (request: NextRequest) => {
   const isLoggedIn = !!claimsData?.claims;
 
   const { pathname } = request.nextUrl;
-  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const isProtected = PROTECTED_PREFIXES.some((prefix) => underPath(pathname, prefix));
 
   // An account created from the Registro starts on a shared default password,
   // so nothing else in the app opens until it has been replaced. Checked before
