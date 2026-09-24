@@ -20,7 +20,7 @@ Faixa BJJ is the **product**; it hosts isolated gyms that share nothing. The fir
 - Row in `platform_admin` (granted by hand: `supabase/scripts/bootstrap-platform-admin.sql`), **no `person` row**: no gym, no belt, no hours. The bootstrap script also removes `admin@bjj.com`'s existing gym `person`/role rows, and aborts if that account is recorded as a course or session instructor (or has attendance or promotions) rather than silently orphaning them.
 - Sees `gym` and two definer functions only: `gym_overview()` (aggregates) and `gym_managers(gym_id)` (a gym's admins). Never students, attendance or promotions — least privilege, and the platform is the gyms' data processor.
 - `current_access()` (final definition in `20260925030000`) adds `isPlatformAdmin` and `gymStatus`; the four gym flags are false outside an active gym.
-- `requireAdmin()` redirects a suspended gym's users to `/suspended`, sends the superadmin from `/dashboard` to `/gyms`, and answers 404 on every other gym page for them. `requirePlatformAdmin()` guards `/gyms/*` (404).
+- `requireAdmin()` redirects a suspended gym's users — and any non-superadmin account in no gym (an orphan) — to `/suspended`, which tells the two apart, sends the superadmin from `/dashboard` to `/gyms`, and answers 404 on every other gym page for them. `requirePlatformAdmin()` guards `/gyms/*` (404).
 - Nav for the superadmin: *Palestre*, *Account*. `/account` shows email and password only.
 
 ## Gym managers
@@ -41,4 +41,4 @@ Faixa BJJ is the **product**; it hosts isolated gyms that share nothing. The fir
 
 ## Deleting a gym
 
-Only when suspended, with the exact name typed (`deletionConfirmed()`). The `gym` row is deleted first — the cascade erases everything — then its auth accounts with the service role; failures are reported as a count. `guard_course_delete` lets the cascade through (the parent `gym` is already gone) and still refuses a direct delete of a course with attendance.
+Only when suspended, with the exact name typed (`deletionConfirmed()`). The `gym` row is deleted first, with `status = suspended` re-checked in the delete itself — the cascade erases everything — then its auth accounts with the service role; failures are reported as a count; a `platform_admin` account is never deleted from here. `guard_course_delete` lets the cascade through (the parent `gym` is already gone) and still refuses a direct delete of a course with attendance.

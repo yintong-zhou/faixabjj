@@ -251,6 +251,8 @@ export const en: Dictionary = {
   suspended: {
     title: "Gym suspended",
     body: "Access to this gym has been suspended by the portal's administration. Its data is kept and will be available again if the gym is reactivated. For information, ask whoever runs your gym.",
+    noGymTitle: "Account without a gym",
+    noGymBody: "This account does not belong to any gym, so there is nothing to show. For information, ask whoever runs your gym.",
   },
 
   dashboard: {

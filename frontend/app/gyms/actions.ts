@@ -177,7 +177,31 @@ export async function deleteGym(formData: FormData) {
     to(detail, { error: t.gyms.msg.failed });
   }
 
-  const { data: deleted, error } = await supabase.from("gym").delete().eq("id", id).select("id");
+  // No person row may be linked to a platform superadmin (the database refuses
+  // it: guard_person_auth_user), but this loop deletes auth accounts with the
+  // service role, so it does not rest on that alone: a superadmin account is
+  // never deleted from here. Unknown superadmins would make the skip
+  // meaningless, so a failed lookup stops the deletion like the one above.
+  const { data: platformAdmins, error: platformAdminsError } = await admin
+    .from("platform_admin")
+    .select("auth_user_id");
+  if (platformAdminsError) {
+    logDbError("gyms", "deleteGym:platformAdmins", platformAdminsError);
+    to(detail, { error: t.gyms.msg.failed });
+  }
+  const protectedIds = new Set(
+    ((platformAdmins ?? []) as { auth_user_id: string }[]).map((r) => r.auth_user_id),
+  );
+
+  // Status re-checked in the delete itself: a gym reactivated since the lookup
+  // above matches no row, and the zero-row check turns the lost race into a
+  // failure instead of deleting an active gym.
+  const { data: deleted, error } = await supabase
+    .from("gym")
+    .delete()
+    .eq("id", id)
+    .eq("status", "suspended")
+    .select("id");
   if (error || !deleted || deleted.length === 0) {
     logDbError("gyms", "deleteGym", error ?? { code: "no-rows", message: "delete matched no rows" });
     to(detail, { error: t.gyms.msg.failed });
@@ -185,6 +209,10 @@ export async function deleteGym(formData: FormData) {
 
   let failed = 0;
   for (const row of (accounts ?? []) as { auth_user_id: string }[]) {
+    if (protectedIds.has(row.auth_user_id)) {
+      console.error("[gyms] deleteGym skipped a platform admin account linked to the gym");
+      continue;
+    }
     const { error: authError } = await admin.auth.admin.deleteUser(row.auth_user_id);
     if (authError) {
       logDbError("gyms", "deleteGym:deleteUser", { code: authError.code ?? null, message: authError.message });

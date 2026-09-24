@@ -253,6 +253,8 @@ export const ptBR: Dictionary = {
   suspended: {
     title: "Academia suspensa",
     body: "O acesso a esta academia foi suspenso pela administração do portal. Os dados são mantidos e voltarão a ficar disponíveis se a academia for reativada. Para informações, fale com quem administra a sua academia.",
+    noGymTitle: "Conta sem academia",
+    noGymBody: "Esta conta não pertence a nenhuma academia, por isso não há nada para mostrar. Para informações, fale com quem administra a sua academia.",
   },
 
   dashboard: {

@@ -95,6 +95,16 @@ export async function requireAdmin(path: string): Promise<AdminSessionWithAccess
     redirect(SUSPENDED_PATH);
   }
 
+  // An account in no gym that is not the superadmin — an orphan left by a
+  // failed account deletion, say — has nothing to open anywhere: say so on the
+  // same page instead of a bare 404 on every gym page. No legitimate first
+  // login lands here: an account gets its person row (and so its gym) when it
+  // is created or invited, and the lazy self-insert of getOrCreateProfile
+  // cannot give a gym to an account that has none.
+  if (access.gymStatus === null && !access.isPlatformAdmin) {
+    redirect(SUSPENDED_PATH);
+  }
+
   if (access.isPlatformAdmin && !PLATFORM_PATHS.some((p) => path.startsWith(p))) {
     if (path === "/dashboard") redirect("/gyms");
     notFound();

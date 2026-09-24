@@ -265,6 +265,8 @@ export const it = {
   suspended: {
     title: "Palestra sospesa",
     body: "L'accesso a questa palestra è stato sospeso dall'amministrazione del portale. I dati sono conservati e torneranno disponibili se la palestra viene riattivata. Per informazioni rivolgiti a chi gestisce la tua palestra.",
+    noGymTitle: "Account senza palestra",
+    noGymBody: "Questo account non appartiene a nessuna palestra, quindi non c'è nulla da mostrare. Per informazioni rivolgiti a chi gestisce la tua palestra.",
   },
 
   dashboard: {
