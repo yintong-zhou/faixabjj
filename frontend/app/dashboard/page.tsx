@@ -5,6 +5,8 @@ import { AlertCircleIcon } from "@/components/icons";
 import { isPortalOnly } from "@/utils/members";
 import { activeRoles, getOrCreateProfile } from "@/utils/supabase/profile";
 import { requireAdmin } from "@/utils/supabase/require-admin";
+import { requireGymSettings } from "@/utils/supabase/gym";
+import { todayIn } from "@/utils/dates";
 import { getDictionary } from "@/utils/i18n/server";
 import { MemberDashboard } from "./member-dashboard";
 import { StaffDashboard } from "./staff-dashboard";
@@ -28,6 +30,7 @@ export default async function DashboardPage({
 }) {
   const { v } = await searchParams;
   const { supabase, userId, email, access } = await requireAdmin("/dashboard");
+  const gym = await requireGymSettings();
   const { t } = await getDictionary();
 
   // The same predicate that opens Corsi and the roll call: instructors,
@@ -55,7 +58,7 @@ export default async function DashboardPage({
     isStaff && profile ? isPortalOnly(await activeRoles(supabase, profile.id)) : false;
 
   const showingMine = !portalOnly && (!isStaff || v === MINE);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIn(gym.timezone);
 
   return (
     <div className="flex w-full flex-col gap-6 sm:gap-10">
@@ -80,9 +83,9 @@ export default async function DashboardPage({
       </header>
 
       {!showingMine ? (
-        <StaffDashboard supabase={supabase} today={today} t={t} />
+        <StaffDashboard supabase={supabase} today={today} gym={gym} t={t} />
       ) : profile ? (
-        <MemberDashboard supabase={supabase} profile={profile} today={today} t={t} />
+        <MemberDashboard supabase={supabase} profile={profile} today={today} gym={gym} t={t} />
       ) : (
         <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />

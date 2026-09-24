@@ -220,6 +220,8 @@ export const ptBR: Dictionary = {
     lead: "Gerencie seus dados pessoais e as credenciais de acesso.",
     profileUnavailable:
       "Seu perfil não está disponível. Se o problema persistir, verifique se as migrações do banco de dados foram aplicadas.",
+    platformAdmin:
+      "Conta de administração do portal: não pertence a nenhuma academia e não tem faixa.",
 
     personalData: "Dados pessoais",
     fullName: "Nome completo",

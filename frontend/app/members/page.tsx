@@ -4,6 +4,7 @@ import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { RowMenu } from "@/components/row-menu";
 import { isAdminClientConfigured } from "@/utils/supabase/admin";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
+import { requireGymSettings } from "@/utils/supabase/gym";
 import { beltLabel, beltLabels, roleLabel, roleLabels } from "@/utils/supabase/profile";
 import { getDictionary } from "@/utils/i18n/server";
 import {
@@ -128,6 +129,7 @@ export default async function RegistroPage({
   const { t } = await getDictionary();
   // Staff only: an allievo or assistente gets a 404 here, not a redirect.
   const { supabase, access } = await requireRegistryViewer("/members");
+  const gym = await requireGymSettings();
 
   const page = Math.max(1, Number.parseInt(search.p ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
@@ -207,6 +209,7 @@ export default async function RegistroPage({
             lessons_since_stripe: Number(counted?.lessons_since_stripe ?? 0),
           },
           criteria,
+          gym,
         ).eligible;
       })
       .map((m) => m.id),
@@ -525,7 +528,7 @@ export default async function RegistroPage({
           const canInvite =
             !member.auth_user_id && member.email && isAdminClientConfigured();
           const canManageAccount = Boolean(member.auth_user_id);
-          const hours = hoursFor(member.joined_at, member.total_hours);
+          const hours = hoursFor(member.joined_at, member.total_hours, gym);
 
           // items-center keeps the kebab vertically centred against the row,
           // whose height is set by the details block on the left.
@@ -575,7 +578,7 @@ export default async function RegistroPage({
                   {/* Mostly estimated until the gym has been recording for a
                       while, so the row says so rather than presenting an
                       assumption as a count. */}
-                  <span title={hours.isPartlyEstimated ? estimateNote(hours.estimated, t) : undefined}>
+                  <span title={hours.isPartlyEstimated ? estimateNote(hours.estimated, gym, t) : undefined}>
                     {formatHours(hours.total, t)}
                     {hours.isPartlyEstimated ? t.registro.estimateSuffix : ""}
                   </span>

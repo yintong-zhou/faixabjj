@@ -2,10 +2,11 @@ import Link from "next/link";
 import { Belt } from "@/components/belt";
 import { formatDate } from "@/utils/dates";
 import { getDictionary } from "@/utils/i18n/server";
-import { LESSONS_PER_WEEK, formatHours, hoursFor } from "@/utils/hours";
+import { formatHours, hoursFor } from "@/utils/hours";
 import { isPortalOnly } from "@/utils/members";
 import { PasswordInput } from "@/components/password-input";
-import { requireAdmin, canManageUsers } from "@/utils/supabase/require-admin";
+import { requireAdmin } from "@/utils/supabase/require-admin";
+import { requireGymSettings } from "@/utils/supabase/gym";
 import {
   getOrCreateProfile,
   roleLabel,
@@ -29,9 +30,74 @@ export default async function AccountPage({
 }) {
   const { ok, error } = await searchParams;
   const { t } = await getDictionary();
-  const { supabase, userId, email } = await requireAdmin("/account");
+
+  // Used by every branch below — the superadmin's page included — so it is
+  // built once, right after the dictionary it is the only thing it reads.
+  const passwordSection = (
+    <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
+      <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+        <KeyIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+        {t.account.passwordSection}
+      </h2>
+
+      <form action={updatePassword} className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="password" className="text-sm font-medium">
+            {t.auth.newPassword}
+          </label>
+          <PasswordInput
+            id="password"
+            name="password"
+            required
+            autoComplete="new-password"
+            showLabel={t.auth.showPassword}
+            hideLabel={t.auth.hidePassword}
+          />
+          <p className="text-xs text-foreground/55">
+            {t.account.passwordMinimum}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="confirm_password" className="text-sm font-medium">
+            {t.auth.confirmPassword}
+          </label>
+          <PasswordInput
+            id="confirm_password"
+            name="confirm_password"
+            required
+            autoComplete="new-password"
+            showLabel={t.auth.showPassword}
+            hideLabel={t.auth.hidePassword}
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+        >
+          {t.account.updatePassword}
+        </button>
+      </form>
+    </section>
+  );
+
+  const { supabase, userId, email, access } = await requireAdmin("/account");
+
+  // The platform superadmin has no person row: no gym, no belt, no hours. Their
+  // account is an email and a password, and nothing else is drawn.
+  if (access.isPlatformAdmin) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 py-5 sm:gap-5 sm:py-7">
+        <h1 className="font-heading text-xl font-semibold sm:text-2xl">{t.nav.account}</h1>
+        <p className="text-sm text-foreground/70">{email}</p>
+        <p className="text-xs text-foreground/55">{t.account.platformAdmin}</p>
+        {passwordSection}
+      </div>
+    );
+  }
+
   const profile = await getOrCreateProfile(supabase, userId, email);
-  const isManager = await canManageUsers(supabase);
 
   if (!profile) {
     return (
@@ -46,13 +112,15 @@ export default async function AccountPage({
     );
   }
 
+  const gym = await requireGymSettings();
+
   const { data: hours } = await supabase
     .from("person_hours")
     .select("total_hours")
     .eq("person_id", profile.id)
     .maybeSingle();
 
-  const training = hoursFor(profile.joined_at, hours?.total_hours);
+  const training = hoursFor(profile.joined_at, hours?.total_hours, gym);
 
   const { data: roles } = await supabase
     .from("assigned_role")
@@ -66,6 +134,7 @@ export default async function AccountPage({
   // none of the rank block may be drawn for them: it would show a white belt
   // nobody was ever given, and dates and hours that mean nothing.
   const portalOnly = isPortalOnly((roles ?? []).map((r) => r.role as string));
+  const isManager = access.canManageUsers;
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5 sm:gap-8">
@@ -193,7 +262,7 @@ export default async function AccountPage({
           )}
           {!portalOnly && training.isPartlyEstimated ? (
             <p className="text-xs leading-relaxed text-foreground/55">
-              {t.account.openingBalanceNote(LESSONS_PER_WEEK)}
+              {t.account.openingBalanceNote(gym.lessonsPerWeek)}
             </p>
           ) : null}
         </div>
@@ -272,52 +341,7 @@ export default async function AccountPage({
         ) : null}
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
-        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
-          <KeyIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-          {t.account.passwordSection}
-        </h2>
-
-        <form action={updatePassword} className="flex flex-col gap-3 sm:gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="password" className="text-sm font-medium">
-              {t.auth.newPassword}
-            </label>
-            <PasswordInput
-              id="password"
-              name="password"
-              required
-              autoComplete="new-password"
-              showLabel={t.auth.showPassword}
-              hideLabel={t.auth.hidePassword}
-            />
-            <p className="text-xs text-foreground/55">
-              {t.account.passwordMinimum}
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="confirm_password" className="text-sm font-medium">
-              {t.auth.confirmPassword}
-            </label>
-            <PasswordInput
-              id="confirm_password"
-              name="confirm_password"
-              required
-              autoComplete="new-password"
-              showLabel={t.auth.showPassword}
-              hideLabel={t.auth.hidePassword}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
-          >
-            {t.account.updatePassword}
-          </button>
-        </form>
-      </section>
+      {passwordSection}
     </div>
   );
 }

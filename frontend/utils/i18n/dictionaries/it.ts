@@ -232,6 +232,8 @@ export const it = {
     lead: "Gestisci i tuoi dati personali e le credenziali di accesso.",
     profileUnavailable:
       "Il tuo profilo non è disponibile. Se il problema persiste, controlla che le migration del database siano state applicate.",
+    platformAdmin:
+      "Account di amministrazione del portale: non appartiene a nessuna palestra e non ha una cintura.",
 
     personalData: "Dati personali",
     fullName: "Nome e cognome",

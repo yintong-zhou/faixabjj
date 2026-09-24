@@ -5,8 +5,9 @@ import { Belt } from "@/components/belt";
 import { beltLabel, roleLabel } from "@/utils/supabase/profile";
 import { getDictionary } from "@/utils/i18n/server";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
-import { daysSince, formatDate, formatDays } from "@/utils/dates";
-import { LESSONS_PER_WEEK, TRACKING_STARTED_ON, formatHours, hoursFor } from "@/utils/hours";
+import { requireGymSettings } from "@/utils/supabase/gym";
+import { daysSince, formatDate, formatDays, todayIn } from "@/utils/dates";
+import { formatHours, hoursFor } from "@/utils/hours";
 import { isPortalOnly } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
 import { correctRankDates } from "../actions";
@@ -98,6 +99,7 @@ export default async function MemberDetailPage({
   const { t } = await getDictionary();
   // Same gate as the list: staff only, 404 for everyone else.
   const { supabase, access } = await requireRegistryViewer(`/members/${id}`);
+  const gym = await requireGymSettings();
 
   // Read from `person`, not from `member_overview`: a single record needs no
   // pre-joined roles array, and the table carries `notes`, which the list view
@@ -125,7 +127,7 @@ export default async function MemberDetailPage({
   // The detail page breaks the total open: on a record that decides a
   // promotion, "18 ore" is not enough — you need to know how much of it the
   // gym actually saw.
-  const training = hoursFor(member.joined_at, hours?.total_hours);
+  const training = hoursFor(member.joined_at, hours?.total_hours, gym);
 
   // The full history, closed assignments included — the registry is meant to
   // show that a person's role changed over time, not just what it is today.
@@ -193,10 +195,11 @@ export default async function MemberDetailPage({
       lessons_since_stripe: Number(rankHours?.lessons_since_stripe ?? 0),
     },
     criteria,
+    gym,
   );
 
   const promotions = (promotionRows ?? []) as PromotionRow[];
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIn(gym.timezone);
 
   // Carries the list's filters and page back, so closing the detail view
   // returns to exactly the list you opened it from.
@@ -306,8 +309,8 @@ export default async function MemberDetailPage({
           {training.isPartlyEstimated ? (
             <p className="text-xs leading-relaxed text-foreground/55">
               {t.registro.openingBalanceExplained(
-                formatDate(TRACKING_STARTED_ON),
-                LESSONS_PER_WEEK,
+                formatDate(gym.trackingStartedOn),
+                gym.lessonsPerWeek,
               )}
             </p>
           ) : null}

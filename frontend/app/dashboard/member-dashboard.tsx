@@ -10,13 +10,13 @@ import {
 } from "@/components/icons";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
 import {
-  LESSONS_PER_WEEK,
   clockHours,
   estimatedHours,
   formatHours,
   hoursFor,
 } from "@/utils/hours";
 import type { Profile } from "@/utils/supabase/profile";
+import type { GymSettings } from "@/utils/supabase/gym";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { addDays, formatDayHeading, formatTime } from "@/utils/schedule";
 import { Section, Stat } from "./stat";
@@ -39,11 +39,13 @@ export async function MemberDashboard({
   supabase,
   profile,
   today,
+  gym,
   t,
 }: {
   supabase: SupabaseClient;
   profile: Profile;
   today: string;
+  gym: GymSettings;
   t: Dictionary;
 }) {
   const since = addDays(today, -WINDOW_DAYS);
@@ -105,7 +107,7 @@ export async function MemberDashboard({
   ).length;
   const lastAttended = attended[0] ?? null;
 
-  const hours = hoursFor(profile.joined_at, hoursRow?.total_hours);
+  const hours = hoursFor(profile.joined_at, hoursRow?.total_hours, gym);
   const perWeek = recentCount / (RECENT_DAYS / 7);
 
   // Hours at the current belt, composed exactly as promotionStatus() composes
@@ -119,7 +121,8 @@ export async function MemberDashboard({
   const rankAnchor =
     profile.joined_at > profile.rank_since ? profile.joined_at : profile.rank_since;
   const hoursAtRank = clockHours(
-    Number(rankRow?.lessons_since_rank ?? 0) + estimatedHours(rankAnchor, { today }),
+    Number(rankRow?.lessons_since_rank ?? 0) + estimatedHours(rankAnchor, { ...gym, today }),
+    gym,
   );
 
   return (
@@ -225,7 +228,7 @@ export async function MemberDashboard({
 
         {hours.isPartlyEstimated ? (
           <p className="text-xs leading-relaxed text-foreground/55">
-            {t.dashboard.memberEstimateNote(LESSONS_PER_WEEK)}
+            {t.dashboard.memberEstimateNote(gym.lessonsPerWeek)}
           </p>
         ) : null}
       </Section>

@@ -218,6 +218,8 @@ export const en: Dictionary = {
     lead: "Manage your personal details and sign-in credentials.",
     profileUnavailable:
       "Your profile is not available. If the problem persists, check that the database migrations have been applied.",
+    platformAdmin:
+      "Portal administration account: it belongs to no gym and holds no belt.",
 
     personalData: "Personal details",
     fullName: "Full name",
