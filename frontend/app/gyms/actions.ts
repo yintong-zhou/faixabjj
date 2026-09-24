@@ -130,10 +130,15 @@ export async function setGymStatus(formData: FormData) {
 }
 
 // Permanent deletion, only for a suspended gym whose exact name was typed.
-// The gym row goes first: its cascade removes every record, which is what the
-// deletion is for. The gym's auth accounts are removed after, with the service
-// role; if any of them fails the gym is already gone, and the message says how
-// many accounts are left to delete by hand rather than pretending otherwise.
+// The accounts to remove are looked up *before* the gym row is deleted: its
+// cascade erases every person row, which is the only record of who to delete
+// from auth — so a failed lookup here is a precondition, not a detail to log
+// and carry on from, or the cascade would orphan every one of the gym's auth
+// accounts with no trace of them left anywhere. Once that lookup has
+// succeeded, the gym row goes; the accounts are removed after, with the
+// service role, and if any of them fails the gym is already gone, so the
+// message says how many accounts are left to delete by hand rather than
+// pretending otherwise.
 export async function deleteGym(formData: FormData) {
   const { t } = await getDictionary();
   const id = field(formData, "id") ?? "";
@@ -164,7 +169,13 @@ export async function deleteGym(formData: FormData) {
     .select("auth_user_id")
     .eq("gym_id", id)
     .not("auth_user_id", "is", null);
-  if (accountsError) logDbError("gyms", "deleteGym:accounts", accountsError);
+  if (accountsError) {
+    // This list is the only record of the gym's auth_user_ids: the gym row's
+    // cascade is about to erase every person row, so a failed lookup here
+    // must stop the deletion rather than proceed and orphan those accounts.
+    logDbError("gyms", "deleteGym:accounts", accountsError);
+    to(detail, { error: t.gyms.msg.failed });
+  }
 
   const { data: deleted, error } = await supabase.from("gym").delete().eq("id", id).select("id");
   if (error || !deleted || deleted.length === 0) {
@@ -237,12 +248,36 @@ export async function addManager(formData: FormData) {
     .maybeSingle();
   if (personError) logDbError("gyms", "addManager:person", personError);
 
-  const { error: roleError } = person
-    ? await admin.from("assigned_role").insert({ person_id: person.id, role: "admin", gym_id: gymId })
-    : { error: { code: "no-person", message: "trigger did not create a person row" } };
+  // The auth trigger links to an *existing* account-less person by email
+  // before creating a new row — which is exactly what happens on re-adding
+  // somebody revokeManager only removed the auth account for, leaving their
+  // person row and open `admin` role untouched. That re-link then hits
+  // assigned_role_active_unique (person_id, role) where end_date is null:
+  // 23505, not a real failure, so it is treated as the manager already being
+  // in place rather than as an error to report and undo.
+  let roleError: { code?: string | null; message?: string | null } | null = null;
+  if (!person) {
+    roleError = personError ?? { code: "no-person", message: "trigger created or linked no person row" };
+  } else {
+    const { error: insertError } = await admin
+      .from("assigned_role")
+      .insert({ person_id: person.id, role: "admin", gym_id: gymId });
+    roleError = insertError && insertError.code !== "23505" ? insertError : null;
+  }
 
+  // A manager is never left as a bare account: if no person row exists to
+  // hold the role, or the role could not be recorded, the auth user just
+  // created is deleted rather than left invisible in gym_managers and
+  // unusable to retry (its email would otherwise look permanently taken).
   if (roleError) {
     logDbError("gyms", "addManager:role", roleError);
+    const { error: cleanupError } = await admin.auth.admin.deleteUser(created.user.id);
+    if (cleanupError) {
+      logDbError("gyms", "addManager:cleanup", {
+        code: cleanupError.code ?? null,
+        message: cleanupError.message,
+      });
+    }
     to(detail, { error: t.gyms.msg.failed });
   }
 
