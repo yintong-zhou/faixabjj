@@ -5,8 +5,8 @@
 --
 -- admin@bjj.com is today an admin of the gym. A superadmin sits outside every
 -- gym, so the account leaves it: its person row and its roles are removed. If
--- that row carries attendance or promotions the script stops rather than erase
--- them — those are the gym's records, not the account's.
+-- that row carries attendance, promotions, or instructor assignments the script
+-- stops rather than erase them — those are the gym's records, not the account's.
 do $$
 declare
   v_user uuid;
@@ -21,8 +21,10 @@ begin
 
   if v_person is not null then
     if exists (select 1 from public.attendance where person_id = v_person)
-       or exists (select 1 from public.promotion where person_id = v_person or promoted_by = v_person) then
-      raise exception 'admin@bjj.com has attendance or promotions on record: resolve them by hand first';
+       or exists (select 1 from public.promotion where person_id = v_person or promoted_by = v_person)
+       or exists (select 1 from public.course where instructor_id = v_person)
+       or exists (select 1 from public.class_session where instructor_id = v_person) then
+      raise exception 'admin@bjj.com has attendance, promotions, or instructor assignments on record: resolve them by hand first';
     end if;
     delete from public.assigned_role where person_id = v_person;
     delete from public.person where id = v_person;
