@@ -11,8 +11,10 @@ import {
 } from "@/utils/supabase/require-admin";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { getDictionary } from "@/utils/i18n/server";
+import { todayIn } from "@/utils/dates";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE } from "@/utils/members";
+import { requireGymSettings } from "@/utils/supabase/gym";
 import { BELT_ORDER } from "@/utils/supabase/profile";
 
 const PATH = "/members";
@@ -657,7 +659,7 @@ export async function correctRankDates(formData: FormData) {
   // Compared as ISO strings, which sort chronologically, and against the gym's
   // own "today" rather than the browser's — the date arrives as text and a
   // crafted POST is not bound by the input's `max`.
-  const today = new Date(Date.now()).toISOString().slice(0, 10);
+  const today = todayIn((await requireGymSettings()).timezone);
   if (rankSince > today || stripeSince > today) {
     detail({ error: t.msg.dateInFuture });
     return;

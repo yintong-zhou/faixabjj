@@ -100,6 +100,9 @@ export default async function MemberDetailPage({
   // Same gate as the list: staff only, 404 for everyone else.
   const { supabase, access } = await requireRegistryViewer(`/members/${id}`);
   const gym = await requireGymSettings();
+  // The gym's own calendar day: ages, days at rank and the estimate cutoff are
+  // all measured to it, and it bounds the date inputs below.
+  const today = todayIn(gym.timezone);
 
   // Read from `person`, not from `member_overview`: a single record needs no
   // pre-joined roles array, and the table carries `notes`, which the list view
@@ -127,7 +130,7 @@ export default async function MemberDetailPage({
   // The detail page breaks the total open: on a record that decides a
   // promotion, "18 ore" is not enough — you need to know how much of it the
   // gym actually saw.
-  const training = hoursFor(member.joined_at, hours?.total_hours, gym);
+  const training = hoursFor(member.joined_at, hours?.total_hours, { ...gym, today });
 
   // The full history, closed assignments included — the registry is meant to
   // show that a person's role changed over time, not just what it is today.
@@ -195,11 +198,10 @@ export default async function MemberDetailPage({
       lessons_since_stripe: Number(rankHours?.lessons_since_stripe ?? 0),
     },
     criteria,
-    gym,
+    { ...gym, today },
   );
 
   const promotions = (promotionRows ?? []) as PromotionRow[];
-  const today = todayIn(gym.timezone);
 
   // Carries the list's filters and page back, so closing the detail view
   // returns to exactly the list you opened it from.
@@ -285,15 +287,15 @@ export default async function MemberDetailPage({
             <Field label={t.account.stripeSince} value={formatDate(member.stripe_since)} />
             <Field
               label={t.registro.trainingTime}
-              value={formatDays(daysSince(member.joined_at), t)}
+              value={formatDays(daysSince(member.joined_at, today), t)}
             />
             <Field
               label={t.registro.beltTime}
-              value={formatDays(daysSince(member.rank_since), t)}
+              value={formatDays(daysSince(member.rank_since, today), t)}
             />
             <Field
               label={t.registro.stripeTime}
-              value={formatDays(daysSince(member.stripe_since), t)}
+              value={formatDays(daysSince(member.stripe_since, today), t)}
             />
             <Field label={t.registro.totalHours} value={formatHours(training.total, t)} />
             <Field

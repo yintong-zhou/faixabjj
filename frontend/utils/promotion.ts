@@ -1,8 +1,8 @@
 // Promotion eligibility: what the next grade is, and what is still missing.
 //
 // Pure on purpose, like schedule.ts and hours.ts. It reads no cookie and makes
-// no query: the caller passes the person, the criteria rows and — in tests —
-// a fixed "today". The database holds the numbers; this module holds the rule.
+// no query: the caller passes the person, the criteria rows and the gym's
+// own "today" (`todayIn(gym.timezone)`), which tests pin. The database holds the numbers; this module holds the rule.
 //
 // It never decides a promotion. Reaching the minimums is necessary and never
 // sufficient: belt-criteria.md puts the instructor's discretion above the
@@ -162,8 +162,7 @@ export function promotionStatus(
   criteria: Criterion[],
   options: HoursOptions,
 ): PromotionStatus {
-  const today =
-    options.today ?? new Date(Date.now()).toISOString().slice(0, 10);
+  const today = options.today;
 
   // Read once, and before the ladder is chosen: white is on both ladders, and
   // the age is what says which one this person is climbing.
@@ -199,10 +198,7 @@ export function promotionStatus(
     ? person.lessons_since_rank
     : person.lessons_since_stripe;
 
-  const estimated = estimatedHours(laterOf(person.joined_at, anchor), {
-    ...options,
-    today,
-  });
+  const estimated = estimatedHours(laterOf(person.joined_at, anchor), options);
 
   const currentHours = clockHours(lessons + estimated, options);
   const currentDays = daysSince(anchor, today) ?? 0;

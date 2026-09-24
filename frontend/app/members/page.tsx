@@ -20,7 +20,7 @@ import {
   UserMinusIcon,
   UserPlusIcon,
 } from "@/components/icons";
-import { daysSince, formatDate, formatDays } from "@/utils/dates";
+import { daysSince, formatDate, formatDays, todayIn } from "@/utils/dates";
 import { estimateNote, formatHours, hoursFor } from "@/utils/hours";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
@@ -130,6 +130,8 @@ export default async function RegistroPage({
   // Staff only: an allievo or assistente gets a 404 here, not a redirect.
   const { supabase, access } = await requireRegistryViewer("/members");
   const gym = await requireGymSettings();
+  // Eligibility, hours and days at rank are all measured to the gym's own day.
+  const today = todayIn(gym.timezone);
 
   const page = Math.max(1, Number.parseInt(search.p ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
@@ -209,7 +211,7 @@ export default async function RegistroPage({
             lessons_since_stripe: Number(counted?.lessons_since_stripe ?? 0),
           },
           criteria,
-          gym,
+          { ...gym, today },
         ).eligible;
       })
       .map((m) => m.id),
@@ -528,7 +530,7 @@ export default async function RegistroPage({
           const canInvite =
             !member.auth_user_id && member.email && isAdminClientConfigured();
           const canManageAccount = Boolean(member.auth_user_id);
-          const hours = hoursFor(member.joined_at, member.total_hours, gym);
+          const hours = hoursFor(member.joined_at, member.total_hours, { ...gym, today });
 
           // items-center keeps the kebab vertically centred against the row,
           // whose height is set by the details block on the left.
@@ -561,12 +563,12 @@ export default async function RegistroPage({
                     (rank_since) — the second is what promotion eligibility
                     actually hangs on. */}
                 <span className="text-xs text-foreground/70">
-                  {t.registro.trainingFor(formatDays(daysSince(member.joined_at), t))}
+                  {t.registro.trainingFor(formatDays(daysSince(member.joined_at, today), t))}
                   {" · "}
                   {/* The colour is no longer spelled out here: the belt is
                       drawn next to the name, a few pixels above. */}
                   {t.registro.atCurrentBelt(
-                    formatDays(daysSince(member.rank_since), t),
+                    formatDays(daysSince(member.rank_since, today), t),
                   )}
                 </span>
 

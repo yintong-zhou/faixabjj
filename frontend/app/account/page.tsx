@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Belt } from "@/components/belt";
-import { formatDate } from "@/utils/dates";
+import { formatDate, todayIn } from "@/utils/dates";
 import { getDictionary } from "@/utils/i18n/server";
 import { formatHours, hoursFor } from "@/utils/hours";
 import { isPortalOnly } from "@/utils/members";
@@ -120,7 +120,10 @@ export default async function AccountPage({
     .eq("person_id", profile.id)
     .maybeSingle();
 
-  const training = hoursFor(profile.joined_at, hours?.total_hours, gym);
+  const training = hoursFor(profile.joined_at, hours?.total_hours, {
+    ...gym,
+    today: todayIn(gym.timezone),
+  });
 
   const { data: roles } = await supabase
     .from("assigned_role")

@@ -107,7 +107,7 @@ export async function MemberDashboard({
   ).length;
   const lastAttended = attended[0] ?? null;
 
-  const hours = hoursFor(profile.joined_at, hoursRow?.total_hours, gym);
+  const hours = hoursFor(profile.joined_at, hoursRow?.total_hours, { ...gym, today });
   const perWeek = recentCount / (RECENT_DAYS / 7);
 
   // Hours at the current belt, composed exactly as promotionStatus() composes
@@ -140,7 +140,7 @@ export async function MemberDashboard({
                 {t.dashboard.atThisBelt}
               </dt>
               <dd className="text-sm font-medium">
-                {formatDays(daysSince(profile.rank_since), t)}
+                {formatDays(daysSince(profile.rank_since, today), t)}
               </dd>
             </div>
             <div>
@@ -148,7 +148,7 @@ export async function MemberDashboard({
                 {t.dashboard.sinceLastStripe}
               </dt>
               <dd className="text-sm font-medium">
-                {formatDays(daysSince(profile.stripe_since), t)}
+                {formatDays(daysSince(profile.stripe_since, today), t)}
               </dd>
             </div>
             <div>

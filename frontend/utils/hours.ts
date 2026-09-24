@@ -41,7 +41,12 @@ export type HoursSettings = {
   sessionLengthHours: number;
 };
 
-export type HoursOptions = HoursSettings & { today?: string };
+/**
+ * A gym's settings plus the day to compute on — required, so every caller has
+ * to say which day it means: the gym's own `todayIn(gym.timezone)`, never a
+ * UTC default that is already tomorrow (or still yesterday) at the gym.
+ */
+export type HoursOptions = HoursSettings & { today: string };
 
 const DAY_MS = 86_400_000;
 
@@ -82,8 +87,7 @@ export function estimatedHours(
 ): number {
   if (!joinedAt) return 0;
 
-  const today =
-    options.today ?? new Date(Date.now()).toISOString().slice(0, 10);
+  const today = options.today;
   const declared = options.trackingStartedOn;
   const cutoff = declared < today ? declared : today;
 
