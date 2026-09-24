@@ -9,6 +9,7 @@ import {
 } from "@/utils/supabase/require-admin";
 import { getDictionary } from "@/utils/i18n/server";
 import { logDbError } from "@/utils/log";
+import { checkinMessage, optionalNumber, parseCheckinOutcome } from "@/utils/checkin";
 
 const PATH = "/attendance";
 
@@ -38,49 +39,64 @@ function backToSession(
 // ---------------------------------------------------------------------------
 // Student check-in
 // ---------------------------------------------------------------------------
-// Runs on the member's own Supabase client, so RLS decides. The time window is
-// not re-checked here on purpose: the policy enforces it, and a second copy in
-// TypeScript would be a second definition free to drift from the first.
+// Runs on the member's own Supabase client and goes through check_in(), which
+// decides everything: the window, "already present" and, when the gym has a
+// position, the distance. None of it is re-checked here — a second copy in
+// TypeScript would be a second definition free to drift from the first. The
+// coordinates travel in this request only: they are passed on and never
+// logged.
+const CHECK_IN_PAGE = "/check-in";
+
 export async function checkIn(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase, userId, email } = await requireAdmin(PATH);
+  const fromCheckInPage = formData.get("_return") === CHECK_IN_PAGE;
+  const { supabase, userId, email } = await requireAdmin(fromCheckInPage ? CHECK_IN_PAGE : PATH);
   const query = (formData.get("_query") as string | null) ?? "";
   const sessionId = formData.get("session_id") as string;
 
+  const done = (params: Record<string, string>) => {
+    if (fromCheckInPage) redirect(`${CHECK_IN_PAGE}?${new URLSearchParams(params).toString()}`);
+    back(params, query);
+  };
+
   if (!sessionId) {
-    back({ error: t.msg.sessionNotSpecified }, query);
+    done({ error: t.msg.sessionNotSpecified });
     return;
   }
 
   const profile = await getOrCreateProfile(supabase, userId, email);
   if (!profile) {
-    back({ error: t.msg.profileUnavailable }, query);
+    done({ error: t.msg.profileUnavailable });
     return;
   }
 
-  const { error } = await supabase.from("attendance").insert({
-    person_id: profile.id,
-    session_id: sessionId,
-    present: true,
-    checked_in_by: "self",
+  const { data, error } = await supabase.rpc("check_in", {
+    p_session_id: sessionId,
+    p_lat: optionalNumber(formData.get("lat")),
+    p_lng: optionalNumber(formData.get("lng")),
+    p_accuracy: optionalNumber(formData.get("accuracy")),
   });
 
-  if (error) {
-    // Only two codes mean something the member can act on. Everything else —
-    // the network, a missing migration, a mangled session id — used to be
-    // reported as "check-in closed", which sends both the member and the
-    // instructor to look at the clock for a problem that is not there.
-    let message = t.msg.checkinFailed;
-    if (error.code === "23505") message = t.msg.alreadyPresent;
-    else if (error.code === "42501") message = t.msg.checkinClosed;
-    else logDbError("attendance", "checkIn", error);
-
-    back({ error: message }, query);
+  const outcome = error ? null : parseCheckinOutcome(data);
+  if (!outcome) {
+    // An error is not a closed window: the network, a missing migration or a
+    // mangled id must not send the member to look at the clock.
+    logDbError(
+      "attendance",
+      "checkIn",
+      error ?? { code: "bad-outcome", message: "check_in returned an unknown shape" },
+    );
+    done({ error: t.msg.checkinFailed });
     return;
   }
 
-  revalidatePath(PATH);
-  back({ ok: t.msg.checkinRecorded }, query);
+  if (outcome.result === "ok") {
+    revalidatePath(PATH);
+    revalidatePath(CHECK_IN_PAGE);
+  }
+
+  const message = checkinMessage(outcome, t);
+  done(message.ok ? { ok: message.text } : { error: message.text });
 }
 
 export async function undoCheckIn(formData: FormData) {
