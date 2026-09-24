@@ -1,5 +1,5 @@
 -- Makes admin@bjj.com the platform superadmin. Run BY HAND in the SQL Editor
--- of project poksgledkecwviypspmi, after the four 20260925* migrations.
+-- of project poksgledkecwviypspmi, after the five 20260925* migrations.
 -- Not a migration on purpose: a migration that grants privileges is a
 -- privilege grant hiding in a schema change.
 --
