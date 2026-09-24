@@ -255,23 +255,18 @@ do $$ begin
 end $$;
 delete from public.person where id = '00000000-0000-0000-0000-00000000fa11';
 
--- T5: a2 cannot check in to a session of gym B. Uses …05cc, not …05bb: with
--- its default 19:00-20:00 window, "members can check themselves in" refuses
--- a2's self check-in for about 22 3/4 hours a day on the window alone, gym or
--- no gym. The positive control below proves b2 (gym B, its own session) can
--- check in to …05cc, so the refusal that follows can only be the gym.
+-- T5: a2 cannot check in to a session of gym B. Uses …05cc, not …05bb: its
+-- window is open at whatever instant replay.sh runs (see Corso B above). The
+-- positive control proves b2 (gym B, its own session, gym B has no location)
+-- can check in to …05cc through check_in(), so the refusal that follows can
+-- only be the gym.
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b2', true);
-do $$
-declare
-  v_id uuid;
-begin
-  insert into public.attendance (person_id, session_id, present, checked_in_by)
-  values (public.current_person_id(), '00000000-0000-0000-0000-0000000005cc', true, 'self')
-  returning id into v_id;
-  if v_id is null then
-    raise exception 'FAIL T5: control failed — b2 could not check in to …05cc in their own gym';
+do $$ begin
+  if public.check_in('00000000-0000-0000-0000-0000000005cc') ->> 'result' is distinct from 'ok' then
+    raise exception 'FAIL T5: control failed — b2 could not check in to …05cc in their own gym: %',
+      public.check_in('00000000-0000-0000-0000-0000000005cc');
   end if;
 end $$;
 rollback;
@@ -280,12 +275,138 @@ begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', true);
 do $$ begin
+  if public.check_in('00000000-0000-0000-0000-0000000005cc') ->> 'result' is distinct from 'closed' then
+    raise exception 'FAIL T5: a2 checked in to a session of gym B';
+  end if;
+  if exists (select 1 from public.attendance where session_id = '00000000-0000-0000-0000-0000000005cc') then
+    raise exception 'FAIL T5: a2 wrote attendance on a session of gym B';
+  end if;
+end $$;
+rollback;
+
+-- T16: check-in near the gym. Gym B gets a position (Milan, Duomo) inside the
+-- transaction, as postgres, then b2 checks in to the open session …05cc.
+begin;
+update public.gym set latitude = 45.4642, longitude = 9.1900 where id = current_setting('test.gym_b')::uuid;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b2', true);
+do $$
+declare
+  v jsonb;
+begin
+  -- One degree of longitude on the equator is 111 195 m (R = 6 371 000 m).
+  if abs(public.gym_distance_m(0, 0, 0, 1) - 111195) > 1 then
+    raise exception 'FAIL T16: gym_distance_m(0,0,0,1) = %', public.gym_distance_m(0, 0, 0, 1);
+  end if;
+
+  -- The direct insert is gone: check_in() is the only way to mark yourself.
   begin
     insert into public.attendance (person_id, session_id, present, checked_in_by)
     values (public.current_person_id(), '00000000-0000-0000-0000-0000000005cc', true, 'self');
-    raise exception 'FAIL T5: a2 checked in to a session of gym B';
+    raise exception 'FAIL T16: a member inserted their own attendance directly';
   exception when insufficient_privilege then null;
   end;
+
+  v := public.check_in('00000000-0000-0000-0000-0000000005cc');
+  if v ->> 'result' is distinct from 'location_needed' then
+    raise exception 'FAIL T16: no coordinates, gym with a position: expected location_needed, got %', v;
+  end if;
+
+  v := public.check_in('00000000-0000-0000-0000-0000000005cc', 200, 9.19, 10);
+  if v ->> 'result' is distinct from 'location_needed' then
+    raise exception 'FAIL T16: latitude 200: expected location_needed, got %', v;
+  end if;
+
+  v := public.check_in('00000000-0000-0000-0000-0000000005cc', 45.4642, 9.19, 150);
+  if v ->> 'result' is distinct from 'imprecise' then
+    raise exception 'FAIL T16: accuracy 150 m: expected imprecise, got %', v;
+  end if;
+
+  v := public.check_in('00000000-0000-0000-0000-0000000005cc', 45.4642, 9.19, null);
+  if v ->> 'result' is distinct from 'imprecise' then
+    raise exception 'FAIL T16: no accuracy: expected imprecise, got %', v;
+  end if;
+
+  -- 0.001 degrees of latitude north: about 111 m.
+  v := public.check_in('00000000-0000-0000-0000-0000000005cc', 45.4652, 9.19, 10);
+  if v ->> 'result' is distinct from 'too_far'
+     or (v ->> 'distance_m')::int not between 100 and 120 then
+    raise exception 'FAIL T16: 111 m away: expected too_far with distance ~111, got %', v;
+  end if;
+
+  -- 0.0002 degrees north: about 22 m.
+  v := public.check_in('00000000-0000-0000-0000-0000000005cc', 45.4644, 9.19, 20);
+  if v ->> 'result' is distinct from 'ok' then
+    raise exception 'FAIL T16: 22 m away: expected ok, got %', v;
+  end if;
+
+  v := public.check_in('00000000-0000-0000-0000-0000000005cc', 45.4644, 9.19, 20);
+  if v ->> 'result' is distinct from 'already' then
+    raise exception 'FAIL T16: second check-in: expected already, got %', v;
+  end if;
+
+  if (select count(*) from public.attendance
+       where session_id = '00000000-0000-0000-0000-0000000005cc'
+         and person_id = public.current_person_id()
+         and present and checked_in_by = 'self') <> 1 then
+    raise exception 'FAIL T16: expected exactly one self check-in row for b2';
+  end if;
+
+  -- The undo policy is untouched.
+  delete from public.attendance
+   where session_id = '00000000-0000-0000-0000-0000000005cc' and person_id = public.current_person_id();
+  if found is false then
+    raise exception 'FAIL T16: b2 could not undo their own check-in';
+  end if;
+end $$;
+rollback;
+
+-- T16: set_gym_location(). A student is refused; the manager of gym B sets
+-- gym B only; a half pair is refused by the constraint.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b2', true);
+do $$ begin
+  begin
+    perform public.set_gym_location(45.1, 9.1);
+    raise exception 'FAIL T16: a student set the gym location';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', true);
+do $$ begin
+  perform public.set_gym_location(45.1, 9.1);
+  if (select latitude from public.gym where id = current_setting('test.gym_b')::uuid) is distinct from 45.1 then
+    raise exception 'FAIL T16: the manager of gym B could not set its location';
+  end if;
+  begin
+    perform public.set_gym_location(45.1, null);
+    raise exception 'FAIL T16: a latitude without a longitude was stored';
+  exception when check_violation then null;
+  end;
+  perform public.set_gym_location(null, null);
+  if (select latitude from public.gym where id = current_setting('test.gym_b')::uuid) is not null then
+    raise exception 'FAIL T16: null, null did not clear the location';
+  end if;
+end $$;
+rollback;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+select public.set_gym_location(1, 1);
+reset role;
+do $$ begin
+  if (select latitude from public.gym where id = current_setting('test.gym_b')::uuid) is not null then
+    raise exception 'FAIL T16: the manager of gym A changed the location of gym B';
+  end if;
+  if (select latitude from public.gym where id = current_setting('test.gym_a')::uuid) is distinct from 1 then
+    raise exception 'FAIL T16: the manager of gym A could not set their own location';
+  end if;
 end $$;
 rollback;
 
