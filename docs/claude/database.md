@@ -9,8 +9,8 @@ Plain SQL migrations in `supabase/migrations/` (Supabase CLI layout). Supabase (
 - `20260911000000_account_management.sql` — profile trigger on `auth.users` insert + backfill, first `can_manage_users()`, anti-self-promotion guards.
 - `20260911120000_role_based_access.sql` — **the current permission model** (adds `admin`, per-role policies). Read first when reasoning about access.
 - `20260925000000`–`20260925050000` — multi-gym tenancy (`040000`: who may set `person.auth_user_id`; `050000`: auth trigger also on the app_metadata update). Read `docs/claude/gyms.md` first.
-- `20260926000000_gym_location_checkin.sql` — `gym.latitude`/`longitude`, `gym_distance_m()` function, `check_in(session, lat, lng, accuracy)` RPC, `set_gym_location(latitude, longitude)` RPC. Read `docs/claude/attendance-and-dashboard.md` (Check-in) and `docs/claude/gyms.md` (Per-gym settings).
-- `20260926010000_drop_direct_checkin.sql` — drops the RLS insert policy allowing direct member check-in; **applies only after the app calling `check_in()` is deployed**. Prevents bypass via direct insert.
+- `20260926000000_gym_location_checkin.sql` — `gym.latitude`/`longitude`, `gym_distance_m()` function, `check_in(session, lat, lng, accuracy)` RPC, `set_gym_location(latitude, longitude)` RPC. Read `docs/claude/attendance-and-dashboard.md` (Check-in) and `docs/claude/gyms.md` (Per-gym settings). **Apply BEFORE merging/deploying the app** — the app selects `gym.latitude`/`longitude` (`GYM_COLUMNS` in `frontend/utils/supabase/gym.ts`), which are unknown columns without it, and `getGymSettings` returns null, 404ing `requireGymSettings` on almost every gym page.
+- `20260926010000_drop_direct_checkin.sql` — drops the RLS insert policy allowing direct member check-in; **applies only after the app calling `check_in()` is deployed**. Prevents bypass via direct insert. Apply AFTER the deploy; rolling the app back after this migration breaks member self check-in until the old policy is restored.
 
 ## Applying migrations
 
@@ -24,6 +24,7 @@ Several objects are defined in more than one migration; only the **last one run*
 - `member_overview`: `20260911140000`, `20260911200000`, `20260912000000`
 - `person_hours`: `20260910000000`, `20260912000000`
 - `gym_timezone()`: was a constant, redefined in `20260925010000` to read the caller's gym; keeps its zero-argument signature
+- policy `"members can check themselves in"`: created by `20260912010000`, dropped by `20260926010000`; re-pasting `20260912010000` alone silently restores the direct-insert bypass of `check_in()`
 
 Pasting an earlier file alone silently reverts the object. Both past failures looked like data problems (staff falling back to member view; dashboard of zeros). Repairs `20260920000000_restore_current_access.sql` and `20260920010000_restore_member_overview.sql` restate the final definitions and sort last.
 

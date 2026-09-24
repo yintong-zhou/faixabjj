@@ -8,6 +8,12 @@
 -- Compatible with the app deployed before it: the direct-insert policy
 -- "members can check themselves in" is dropped only by 20260926010000,
 -- applied after the new app is live.
+--
+-- Rollout order: apply this migration BEFORE merging/deploying the app that
+-- ships with it. The app selects gym.latitude/longitude (GYM_COLUMNS in
+-- frontend/utils/supabase/gym.ts); without this migration those columns don't
+-- exist, getGymSettings returns null, and requireGymSettings 404s on almost
+-- every gym page.
 
 alter table public.gym add column if not exists latitude double precision;
 alter table public.gym add column if not exists longitude double precision;
