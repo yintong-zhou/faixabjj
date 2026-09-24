@@ -404,6 +404,8 @@ export const it = {
       "— comunicala alla persona. Al primo accesso le verrà chiesto di sostituirla prima di poter usare il resto dell'app.",
     select: "Seleziona…",
     stripes: "Tacche",
+    beltNotForAdmin:
+      "Non si applica a un account solo amministrativo: un admin non ha grado.",
     todayIfEmpty: "(oggi se vuoto)",
     role: "Ruolo",
 

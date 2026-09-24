@@ -3,6 +3,7 @@ import { Belt } from "@/components/belt";
 import { formatDate } from "@/utils/dates";
 import { getDictionary } from "@/utils/i18n/server";
 import { LESSONS_PER_WEEK, formatHours, hoursFor } from "@/utils/hours";
+import { isPortalOnly } from "@/utils/members";
 import { PasswordInput } from "@/components/password-input";
 import { requireAdmin, canManageUsers } from "@/utils/supabase/require-admin";
 import {
@@ -59,6 +60,12 @@ export default async function AccountPage({
     .eq("person_id", profile.id)
     .is("end_date", null)
     .order("start_date");
+
+  // A portal-only admin runs the app and does not train, so they hold no belt.
+  // `person.current_belt` is `not null default 'white'`, which is exactly why
+  // none of the rank block may be drawn for them: it would show a white belt
+  // nobody was ever given, and dates and hours that mean nothing.
+  const portalOnly = isPortalOnly((roles ?? []).map((r) => r.role as string));
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5 sm:gap-8">
@@ -177,12 +184,14 @@ export default async function AccountPage({
         <div className="flex flex-col gap-1">
           <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
             <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-            {t.account.rankAndRoles}
+            {portalOnly ? t.registro.rolesSection : t.account.rankAndRoles}
           </h2>
-          <p className="text-xs text-foreground/55">
-            {t.account.rankReadOnly}
-          </p>
-          {training.isPartlyEstimated ? (
+          {portalOnly ? null : (
+            <p className="text-xs text-foreground/55">
+              {t.account.rankReadOnly}
+            </p>
+          )}
+          {!portalOnly && training.isPartlyEstimated ? (
             <p className="text-xs leading-relaxed text-foreground/55">
               {t.account.openingBalanceNote(LESSONS_PER_WEEK)}
             </p>
@@ -190,51 +199,55 @@ export default async function AccountPage({
         </div>
 
         <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              {t.account.belt}
-            </dt>
-            <dd className="text-sm font-medium">
-              <Belt
-                belt={profile.current_belt}
-                stripes={profile.current_stripes}
-                size="md"
-                className="mt-0.5"
-              />
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              {t.account.beltSince}
-            </dt>
-            <dd className="text-sm font-medium">{formatDate(profile.rank_since)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              {t.account.stripeSince}
-            </dt>
-            <dd className="text-sm font-medium">{formatDate(profile.stripe_since)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              {t.account.joinedOn}
-            </dt>
-            <dd className="text-sm font-medium">{formatDate(profile.joined_at)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-foreground/55">
-              {t.account.classHours}
-            </dt>
-            <dd className="text-sm font-medium">
-              {formatHours(training.total, t)}
-              {training.isPartlyEstimated ? (
-                <span className="font-normal text-foreground/55">
-                  {" "}
-                  {t.account.estimateSuffix}
-                </span>
-              ) : null}
-            </dd>
-          </div>
+          {portalOnly ? null : (
+            <>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-foreground/55">
+                {t.account.belt}
+              </dt>
+              <dd className="text-sm font-medium">
+                <Belt
+                  belt={profile.current_belt}
+                  stripes={profile.current_stripes}
+                  size="md"
+                  className="mt-0.5"
+                />
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-foreground/55">
+                {t.account.beltSince}
+              </dt>
+              <dd className="text-sm font-medium">{formatDate(profile.rank_since)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-foreground/55">
+                {t.account.stripeSince}
+              </dt>
+              <dd className="text-sm font-medium">{formatDate(profile.stripe_since)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-foreground/55">
+                {t.account.joinedOn}
+              </dt>
+              <dd className="text-sm font-medium">{formatDate(profile.joined_at)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-foreground/55">
+                {t.account.classHours}
+              </dt>
+              <dd className="text-sm font-medium">
+                {formatHours(training.total, t)}
+                {training.isPartlyEstimated ? (
+                  <span className="font-normal text-foreground/55">
+                    {" "}
+                    {t.account.estimateSuffix}
+                  </span>
+                ) : null}
+              </dd>
+            </div>
+            </>
+          )}
           <div>
             <dt className="text-xs uppercase tracking-wide text-foreground/55">
               {t.account.activeRoles}

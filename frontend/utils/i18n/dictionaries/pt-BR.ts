@@ -390,6 +390,8 @@ export const ptBR: Dictionary = {
       "— informe-a à pessoa. No primeiro acesso será pedido que ela a substitua antes de poder usar o restante do aplicativo.",
     select: "Selecione…",
     stripes: "Graus",
+    beltNotForAdmin:
+      "Não se aplica a uma conta apenas administrativa: um admin não tem graduação.",
     todayIfEmpty: "(hoje, se vazio)",
     role: "Função",
 

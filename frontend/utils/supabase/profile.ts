@@ -52,6 +52,23 @@ export async function getOrCreateProfile(
   return (created as Profile | null) ?? null;
 }
 
+// The roles a person holds right now — an assignment with no end date. Used
+// wherever the app has to tell a portal-only admin from somebody who trains;
+// the roles themselves are the answer, not the access flags, since a head
+// coach holds every flag an admin does.
+export async function activeRoles(
+  supabase: SupabaseClient,
+  personId: string,
+): Promise<string[]> {
+  const { data } = await supabase
+    .from("assigned_role")
+    .select("role")
+    .eq("person_id", personId)
+    .is("end_date", null);
+
+  return ((data ?? []) as { role: string }[]).map((r) => r.role);
+}
+
 export function beltLabels(t: Dictionary = en): Record<string, string> {
   return {
     white: t.belts.white,

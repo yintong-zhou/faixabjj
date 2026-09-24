@@ -388,6 +388,8 @@ export const en: Dictionary = {
       "— pass it on to the person. They will be asked to replace it on first sign-in, before anything else in the app opens.",
     select: "Select…",
     stripes: "Stripes",
+    beltNotForAdmin:
+      "Does not apply to a portal-only admin account: an admin holds no rank.",
     todayIfEmpty: "(today if empty)",
     role: "Role",
 

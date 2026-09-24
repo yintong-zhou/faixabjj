@@ -101,10 +101,15 @@ export default async function AddPersonPage({
             <label htmlFor="current_belt" className="text-sm font-medium">
               {t.account.belt}
             </label>
+            {/* Not `required`: a portal-only admin runs the app and does not
+                train, so there is no belt to pick. The field cannot hide
+                itself — the role is chosen further down and this form is
+                server-rendered with no client state — so it says so instead,
+                and addPerson leaves the rank columns at their defaults when
+                the role being created is admin. */}
             <select
               id="current_belt"
               name="current_belt"
-              required
               defaultValue=""
               className={fieldClass}
             >
@@ -117,6 +122,7 @@ export default async function AddPersonPage({
                 </option>
               ))}
             </select>
+            <p className="text-xs text-foreground/55">{t.registro.beltNotForAdmin}</p>
           </div>
 
           <div className="flex flex-col gap-1.5">

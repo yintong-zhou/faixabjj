@@ -10,6 +10,7 @@ import {
 } from "@/utils/supabase/require-admin";
 import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { getDictionary } from "@/utils/i18n/server";
+import { PORTAL_ONLY_ROLE } from "@/utils/members";
 import { BELT_ORDER } from "@/utils/supabase/profile";
 
 const PATH = "/members";
@@ -107,21 +108,26 @@ export async function addPerson(formData: FormData) {
     return;
   }
 
+  const role = formData.get("role") as string;
+  if (!ASSIGNABLE_ROLES.includes(role as (typeof ASSIGNABLE_ROLES)[number])) {
+    back({ error: t.msg.pickRole }, query);
+    return;
+  }
+
+  // An admin runs the portal and does not train, so they hold no rank: the
+  // belt is neither asked for nor stored, and the rank columns keep their
+  // defaults. Asking for one would record a grade nobody was given.
+  const portalOnly = role === PORTAL_ONLY_ROLE;
+
   const belt = formData.get("current_belt") as string;
-  if (!isBelt(belt)) {
+  if (!portalOnly && !isBelt(belt)) {
     back({ error: t.msg.pickBelt }, query);
     return;
   }
 
   const stripes = Number.parseInt((formData.get("current_stripes") as string) ?? "0", 10);
-  if (!Number.isInteger(stripes) || stripes < 0 || stripes > 4) {
+  if (!portalOnly && (!Number.isInteger(stripes) || stripes < 0 || stripes > 4)) {
     back({ error: t.msg.stripesRange }, query);
-    return;
-  }
-
-  const role = formData.get("role") as string;
-  if (!ASSIGNABLE_ROLES.includes(role as (typeof ASSIGNABLE_ROLES)[number])) {
-    back({ error: t.msg.pickRole }, query);
     return;
   }
 
@@ -171,12 +177,19 @@ export async function addPerson(formData: FormData) {
       birth_date: text(formData, "birth_date"),
       joined_at: joinedAt,
       // Optional: left to the column defaults (today) when the field is empty.
-      ...(text(formData, "rank_since") ? { rank_since: text(formData, "rank_since") } : {}),
-      ...(text(formData, "stripe_since")
-        ? { stripe_since: text(formData, "stripe_since") }
-        : {}),
-      current_belt: belt,
-      current_stripes: stripes,
+      // An admin-only account skips the whole rank block for the reason above.
+      ...(portalOnly
+        ? {}
+        : {
+            ...(text(formData, "rank_since")
+              ? { rank_since: text(formData, "rank_since") }
+              : {}),
+            ...(text(formData, "stripe_since")
+              ? { stripe_since: text(formData, "stripe_since") }
+              : {}),
+            current_belt: belt,
+            current_stripes: stripes,
+          }),
       notes: text(formData, "notes"),
     })
     .eq("auth_user_id", created.user.id)

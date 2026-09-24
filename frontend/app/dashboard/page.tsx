@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AlertCircleIcon } from "@/components/icons";
-import { getOrCreateProfile } from "@/utils/supabase/profile";
+import { isPortalOnly } from "@/utils/members";
+import { activeRoles, getOrCreateProfile } from "@/utils/supabase/profile";
 import { getAccess, requireAdmin } from "@/utils/supabase/require-admin";
 import { getDictionary } from "@/utils/i18n/server";
 import { MemberDashboard } from "./member-dashboard";
@@ -45,14 +46,16 @@ export default async function DashboardPage({
   //
   // A member sees no control: there is nothing to switch to, and offering the
   // choice would hint at a view they cannot open.
-  const showingMine = !isStaff || v === MINE;
+  // A portal-only admin is the exception to that: they run the portal and do
+  // not train, so they hold no belt and collect no hours. There is nothing for
+  // a personal view to draw, so the control is not offered and `v=mia` is
+  // ignored — a white belt from the column default and a row of zeroes is not
+  // "their own figures", it is a rank nobody gave them.
+  const profile = await getOrCreateProfile(supabase, userId, email);
+  const portalOnly =
+    isStaff && profile ? isPortalOnly(await activeRoles(supabase, profile.id)) : false;
 
-  // Unchanged in substance: the split is still in which queries run, not in
-  // which cards render. A gym-wide query is issued only when the gym view is
-  // the one actually being drawn.
-  const profile = showingMine
-    ? await getOrCreateProfile(supabase, userId, email)
-    : null;
+  const showingMine = !portalOnly && (!isStaff || v === MINE);
   const today = new Date().toISOString().slice(0, 10);
 
   return (
@@ -62,7 +65,7 @@ export default async function DashboardPage({
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             {t.dashboard.title}
           </h1>
-          {isStaff ? (
+          {isStaff && !portalOnly ? (
             <ViewToggle
               showingMine={showingMine}
               gymHref="/dashboard"
