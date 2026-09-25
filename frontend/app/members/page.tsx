@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Belt } from "@/components/belt";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { RowMenu } from "@/components/row-menu";
+import { TemporaryPasswordNotice } from "@/components/temporary-password-notice";
 import { isAdminClientConfigured } from "@/utils/supabase/admin";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { requireGymSettings } from "@/utils/supabase/gym";
@@ -24,6 +25,7 @@ import { daysSince, formatDate, formatDays, todayIn } from "@/utils/dates";
 import { estimateNote, formatHours, hoursFor } from "@/utils/hours";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
+import { readTemporaryPassword } from "@/utils/temporary-password-flash";
 import {
   promotionStatus,
   type Criterion,
@@ -95,6 +97,7 @@ type Search = {
   p?: string;
   ok?: string;
   error?: string;
+  pw?: string;
 };
 
 type RankHours = {
@@ -130,6 +133,7 @@ export default async function RegistroPage({
   // Staff only: an allievo or assistente gets a 404 here, not a redirect.
   const { supabase, access } = await requireRegistryViewer("/members");
   const gym = await requireGymSettings();
+  const temporaryPassword = await readTemporaryPassword(search.pw);
   // Eligibility, hours and days at rank are all measured to the gym's own day.
   const today = todayIn(gym.timezone);
 
@@ -293,6 +297,7 @@ export default async function RegistroPage({
           {search.ok}
         </p>
       ) : null}
+      <TemporaryPasswordNotice t={t} flash={temporaryPassword} />
       {search.error ? (
         <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
@@ -626,9 +631,9 @@ export default async function RegistroPage({
 
                 {access.canEditRegistry && canManageAccount ? (
                     <>
-                      {/* The provisional password is the shared default, not
-                          a chosen one, so the menu shows no field: nothing here
-                          has to be read back off the screen. */}
+                      {/* The provisional password is drawn by the action, not
+                          typed here, so the menu shows no field; the new one
+                          appears once above the list after the redirect. */}
                       <form action={setTemporaryPassword}>
                         <input type="hidden" name="_query" value={currentQuery} />
                         <input

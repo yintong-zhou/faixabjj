@@ -64,8 +64,9 @@ Looks simplifiable, is not:
 
 ## Forced password change
 
-Accounts from `addPerson` start on the shared default password; nothing else opens until it's replaced.
+Accounts from `addPerson` / `addManager`, and every staff reset, start on a **temporary password unique to that account** (`generateTemporaryPassword()`); nothing else opens until it's replaced. **Never a shared default**: a shared password let anyone who knew it take over any pending account, a manager's in another gym included (removed 2026-09-25; `supabase/scripts/pending-temporary-passwords.sql` lists accounts that may still be on it).
+- The password reaches the maestro **once**, through `flashTemporaryPassword()` (`utils/temporary-password-flash.ts`): an httpOnly 5-minute cookie, with only a random `pw` id in the redirect URL; `<TemporaryPasswordNotice>` shows it when the id matches. Never put it in `?ok=` (browser history, request logs).
 - Flag in **`app_metadata.must_change_password`** (only service role can write; rides in the JWT). Never `user_metadata` (user could clear it).
 - Enforced in `proxy.ts` (every path → `/change-password`, `/auth/*` and `/privacy` exempt) and in `requireAdmin()`.
 - `requireSession()` = `requireAdmin()` minus that check; `/change-password` is the only page using it (else infinite redirect).
-- The action **refuses the default password**, clears the flag with the admin client, then **`refreshSession()`** (old JWT still carries the flag).
+- The action refuses the current (temporary) password — GoTrue's `same_password` → `t.auth.sameAsTemporary` — clears the flag with the admin client, then **`refreshSession()`** (old JWT still carries the flag).

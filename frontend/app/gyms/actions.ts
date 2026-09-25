@@ -4,13 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { todayIn } from "@/utils/dates";
-import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { DEFAULT_TIMEZONE } from "@/utils/gym-defaults";
 import { deletionConfirmed, parseGymForm } from "@/utils/gyms";
 import { getDictionary } from "@/utils/i18n/server";
 import { logDbError } from "@/utils/log";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requirePlatformAdmin } from "@/utils/supabase/require-admin";
+import { generateTemporaryPassword } from "@/utils/temporary-password";
+import { flashTemporaryPassword } from "@/utils/temporary-password-flash";
 
 const LIST = "/gyms";
 
@@ -230,8 +231,9 @@ export async function deleteGym(formData: FormData) {
   to(LIST, failed ? { error: t.gyms.msg.accountsNotDeleted(failed) } : { ok: t.gyms.msg.deleted(gym.name) });
 }
 
-// A manager is an `admin` of the gym: created on the shared default password
-// with the forced change armed, like every account the portal creates. The gym
+// A manager is an `admin` of the gym: created on a temporary password drawn for
+// it alone, shown once, with the forced change armed, like every account the
+// portal creates. The gym
 // rides in app_metadata, where the auth trigger reads it to make the person
 // row; the role is inserted with the service role, since the superadmin holds
 // no rights inside the gym.
@@ -263,9 +265,10 @@ export async function addManager(formData: FormData) {
     to(detail, { error: t.gyms.msg.secretMissing });
   }
 
+  const password = generateTemporaryPassword();
   const { data: created, error } = await admin.auth.admin.createUser({
     email,
-    password: DEFAULT_PASSWORD,
+    password,
     email_confirm: true,
     user_metadata: { full_name: fullName },
     app_metadata: { must_change_password: true, gym_id: gymId },
@@ -317,7 +320,10 @@ export async function addManager(formData: FormData) {
 
   revalidatePath(detail);
   revalidatePath(LIST);
-  to(detail, { ok: t.gyms.msg.managerAdded(email, DEFAULT_PASSWORD) });
+  to(detail, {
+    ok: t.gyms.msg.managerAdded(email),
+    pw: await flashTemporaryPassword({ email, password }),
+  });
 }
 
 // Both account actions act only on a manager of this gym, checked through
@@ -349,8 +355,9 @@ export async function resetManagerPassword(formData: FormData) {
     to(detail, { error: t.gyms.msg.secretMissing });
   }
 
+  const password = generateTemporaryPassword();
   const { error } = await admin.auth.admin.updateUserById(userId, {
-    password: DEFAULT_PASSWORD,
+    password,
     // Keeps gym_id: app_metadata is merged, but it is restated so the account
     // can never lose its gym through this call.
     app_metadata: { must_change_password: true, gym_id: gymId },
@@ -360,7 +367,10 @@ export async function resetManagerPassword(formData: FormData) {
     to(detail, { error: t.gyms.msg.failed });
   }
 
-  to(detail, { ok: t.gyms.msg.passwordReset(manager.email ?? "") });
+  to(detail, {
+    ok: t.gyms.msg.passwordReset(manager.email ?? ""),
+    pw: await flashTemporaryPassword({ email: manager.email ?? "", password }),
+  });
 }
 
 export async function revokeManager(formData: FormData) {

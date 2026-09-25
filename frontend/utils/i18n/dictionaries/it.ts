@@ -125,7 +125,7 @@ export const it = {
     changeButton: "Salva e continua",
     tooShort: "La password deve avere almeno 8 caratteri.",
     mismatch: "Le due password non coincidono.",
-    sameAsDefault: "Scegli una password diversa da quella predefinita.",
+    sameAsTemporary: "Scegli una password diversa da quella provvisoria.",
     updateFailed: "Non è stato possibile aggiornare la password.",
     flagNotCleared:
       "Password aggiornata, ma la richiesta di cambio non è stata azzerata. Riprova.",
@@ -452,10 +452,11 @@ export const it = {
 
     addPerson: "Aggiungi persona",
     addToRegistry: "Aggiungi al registro",
-    defaultPasswordNoteBefore:
-      "Viene creato anche l'account, subito attivo e senza email di conferma. Password provvisoria:",
-    defaultPasswordNoteAfter:
-      "— comunicala alla persona. Al primo accesso le verrà chiesto di sostituirla prima di poter usare il resto dell'app.",
+    temporaryPasswordNote:
+      "Viene creato anche l'account, subito attivo e senza email di conferma. Dopo il salvataggio compare una password provvisoria valida solo per questo account: comunicala alla persona. Al primo accesso le verrà chiesto di sostituirla prima di poter usare il resto dell'app.",
+    temporaryPasswordFor: (email: string) => `Password provvisoria di ${email}:`,
+    temporaryPasswordHelp:
+      "Viene mostrata solo adesso: comunicala alla persona, che dovrà sostituirla al primo accesso.",
     select: "Seleziona…",
     stripes: "Tacche",
     beltNotForAdmin:
@@ -490,7 +491,7 @@ export const it = {
     invite: "Invita al portale",
     resetPassword: "Reimposta password",
     resetPasswordConfirm: (name: string) =>
-      `Reimpostare la password di ${name} su quella provvisoria? La password attuale smetterà di funzionare.`,
+      `Dare a ${name} una nuova password provvisoria? La password attuale smetterà di funzionare.`,
     revoke: "Revoca accesso",
     revokeConfirm: (name: string) =>
       `Revocare l'accesso a ${name}? La scheda resta nel registro, ma la persona non potrà più entrare nel portale.`,
@@ -560,16 +561,16 @@ export const it = {
     secretMissingRevoke: "SUPABASE_SECRET_KEY non è configurata: la revoca è disattivata.",
     accountNotCreated:
       "Account non creato: l'indirizzo email potrebbe essere già registrato.",
-    personAdded: (name: string, password: string) =>
-      `${name} aggiunta al registro. Account attivo: password provvisoria ${password}, da cambiare al primo accesso.`,
+    personAdded: (name: string) =>
+      `${name} aggiunta al registro. Account attivo, con una password provvisoria da cambiare al primo accesso.`,
     personAddedNoRole: (name: string) =>
       `${name} è stata aggiunta, ma il ruolo non è stato assegnato.`,
     accountCreatedNoProfile: (email: string) =>
       `Account creato per ${email}, ma i dati della scheda non sono stati salvati.`,
     inviteFailed: "Invito non riuscito. L'indirizzo potrebbe essere già registrato.",
     inviteSent: (email: string) => `Invito inviato a ${email}.`,
-    passwordReset: (who: string, password: string) =>
-      `Password di ${who} riportata a quella provvisoria (${password}): le verrà chiesto di cambiarla al primo accesso.`,
+    passwordReset: (who: string) =>
+      `${who} ha una nuova password provvisoria: le verrà chiesto di cambiarla al primo accesso.`,
     someUser: "l'utente",
     accessRevoked: "Accesso revocato. La scheda resta nel registro.",
 
@@ -917,7 +918,7 @@ export const it = {
     noAccount: "senza account",
     resetPassword: "Reimposta password",
     confirmReset: (email: string) =>
-      `Reimpostare la password di ${email} a quella predefinita? Dovrà cambiarla al prossimo accesso.`,
+      `Dare a ${email} una nuova password provvisoria? Dovrà cambiarla al prossimo accesso.`,
     revoke: "Revoca accesso",
     confirmRevoke: (email: string) =>
       `Revocare l'accesso di ${email}? L'account viene eliminato; la persona resta nel registro della palestra.`,
@@ -948,8 +949,8 @@ export const it = {
       deleteNameMismatch: "Il nome digitato non corrisponde.",
       accountsNotDeleted: (n: number) =>
         `Palestra eliminata, ma ${n} account non sono stati rimossi: eliminali dal pannello di Supabase.`,
-      managerAdded: (email: string, password: string) =>
-        `Gestore ${email} creato con la password predefinita ${password}: la cambierà al primo accesso.`,
+      managerAdded: (email: string) =>
+        `Gestore ${email} creato con una password provvisoria: la cambierà al primo accesso.`,
       managerFailed: "Impossibile creare il gestore: l'email potrebbe essere già in uso.",
       managerMissing: "Nome ed email sono obbligatori.",
       notAManager: "Questa persona non è un gestore di questa palestra.",

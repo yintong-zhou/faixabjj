@@ -9,8 +9,9 @@ import {
   requireRegistryEditor,
   requireUserManager,
 } from "@/utils/supabase/require-admin";
-import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { getDictionary } from "@/utils/i18n/server";
+import { generateTemporaryPassword } from "@/utils/temporary-password";
+import { flashTemporaryPassword } from "@/utils/temporary-password-flash";
 import { todayIn } from "@/utils/dates";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE } from "@/utils/members";
@@ -162,10 +163,11 @@ async function accountInMyGym(
 
 // Adds a member to the registry *and* creates their login account in one act.
 //
-// The account is created with the shared default password, its address marked
-// confirmed so no email is sent and nothing has to be clicked, and
-// `must_change_password` set — which the proxy and requireAdmin enforce, so the
-// member replaces the shared password before anything else in the app opens.
+// The account is created with a temporary password drawn for it alone and shown
+// once to the maestro, its address marked confirmed so no email is sent and
+// nothing has to be clicked, and `must_change_password` set — which the proxy
+// and requireAdmin enforce, so the member replaces it before anything else in
+// the app opens.
 //
 // Order matters: the auth user is created first, because that is the step that
 // can fail on a duplicate email. Doing it after the registry insert would leave
@@ -244,9 +246,10 @@ export async function addPerson(formData: FormData) {
     return;
   }
 
+  const password = generateTemporaryPassword();
   const { data: created, error: authError } = await admin.auth.admin.createUser({
     email,
-    password: DEFAULT_PASSWORD,
+    password,
     // Marks the address confirmed at creation: no verification email is sent
     // and the account is usable immediately.
     email_confirm: true,
@@ -318,7 +321,8 @@ export async function addPerson(formData: FormData) {
   revalidatePath(PATH);
   back(
     {
-      ok: t.msg.personAdded(fullName, DEFAULT_PASSWORD),
+      ok: t.msg.personAdded(fullName),
+      pw: await flashTemporaryPassword({ email, password }),
     },
     query,
   );
@@ -457,12 +461,11 @@ export async function inviteToPortal(formData: FormData) {
   back({ ok: t.msg.inviteSent(email) }, query);
 }
 
-// Resets a member's password to the shared default, rather than emailing a
-// recovery link — the same password addPerson starts every account on, so the
-// maestro has nothing to read off the screen and pass on. It is provisional by
-// construction: setting it re-arms must_change_password, so the member has to
-// replace it at their next login exactly like a freshly created account.
-// Without that flag this would leave an account on a password everyone knows.
+// Gives a member a fresh temporary password, rather than emailing a recovery
+// link — drawn for this account alone and shown once to the maestro, exactly as
+// addPerson does. It is provisional by construction: setting it re-arms
+// must_change_password, so the member has to replace it at their next login
+// like a freshly created account.
 export async function setTemporaryPassword(formData: FormData) {
   const { t } = await getDictionary();
   const { supabase } = await requireUserManager(PATH);
@@ -496,8 +499,9 @@ export async function setTemporaryPassword(formData: FormData) {
     return;
   }
 
+  const password = generateTemporaryPassword();
   const { data, error } = await admin.auth.admin.updateUserById(targetId, {
-    password: DEFAULT_PASSWORD,
+    password,
     app_metadata: { must_change_password: true },
   });
 
@@ -506,9 +510,11 @@ export async function setTemporaryPassword(formData: FormData) {
     return;
   }
 
+  const who = data.user.email ?? t.msg.someUser;
   back(
     {
-      ok: t.msg.passwordReset(data.user.email ?? t.msg.someUser, DEFAULT_PASSWORD),
+      ok: t.msg.passwordReset(who),
+      pw: await flashTemporaryPassword({ email: who, password }),
     },
     query,
   );
