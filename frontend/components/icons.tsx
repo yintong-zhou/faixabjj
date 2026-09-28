@@ -136,6 +136,15 @@ export function UserMinusIcon({ className }: IconProps) {
   );
 }
 
+export function SearchIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m20 20-4.2-4.2" />
+    </svg>
+  );
+}
+
 export function FilterIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...strokeProps}>
