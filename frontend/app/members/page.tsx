@@ -3,6 +3,7 @@ import { Belt } from "@/components/belt";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { RowMenu } from "@/components/row-menu";
 import { TemporaryPasswordNotice } from "@/components/temporary-password-notice";
+import { NameSearch } from "./name-search";
 import { isAdminClientConfigured } from "@/utils/supabase/admin";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { requireGymSettings } from "@/utils/supabase/gym";
@@ -17,6 +18,7 @@ import {
   FilterIcon,
   KeyIcon,
   MailIcon,
+  TrashIcon,
   TrendingUpIcon,
   UserMinusIcon,
   UserPlusIcon,
@@ -32,6 +34,7 @@ import {
   type PromotionInput,
 } from "@/utils/promotion";
 import {
+  deletePerson,
   inviteToPortal,
   revokeAccess,
   setTemporaryPassword,
@@ -245,10 +248,17 @@ export default async function RegistroPage({
     }
 
     // Name only — searching by email was explicitly excluded. The strip keeps a
-    // stray comma or parenthesis from breaking PostgREST's filter syntax.
-    const term = (search.q ?? "").trim().replace(/[%,()\\]/g, "");
-    if (term) {
-      query = query.ilike("full_name", `%${term}%`);
+    // stray comma or parenthesis from breaking PostgREST's filter syntax (`_`
+    // too: it is ilike's one-character wildcard). Each word must appear
+    // somewhere in the name, in any order, so "rossi mario" finds Mario Rossi
+    // and "mar ros" narrows as it is typed.
+    const words = (search.q ?? "")
+      .replace(/[%,()\\_]/g, " ")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 5);
+    for (const word of words) {
+      query = query.ilike("full_name", `%${word}%`);
     }
     if (search.ruolo) {
       query = query.contains("active_roles", [search.ruolo]);
@@ -271,9 +281,10 @@ export default async function RegistroPage({
   const eligibleQuery = queryString(search, { idonei: "1", p: "" });
 
   // `p` is paging, not filtering — it must not make the panel look active or
-  // open itself on page 2 of an unfiltered list.
+  // open itself on page 2 of an unfiltered list. The name is not counted
+  // either: it has its own box above the panel, and counting it would pop the
+  // panel open under the reader's fingers while they type.
   const activeFilters = [
-    search.q ? `"${search.q}"` : null,
     search.ruolo ? roleLabel(search.ruolo, t) : null,
     search.cintura ? beltLabel(search.cintura, t) : null,
     search.attivi ? t.registro.onlyActiveChip : null,
@@ -363,15 +374,30 @@ export default async function RegistroPage({
       {/* Open only when something is filtering: an untouched list keeps the
           panel out of the way, a filtered one shows why it is short.
 
-          The flex wrapper is what keeps the closed chip the width of its own
+          The flex row below is what keeps the closed chip the width of its own
           label: as a plain block on this column it would stretch edge to edge
-          and read as a bar again. `open:w-full` gives it the whole line back
-          the moment it opens, so the form inside is never narrower than the
-          page. */}
-      <div className="flex">
+          and read as a bar again. */}
+      {/* Search and filters share one row: the search box takes the room, the
+          filters chip sits at its end. Opened, the panel needs the whole width
+          for its form, so it wraps onto a line of its own under the search box
+          (`open:basis-full`) instead of squeezing it. Finding somebody by name
+          is what this page is opened for most often, so the box is always
+          visible and live rather than inside the panel. */}
+      <div className="flex flex-wrap items-start gap-2">
+      <div className="min-w-0 flex-1 basis-56">
+        <NameSearch
+          initialQuery={search.q ?? ""}
+          baseQuery={queryString(search, { q: "", p: "" })}
+          filterFormId="registry-filters"
+          label={t.registro.name}
+          placeholder={t.registro.searchByName}
+          pendingLabel={t.common.loading}
+        />
+      </div>
+
       <details
         open={activeFilters.length > 0}
-        className="group rounded-xl border border-border open:w-full"
+        className="group rounded-xl border border-border open:basis-full"
       >
         <summary className={PANEL_SUMMARY}>
           <FilterIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
@@ -389,6 +415,7 @@ export default async function RegistroPage({
         </summary>
 
         <form
+          id="registry-filters"
           method="get"
           action="/members"
           className="flex flex-col gap-2.5 border-t border-border px-3 pb-4 pt-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3 sm:px-4 sm:pb-5"
@@ -396,20 +423,12 @@ export default async function RegistroPage({
           {/* Carried through the form, or narrowing by belt while looking at
               the queue would silently drop you back into the whole list. */}
           {onlyEligible ? <input type="hidden" name="idonei" value="1" /> : null}
-
-          <div className="flex min-w-52 flex-1 flex-col gap-1.5">
-            <label htmlFor="q" className="text-xs font-medium text-foreground/65">
-              {t.registro.name}
-            </label>
-            <input
-              id="q"
-              name="q"
-              type="search"
-              defaultValue={search.q ?? ""}
-              placeholder={t.registro.searchByName}
-              className={fieldClass}
-            />
-          </div>
+          {/* The name lives in the search box above; carried here so applying
+              a filter does not clear what was typed. Always rendered, because
+              NameSearch writes the text as it is at submit time into it — the
+              value below is only the last server response's. Disabled when
+              empty so the URL gets no bare `q=`. */}
+          <input type="hidden" name="q" defaultValue={search.q ?? ""} disabled={!search.q} />
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="ruolo" className="text-xs font-medium text-foreground/65">
@@ -667,6 +686,22 @@ export default async function RegistroPage({
                       </form>
                     </>
                   ) : null}
+
+                {/* Deleting is the step after revoking: offered only once the
+                    account is gone, which the delete policy also insists on. */}
+                {access.canManageUsers && !member.auth_user_id ? (
+                  <form action={deletePerson}>
+                    <input type="hidden" name="_query" value={currentQuery} />
+                    <input type="hidden" name="person_id" value={member.id} />
+                    <ConfirmSubmitButton
+                      message={t.registro.deletePersonConfirm(member.full_name)}
+                      className={`${menuItemClass} text-accent hover:bg-accent/10`}
+                    >
+                      <TrashIcon className={menuIconClass} />
+                      {t.registro.deletePerson}
+                    </ConfirmSubmitButton>
+                  </form>
+                ) : null}
               </RowMenu>
             </li>
           );

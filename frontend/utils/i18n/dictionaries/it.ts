@@ -495,6 +495,12 @@ export const it = {
     revoke: "Revoca accesso",
     revokeConfirm: (name: string) =>
       `Revocare l'accesso a ${name}? La scheda resta nel registro, ma la persona non potrà più entrare nel portale.`,
+    deletePerson: "Elimina dal registro",
+    deletePersonConfirm: (name: string) =>
+      `Eliminare definitivamente ${name} dal registro? Si perdono anche presenze, ruoli e storico delle promozioni. Non si può annullare.`,
+    deleteSection: "Elimina la scheda",
+    deleteSectionHelp:
+      "La persona non ha più un account. Eliminando la scheda si cancellano anche le sue presenze, i ruoli e lo storico delle promozioni, e le ore della palestra cambiano di conseguenza. Non si può annullare.",
 
     backToRegistry: "Registro",
     detailReadOnly:
@@ -535,6 +541,8 @@ export const it = {
     resetFailed: "Reimpostazione non riuscita.",
     cannotRevokeSelf: "Non puoi revocare il tuo stesso accesso.",
     revokeFailed: "Revoca non riuscita.",
+    personDeleted: (name: string) => `${name} è stata eliminata dal registro.`,
+    deleteNeedsRevoke: "Prima di eliminare la scheda revoca l'accesso della persona.",
     // account
     nameEmpty: "Il nome non può essere vuoto.",
     profileNotFound: "Profilo non trovato.",
@@ -572,7 +580,8 @@ export const it = {
     passwordReset: (who: string) =>
       `${who} ha una nuova password provvisoria: le verrà chiesto di cambiarla al primo accesso.`,
     someUser: "l'utente",
-    accessRevoked: "Accesso revocato. La scheda resta nel registro.",
+    accessRevoked:
+      "Accesso revocato. La scheda resta nel registro; se la persona non tornerà, puoi eliminarla dal menu della riga o dai dettagli.",
 
     // corsi
     courseNameRequired: "Il nome del corso è obbligatorio.",

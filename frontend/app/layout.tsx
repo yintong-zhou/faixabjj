@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Work_Sans } from "next/font/google";
 import { cookies } from "next/headers";
+import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { InlineScript } from "@/components/inline-script";
 import { CookieNotice } from "@/components/cookie-notice";
 import { NavShell } from "@/components/nav-shell";
+import { PendingFeedback } from "@/components/pending-feedback";
 import { createClient } from "@/utils/supabase/server";
 import { getAccess } from "@/utils/supabase/require-admin";
 import { getGymSettings } from "@/utils/supabase/gym";
@@ -129,6 +131,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <InlineScript html={THEME_INIT_SCRIPT} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        {/* The belt bar and the pressed-button stripes — see the component.
+            Suspense because it reads the search params, which would otherwise
+            pull every prerendered page into client rendering. Nothing to show
+            as a fallback: the bar is invisible until something is pending. */}
+        <Suspense fallback={null}>
+          <PendingFeedback label={t.common.loading} />
+        </Suspense>
+
         <NavShell
           isLoggedIn={isLoggedIn}
           canViewRegistry={canViewRegistry}

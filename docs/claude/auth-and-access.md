@@ -60,7 +60,7 @@ Looks simplifiable, is not:
 - `/members` is where accounts are managed; no separate user-management page (see members doc).
 - Profile = `person` row linked by `person.auth_user_id`. `getOrCreateProfile()` (`utils/supabase/profile.ts`) creates it on demand as fallback to the trigger.
 - Service-role actions in `app/members/actions.ts` each re-check `requireUserManager()`. Without the key the page renders but destructive controls are disabled.
-- Revoking access deletes the `auth` user only; `auth_user_id` is `ON DELETE SET NULL` so registry and attendance survive.
+- Revoking access deletes the `auth` user only; `auth_user_id` is `ON DELETE SET NULL` so registry and attendance survive. Deleting the record is a separate, later step (`deletePerson`, see members doc), refused by the policy while an account is linked.
 
 ## Forced password change
 

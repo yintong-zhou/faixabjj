@@ -638,4 +638,47 @@ begin
 end $$;
 rollback;
 
+-- T19: a person is deleted only by a user manager, only once their account is
+-- gone, and takes their attendance with them.
+insert into public.person (id, full_name, gym_id)
+values ('00000000-0000-0000-0000-0000000000d1', 'Left For Good', current_setting('test.gym_a')::uuid);
+insert into public.attendance (person_id, session_id, present, gym_id)
+values ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000005aa', true,
+        current_setting('test.gym_a')::uuid);
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', true);
+do $$ begin
+  delete from public.person where id = '00000000-0000-0000-0000-0000000000d1';
+  if found then
+    raise exception 'FAIL T19: a student deleted a person';
+  end if;
+end $$;
+commit;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+do $$ begin
+  delete from public.person where email = 'a2@test';
+  if found then
+    raise exception 'FAIL T19: a1 deleted a person who still has an account';
+  end if;
+  delete from public.person where id = '00000000-0000-0000-0000-0000000000d1';
+  if not found then
+    raise exception 'FAIL T19: a1 could not delete an account-less person';
+  end if;
+end $$;
+commit;
+
+do $$ begin
+  if exists (select 1 from public.attendance where person_id = '00000000-0000-0000-0000-0000000000d1') then
+    raise exception 'FAIL T19: the deleted person''s attendance survived';
+  end if;
+  if not exists (select 1 from public.person where email = 'a2@test') then
+    raise exception 'FAIL T19: a2 was deleted';
+  end if;
+end $$;
+
 select 'tenant isolation: all checks passed' as result;
