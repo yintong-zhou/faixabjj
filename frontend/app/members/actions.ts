@@ -269,7 +269,12 @@ export async function addPerson(formData: FormData) {
 
   // The on_auth_user_created trigger has just created the matching `person`
   // row from the metadata above; fill in the rest of the form.
-  const { data: person, error } = await supabase
+  //
+  // With the service role, not the user's client: the database lets a belt
+  // change only inside record_promotion() (20260927000000), and the starting
+  // belt is not a promotion. The row is addressed by the account created a few
+  // lines up and by the caller's own gym, so this reaches nobody else.
+  const { data: person, error } = await admin
     .from("person")
     .update({
       full_name: fullName,
@@ -293,9 +298,11 @@ export async function addPerson(formData: FormData) {
       notes: text(formData, "notes"),
     })
     .eq("auth_user_id", created.user.id)
+    .eq("gym_id", gymId as string)
     .select("id")
     .maybeSingle();
 
+  if (error) logDbError("members", "addPerson:profile", error);
   if (error || !person) {
     back(
       {

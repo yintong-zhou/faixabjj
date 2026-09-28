@@ -6,12 +6,15 @@ import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { getDictionary } from "@/utils/i18n/server";
 import { logDbError } from "@/utils/log";
+import { safeNextPath } from "@/utils/paths";
 import { turnstileToken } from "@/utils/turnstile";
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const next = (formData.get("next") as string) || "/dashboard";
+  // `next` arrives in the URL, so anybody can write it into a link: only a path
+  // on this site is honoured (see safeNextPath).
+  const next = safeNextPath(formData.get("next"), "/dashboard");
 
   const supabase = createClient(await cookies());
   // Supabase verifies the challenge itself, before it looks at the password —

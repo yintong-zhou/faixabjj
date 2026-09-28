@@ -49,7 +49,7 @@ Not flat. Role = an **active** `assigned_role` (`end_date is null`); no active r
 
 Looks simplifiable, is not:
 - Writes to `assigned_role` are manager-only, or anyone could grant themselves `head_coach`.
-- Trigger `guard_person_auth_link` on `person` freezes `auth_user_id` against non-managers and `current_belt`/`current_stripes`/`rank_since`/`stripe_since` against non-editors. RLS can't: a member legitimately UPDATEs their own row. It skips when `auth.uid()` is null (service role, and the FK `ON DELETE SET NULL` cascade — otherwise deleting a user fails).
+- Trigger `guard_person_auth_link` on `person` freezes `auth_user_id` against non-managers; for non-editors it is an **allowlist** — on their own row only `full_name`, `phone`, `birth_date`, `notes` may change (`joined_at` feeds eligibility). Nobody, editors included, changes their own rank columns or `joined_at`; belt/stripes change only inside `record_promotion()`, the only writer of `promotion` too (`20260927000000`). RLS can't: a member legitimately UPDATEs their own row. It skips when `auth.uid()` is null (service role, and the FK `ON DELETE SET NULL` cascade — otherwise deleting a user fails).
 - `admin` is never a literal in migration SQL (`role::text = any(...)`): a freshly added enum value can't be used in the same transaction, breaking a from-scratch replay.
 
 **Bootstrap:** after migrations nobody has a role. The first `head_coach` is inserted by hand; the statement is commented out at the bottom of both migrations on purpose (no hidden privilege grants). The first platform superadmin is granted the same way, by hand: `supabase/scripts/bootstrap-platform-admin.sql` (not a migration — see `docs/claude/gyms.md`).

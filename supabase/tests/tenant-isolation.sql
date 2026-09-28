@@ -557,4 +557,85 @@ do $$ begin
   end if;
 end $$;
 
+-- T17: a member edits only what /account offers on their own row.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', true);
+do $$ begin
+  update public.person set phone = '123', notes = 'n', birth_date = '2000-01-01'
+   where auth_user_id = auth.uid();
+  if not found then
+    raise exception 'FAIL T17: a2 could not save their own profile fields';
+  end if;
+  begin
+    update public.person set joined_at = '2000-01-01' where auth_user_id = auth.uid();
+    raise exception 'FAIL T17: a2 backdated their own join date';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.person set current_stripes = 4 where auth_user_id = auth.uid();
+    raise exception 'FAIL T17: a2 changed their own stripes';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.person set email = 'x@test' where auth_user_id = auth.uid();
+    raise exception 'FAIL T17: a2 rewrote the email on their own row';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
+-- T18: an editor goes through record_promotion() for grades and history, and
+-- never changes their own rank.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+do $$
+declare
+  v_a2 uuid := (select id from public.person where email = 'a2@test');
+begin
+  begin
+    update public.person set current_belt = 'black' where auth_user_id = auth.uid();
+    raise exception 'FAIL T18: a1 changed their own belt';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.person set rank_since = '2000-01-01' where auth_user_id = auth.uid();
+    raise exception 'FAIL T18: a1 backdated their own belt date';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.person set current_stripes = 3 where id = v_a2;
+    raise exception 'FAIL T18: a1 changed a2''s stripes without a promotion';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into public.promotion (person_id, from_belt, from_stripes, to_belt, to_stripes, promoted_on)
+    values (v_a2, 'white', 0, 'black', 0, current_date);
+    raise exception 'FAIL T18: a1 wrote a promotion row directly';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- Correcting somebody else's dates stays a direct write.
+  update public.person set rank_since = current_date - 30, stripe_since = current_date - 30 where id = v_a2;
+  if not found then
+    raise exception 'FAIL T18: a1 could not correct a2''s rank dates';
+  end if;
+
+  perform public.record_promotion(v_a2, 'white', 1::smallint, current_date, null);
+  if (select current_stripes from public.person where id = v_a2) <> 1
+     or (select count(*) from public.promotion where person_id = v_a2) <> 1 then
+    raise exception 'FAIL T18: record_promotion did not write the grade and its history';
+  end if;
+
+  -- The pass ends with the function.
+  begin
+    insert into public.promotion (person_id, from_belt, from_stripes, to_belt, to_stripes, promoted_on)
+    values (v_a2, 'white', 1, 'white', 2, current_date);
+    raise exception 'FAIL T18: a direct promotion insert succeeded after record_promotion';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
 select 'tenant isolation: all checks passed' as result;
