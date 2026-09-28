@@ -115,7 +115,7 @@ export const ptBR: Dictionary = {
     changeButton: "Salvar e continuar",
     tooShort: "A senha deve ter pelo menos 8 caracteres.",
     mismatch: "As duas senhas não coincidem.",
-    sameAsDefault: "Escolha uma senha diferente da padrão.",
+    sameAsTemporary: "Escolha uma senha diferente da provisória.",
     updateFailed: "Não foi possível atualizar a senha.",
     flagNotCleared:
       "Senha atualizada, mas a solicitação de alteração não foi encerrada. Tente novamente.",
@@ -438,10 +438,11 @@ export const ptBR: Dictionary = {
 
     addPerson: "Adicionar pessoa",
     addToRegistry: "Adicionar ao cadastro",
-    defaultPasswordNoteBefore:
-      "A conta também é criada, ativa na hora e sem e-mail de confirmação. Senha provisória:",
-    defaultPasswordNoteAfter:
-      "— informe-a à pessoa. No primeiro acesso será pedido que ela a substitua antes de poder usar o restante do aplicativo.",
+    temporaryPasswordNote:
+      "A conta também é criada, ativa na hora e sem e-mail de confirmação. Depois de salvar, aparece uma senha provisória válida só para esta conta: informe-a à pessoa. No primeiro acesso será pedido que ela a substitua antes de poder usar o restante do aplicativo.",
+    temporaryPasswordFor: (email: string) => `Senha provisória de ${email}:`,
+    temporaryPasswordHelp:
+      "Mostrada só agora: informe-a à pessoa, que terá de substituí-la no primeiro acesso.",
     select: "Selecione…",
     stripes: "Graus",
     beltNotForAdmin:
@@ -476,7 +477,7 @@ export const ptBR: Dictionary = {
     invite: "Convidar para o portal",
     resetPassword: "Redefinir senha",
     resetPasswordConfirm: (name: string) =>
-      `Redefinir a senha de ${name} para a provisória? A senha atual deixará de funcionar.`,
+      `Dar a ${name} uma nova senha provisória? A senha atual deixará de funcionar.`,
     revoke: "Revogar acesso",
     revokeConfirm: (name: string) =>
       `Revogar o acesso de ${name}? A ficha permanece no cadastro, mas a pessoa não poderá mais entrar no portal.`,
@@ -544,16 +545,16 @@ export const ptBR: Dictionary = {
     secretMissingRevoke: "SUPABASE_SECRET_KEY não está configurada: a revogação está desativada.",
     accountNotCreated:
       "Conta não criada: o endereço de e-mail pode já estar cadastrado.",
-    personAdded: (name: string, password: string) =>
-      `${name} adicionada ao cadastro. Conta ativa: senha provisória ${password}, a ser trocada no primeiro acesso.`,
+    personAdded: (name: string) =>
+      `${name} adicionada ao cadastro. Conta ativa, com uma senha provisória a ser trocada no primeiro acesso.`,
     personAddedNoRole: (name: string) =>
       `${name} foi adicionada, mas a função não foi atribuída.`,
     accountCreatedNoProfile: (email: string) =>
       `Conta criada para ${email}, mas os dados da ficha não foram salvos.`,
     inviteFailed: "O convite falhou. O endereço pode já estar cadastrado.",
     inviteSent: (email: string) => `Convite enviado para ${email}.`,
-    passwordReset: (who: string, password: string) =>
-      `A senha de ${who} voltou a ser a provisória (${password}): será pedido que ela a troque no primeiro acesso.`,
+    passwordReset: (who: string) =>
+      `${who} tem uma nova senha provisória: será pedido que a troque no primeiro acesso.`,
     someUser: "o usuário",
     accessRevoked: "Acesso revogado. A ficha permanece no cadastro.",
 
@@ -894,7 +895,7 @@ export const ptBR: Dictionary = {
     noAccount: "sem conta",
     resetPassword: "Redefinir senha",
     confirmReset: (email: string) =>
-      `Redefinir a senha de ${email} para a padrão? Será preciso trocá-la no próximo acesso.`,
+      `Dar a ${email} uma nova senha provisória? Será preciso trocá-la no próximo acesso.`,
     revoke: "Revogar acesso",
     confirmRevoke: (email: string) =>
       `Revogar o acesso de ${email}? A conta é excluída; a pessoa continua no cadastro da academia.`,
@@ -925,8 +926,8 @@ export const ptBR: Dictionary = {
       deleteNameMismatch: "O nome digitado não confere.",
       accountsNotDeleted: (n: number) =>
         `Academia excluída, mas ${n} contas não foram removidas: exclua-as pelo painel do Supabase.`,
-      managerAdded: (email: string, password: string) =>
-        `Gestor ${email} criado com a senha padrão ${password}: ele vai trocá-la no primeiro acesso.`,
+      managerAdded: (email: string) =>
+        `Gestor ${email} criado com uma senha provisória: vai trocá-la no primeiro acesso.`,
       managerFailed: "Não foi possível criar o gestor: o e-mail pode já estar em uso.",
       managerMissing: "Nome e e-mail são obrigatórios.",
       notAManager: "Esta pessoa não é gestora desta academia.",

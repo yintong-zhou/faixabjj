@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { ChevronLeftIcon, UserPlusIcon } from "@/components/icons";
-import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { getDictionary } from "@/utils/i18n/server";
 import { beltLabels, roleLabels } from "@/utils/supabase/profile";
 import { requireRegistryEditor } from "@/utils/supabase/require-admin";
@@ -60,13 +59,7 @@ export default async function AddPersonPage({
       <form action={addPerson} className="flex flex-col gap-3 sm:gap-4">
         <input type="hidden" name="_query" value={query} />
 
-        <p className="text-xs text-foreground/55">
-          {t.registro.defaultPasswordNoteBefore}{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 font-medium">
-            {DEFAULT_PASSWORD}
-          </code>{" "}
-          {t.registro.defaultPasswordNoteAfter}
-        </p>
+        <p className="text-xs text-foreground/55">{t.registro.temporaryPasswordNote}</p>
 
         <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
           <div className="flex flex-col gap-1.5">

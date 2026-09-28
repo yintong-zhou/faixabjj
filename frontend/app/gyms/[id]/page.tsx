@@ -17,11 +17,12 @@ import {
 } from "@/components/icons";
 import { RowMenu } from "@/components/row-menu";
 import { formatDate, todayIn } from "@/utils/dates";
-import { DEFAULT_PASSWORD } from "@/utils/default-password";
+import { TemporaryPasswordNotice } from "@/components/temporary-password-notice";
 import { getDictionary } from "@/utils/i18n/server";
 import { logDbError } from "@/utils/log";
 import { GYM_COLUMNS, toGymSettings, type GymRow } from "@/utils/supabase/gym";
 import { requirePlatformAdmin } from "@/utils/supabase/require-admin";
+import { readTemporaryPassword } from "@/utils/temporary-password-flash";
 import {
   addManager,
   deleteGym,
@@ -59,12 +60,13 @@ export default async function GymDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; error?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string; pw?: string }>;
 }) {
   const { id } = await params;
-  const { ok, error } = await searchParams;
+  const { ok, error, pw } = await searchParams;
   const { t } = await getDictionary();
   const { supabase } = await requirePlatformAdmin(`/gyms/${id}`);
+  const temporaryPassword = await readTemporaryPassword(pw);
 
   const { data: row, error: gymError } = await supabase
     .from("gym")
@@ -107,6 +109,7 @@ export default async function GymDetailPage({
           <span>{ok}</span>
         </p>
       ) : null}
+      <TemporaryPasswordNotice t={t} flash={temporaryPassword} />
       {error ? (
         <p className="flex items-start gap-2 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
           <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
@@ -202,11 +205,7 @@ export default async function GymDetailPage({
 
         <form action={addManager} className="flex flex-col gap-3 border-t border-border pt-4">
           <input type="hidden" name="gym_id" value={gym.id} />
-          <p className="text-xs text-foreground/55">
-            {t.registro.defaultPasswordNoteBefore}{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 font-medium">{DEFAULT_PASSWORD}</code>{" "}
-            {t.registro.defaultPasswordNoteAfter}
-          </p>
+          <p className="text-xs text-foreground/55">{t.registro.temporaryPasswordNote}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="full_name" className="text-sm font-medium">{t.gyms.managerName}</label>

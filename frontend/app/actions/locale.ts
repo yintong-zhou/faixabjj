@@ -8,6 +8,7 @@ import {
   LOCALE_COOKIE_MAX_AGE,
   isLocale,
 } from "@/utils/i18n/locales";
+import { safeNextPath } from "@/utils/paths";
 
 /**
  * Store the chosen language and return where the reader was.
@@ -32,12 +33,7 @@ export async function setLocale(formData: FormData) {
   }
 
   // Only same-site paths are honoured, so a crafted form cannot turn the
-  // language switcher into an open redirect.
-  const next = formData.get("next");
-  const target =
-    typeof next === "string" && next.startsWith("/") && !next.startsWith("//")
-      ? next
-      : "/";
-
-  redirect(target);
+  // language switcher into an open redirect. The old check here let `/\host`
+  // through, which browsers read as `//host`.
+  redirect(safeNextPath(formData.get("next"), "/"));
 }

@@ -113,7 +113,7 @@ export const en: Dictionary = {
     changeButton: "Save and continue",
     tooShort: "The password must be at least 8 characters long.",
     mismatch: "The two passwords do not match.",
-    sameAsDefault: "Choose a password different from the default one.",
+    sameAsTemporary: "Choose a password different from the temporary one.",
     updateFailed: "The password could not be updated.",
     flagNotCleared:
       "Password updated, but the change request was not cleared. Please try again.",
@@ -436,10 +436,11 @@ export const en: Dictionary = {
 
     addPerson: "Add a person",
     addToRegistry: "Add to the registry",
-    defaultPasswordNoteBefore:
-      "An account is created too, active immediately and with no confirmation email. Temporary password:",
-    defaultPasswordNoteAfter:
-      "— pass it on to the person. They will be asked to replace it on first sign-in, before anything else in the app opens.",
+    temporaryPasswordNote:
+      "An account is created too, active immediately and with no confirmation email. Once saved, a temporary password for this account alone is shown: pass it on to the person. They will be asked to replace it on first sign-in, before anything else in the app opens.",
+    temporaryPasswordFor: (email: string) => `Temporary password for ${email}:`,
+    temporaryPasswordHelp:
+      "Shown only now: pass it on to the person, who will have to replace it on first sign-in.",
     select: "Select…",
     stripes: "Stripes",
     beltNotForAdmin:
@@ -474,7 +475,7 @@ export const en: Dictionary = {
     invite: "Invite to the portal",
     resetPassword: "Reset password",
     resetPasswordConfirm: (name: string) =>
-      `Reset ${name}'s password to the temporary one? The current password will stop working.`,
+      `Give ${name} a new temporary password? The current password will stop working.`,
     revoke: "Revoke access",
     revokeConfirm: (name: string) =>
       `Revoke ${name}'s access? The record stays in the registry, but the person will no longer be able to sign in.`,
@@ -542,16 +543,16 @@ export const en: Dictionary = {
     secretMissingRevoke: "SUPABASE_SECRET_KEY is not configured: revoking is disabled.",
     accountNotCreated:
       "Account not created: the email address may already be registered.",
-    personAdded: (name: string, password: string) =>
-      `${name} added to the registry. The account is active: temporary password ${password}, to be changed on first sign-in.`,
+    personAdded: (name: string) =>
+      `${name} added to the registry. The account is active, with a temporary password to be changed on first sign-in.`,
     personAddedNoRole: (name: string) =>
       `${name} was added, but the role was not assigned.`,
     accountCreatedNoProfile: (email: string) =>
       `Account created for ${email}, but the record's details were not saved.`,
     inviteFailed: "The invitation failed. The address may already be registered.",
     inviteSent: (email: string) => `Invitation sent to ${email}.`,
-    passwordReset: (who: string, password: string) =>
-      `${who}'s password has been set back to the temporary one (${password}): they will be asked to change it on first sign-in.`,
+    passwordReset: (who: string) =>
+      `${who} has a new temporary password: they will be asked to change it on first sign-in.`,
     someUser: "the user",
     accessRevoked: "Access revoked. The record stays in the registry.",
 
@@ -892,7 +893,7 @@ export const en: Dictionary = {
     noAccount: "no account",
     resetPassword: "Reset password",
     confirmReset: (email: string) =>
-      `Reset ${email}'s password to the default one? They will have to change it at their next login.`,
+      `Give ${email} a new temporary password? They will have to change it at their next login.`,
     revoke: "Revoke access",
     confirmRevoke: (email: string) =>
       `Revoke ${email}'s access? The account is deleted; the person stays in the gym's registry.`,
@@ -923,8 +924,8 @@ export const en: Dictionary = {
       deleteNameMismatch: "The name you typed does not match.",
       accountsNotDeleted: (n: number) =>
         `Gym deleted, but ${n} accounts were not removed: delete them from the Supabase dashboard.`,
-      managerAdded: (email: string, password: string) =>
-        `Manager ${email} created with the default password ${password}: they will change it at first login.`,
+      managerAdded: (email: string) =>
+        `Manager ${email} created with a temporary password: they will change it at first login.`,
       managerFailed: "Could not create the manager: the email may already be in use.",
       managerMissing: "Name and email are required.",
       notAManager: "This person is not a manager of this gym.",

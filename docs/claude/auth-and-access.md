@@ -49,7 +49,7 @@ Not flat. Role = an **active** `assigned_role` (`end_date is null`); no active r
 
 Looks simplifiable, is not:
 - Writes to `assigned_role` are manager-only, or anyone could grant themselves `head_coach`.
-- Trigger `guard_person_auth_link` on `person` freezes `auth_user_id` against non-managers and `current_belt`/`current_stripes`/`rank_since`/`stripe_since` against non-editors. RLS can't: a member legitimately UPDATEs their own row. It skips when `auth.uid()` is null (service role, and the FK `ON DELETE SET NULL` cascade — otherwise deleting a user fails).
+- Trigger `guard_person_auth_link` on `person` freezes `auth_user_id` against non-managers; for non-editors it is an **allowlist** — on their own row only `full_name`, `phone`, `birth_date`, `notes` may change (`joined_at` feeds eligibility). Nobody, editors included, changes their own rank columns or `joined_at`; belt/stripes change only inside `record_promotion()`, the only writer of `promotion` too (`20260927000000`). RLS can't: a member legitimately UPDATEs their own row. It skips when `auth.uid()` is null (service role, and the FK `ON DELETE SET NULL` cascade — otherwise deleting a user fails).
 - `admin` is never a literal in migration SQL (`role::text = any(...)`): a freshly added enum value can't be used in the same transaction, breaking a from-scratch replay.
 
 **Bootstrap:** after migrations nobody has a role. The first `head_coach` is inserted by hand; the statement is commented out at the bottom of both migrations on purpose (no hidden privilege grants). The first platform superadmin is granted the same way, by hand: `supabase/scripts/bootstrap-platform-admin.sql` (not a migration — see `docs/claude/gyms.md`).
@@ -64,8 +64,9 @@ Looks simplifiable, is not:
 
 ## Forced password change
 
-Accounts from `addPerson` start on the shared default password; nothing else opens until it's replaced.
+Accounts from `addPerson` / `addManager`, and every staff reset, start on a **temporary password unique to that account** (`generateTemporaryPassword()`); nothing else opens until it's replaced. **Never a shared default**: a shared password let anyone who knew it take over any pending account, a manager's in another gym included (removed 2026-09-25; `supabase/scripts/pending-temporary-passwords.sql` lists accounts that may still be on it).
+- The password reaches the maestro **once**, through `flashTemporaryPassword()` (`utils/temporary-password-flash.ts`): an httpOnly 5-minute cookie, with only a random `pw` id in the redirect URL; `<TemporaryPasswordNotice>` shows it when the id matches. Never put it in `?ok=` (browser history, request logs).
 - Flag in **`app_metadata.must_change_password`** (only service role can write; rides in the JWT). Never `user_metadata` (user could clear it).
 - Enforced in `proxy.ts` (every path → `/change-password`, `/auth/*` and `/privacy` exempt) and in `requireAdmin()`.
 - `requireSession()` = `requireAdmin()` minus that check; `/change-password` is the only page using it (else infinite redirect).
-- The action **refuses the default password**, clears the flag with the admin client, then **`refreshSession()`** (old JWT still carries the flag).
+- The action refuses the current (temporary) password — GoTrue's `same_password` → `t.auth.sameAsTemporary` — clears the flag with the admin client, then **`refreshSession()`** (old JWT still carries the flag).

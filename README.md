@@ -44,8 +44,9 @@ belt, attendance over the last weeks — and then gets out of the way.
   typed in.
 - **Dashboards.** Gym-wide figures for staff, personal figures for a member —
   two different pages behind one route.
-- **Account management.** Adding a person creates their account, on a shared
-  default password the app forces them to replace before anything else opens.
+- **Account management.** Adding a person creates their account, on a temporary
+  password of its own, shown once, that the app forces them to replace before
+  anything else opens.
 - **Three languages.** English (default), Italian and Brazilian Portuguese —
   because a BJJ gym in Italy has Brazilian coaches and international students.
 - **Light and dark theme**, mobile first. The gym reads this on a phone, at the

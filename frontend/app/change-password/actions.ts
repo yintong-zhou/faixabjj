@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireSession } from "@/utils/supabase/require-admin";
-import { DEFAULT_PASSWORD } from "@/utils/default-password";
 import { getDictionary } from "@/utils/i18n/server";
 
 const PATH = "/change-password";
@@ -26,16 +25,16 @@ export async function changePassword(formData: FormData) {
     redirect(`${PATH}?error=${encodeURIComponent(t.auth.mismatch)}`);
   }
 
-  // Without this the forced change would be theatre: confirming the default
-  // password twice would satisfy the form and leave the account exactly as
-  // exposed as it was.
-  if (password === DEFAULT_PASSWORD) {
-    redirect(
-      `${PATH}?error=${encodeURIComponent(t.auth.sameAsDefault)}`,
-    );
-  }
-
   const { error } = await supabase.auth.updateUser({ password });
+
+  // Without this the forced change would be theatre: confirming the temporary
+  // password twice would satisfy the form and leave the maestro knowing the
+  // member's password. Each temporary password is unique, so there is no
+  // literal to compare against here; Supabase Auth refuses a new password equal
+  // to the current one with `same_password`.
+  if (error?.code === "same_password") {
+    redirect(`${PATH}?error=${encodeURIComponent(t.auth.sameAsTemporary)}`);
+  }
 
   if (error) {
     redirect(

@@ -48,7 +48,7 @@ export const updateSession = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((prefix) => underPath(pathname, prefix));
 
-  // An account created from the Registro starts on a shared default password,
+  // An account created from the Registro starts on a temporary password,
   // so nothing else in the app opens until it has been replaced. Checked before
   // the redirects below so there is only ever one hop. Signing out stays
   // reachable — otherwise the only way out would be clearing cookies — and so
