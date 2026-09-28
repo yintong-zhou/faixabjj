@@ -15,10 +15,13 @@ export type GymSettings = HoursSettings & {
   name: string;
   status: GymStatus;
   timezone: string;
+  // Both null, or both set (gym_location_valid).
+  latitude: number | null;
+  longitude: number | null;
 };
 
 export const GYM_COLUMNS =
-  "id, name, status, timezone, tracking_started_on, session_length_hours, lessons_per_week, created_at";
+  "id, name, status, timezone, tracking_started_on, session_length_hours, lessons_per_week, latitude, longitude, created_at";
 
 export type GymRow = {
   id: string;
@@ -29,6 +32,8 @@ export type GymRow = {
   // PostgREST returns numeric as a string; a string silently wins a `<`.
   session_length_hours: number | string;
   lessons_per_week: number | string;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string;
 };
 
@@ -41,6 +46,8 @@ export function toGymSettings(row: GymRow): GymSettings {
     trackingStartedOn: row.tracking_started_on,
     sessionLengthHours: Number(row.session_length_hours),
     lessonsPerWeek: Number(row.lessons_per_week),
+    latitude: row.latitude,
+    longitude: row.longitude,
   };
 }
 

@@ -24,7 +24,8 @@ import {
   weekdayLabels,
 } from "@/utils/schedule";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
-import { checkIn, undoCheckIn } from "./actions";
+import { undoCheckIn } from "./actions";
+import { CheckinButton, type CheckinButtonLabels } from "./checkin-button";
 
 type Session = {
   id: string;
@@ -84,7 +85,17 @@ export default async function PresenzePage({
   const access = await getAccess(supabase);
   const isStaff = access.canManageClasses;
 
-  const today = todayIn((await requireGymSettings()).timezone);
+  const gym = await requireGymSettings();
+  const today = todayIn(gym.timezone);
+  // No position, no question: the browser is asked only when it matters.
+  const needsLocation = gym.latitude !== null;
+  const checkinLabels: CheckinButtonLabels = {
+    checkIn: t.presenze.checkIn,
+    locating: t.checkin.locating,
+    sending: t.checkin.sending,
+    retry: t.checkin.retry,
+    geo: t.checkin.geo,
+  };
   const isGrid = search.v === GRID;
   const anchor = ISO_DATE.test(search.da ?? "") ? search.da! : today;
 
@@ -329,6 +340,8 @@ export default async function PresenzePage({
                       now={now}
                       profileMissing={profileMissing}
                       query={currentQuery}
+                      needsLocation={needsLocation}
+                      checkinLabels={checkinLabels}
                       t={t}
                     />
                   ))}
@@ -367,6 +380,8 @@ export default async function PresenzePage({
                       now={now}
                       profileMissing={profileMissing}
                       query={currentQuery}
+                      needsLocation={needsLocation}
+                      checkinLabels={checkinLabels}
                       t={t}
                     />
                   ))}
@@ -540,6 +555,8 @@ function SessionRow({
   now,
   profileMissing,
   query,
+  needsLocation,
+  checkinLabels,
   t,
 }: {
   session: Session;
@@ -549,6 +566,8 @@ function SessionRow({
   now: Date;
   profileMissing: boolean;
   query: string;
+  needsLocation: boolean;
+  checkinLabels: CheckinButtonLabels;
   t: Dictionary;
 }) {
   const cancelled = session.status === "cancelled";
@@ -594,6 +613,8 @@ function SessionRow({
           checkedIn={checkedIn}
           disabled={profileMissing}
           query={query}
+          needsLocation={needsLocation}
+          checkinLabels={checkinLabels}
           t={t}
         />
       ) : (
@@ -640,6 +661,8 @@ function CheckinControl({
   checkedIn,
   disabled,
   query,
+  needsLocation,
+  checkinLabels,
   t,
 }: {
   sessionId: string;
@@ -647,6 +670,8 @@ function CheckinControl({
   checkedIn: boolean | undefined;
   disabled: boolean;
   query: string;
+  needsLocation: boolean;
+  checkinLabels: CheckinButtonLabels;
   t: Dictionary;
 }) {
   const muted = "shrink-0 text-xs text-foreground/50";
@@ -689,16 +714,13 @@ function CheckinControl({
   }
 
   return (
-    <form action={checkIn} className="shrink-0">
-      <input type="hidden" name="_query" value={query} />
-      <input type="hidden" name="session_id" value={sessionId} />
-      <button
-        type="submit"
-        disabled={disabled}
-        className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
-      >
-        {t.presenze.checkIn}
-      </button>
-    </form>
+    <CheckinButton
+      sessionId={sessionId}
+      query={query}
+      returnTo="/attendance"
+      needsLocation={needsLocation}
+      disabled={disabled}
+      labels={checkinLabels}
+    />
   );
 }

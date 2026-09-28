@@ -125,7 +125,7 @@ export const it = {
     changeButton: "Salva e continua",
     tooShort: "La password deve avere almeno 8 caratteri.",
     mismatch: "Le due password non coincidono.",
-    sameAsDefault: "Scegli una password diversa da quella predefinita.",
+    sameAsTemporary: "Scegli una password diversa da quella provvisoria.",
     updateFailed: "Non è stato possibile aggiornare la password.",
     flagNotCleared:
       "Password aggiornata, ma la richiesta di cambio non è stata azzerata. Riprova.",
@@ -255,6 +255,7 @@ export const it = {
     classHours: "Ore di lezione",
     activeRoles: "Ruoli attivi",
     manageMembers: "Gestisci i membri dal Registro →",
+    myGym: "Posizione della palestra e QR per il check-in →",
 
     passwordSection: "Password",
     updatePassword: "Aggiorna password",
@@ -374,6 +375,49 @@ export const it = {
     checkIn: "Check-in",
   },
 
+  checkin: {
+    title: "Check-in",
+    lead: "Segnati presente alla lezione in corso. Il check-in riesce solo in palestra.",
+    noOpenSession: "Nessuna lezione è aperta al check-in adesso.",
+    toCalendar: "Vai al calendario",
+    staffUseRollCall: "Lo staff registra le presenze con l'appello, dal calendario.",
+    locating: "Rilevo la posizione…",
+    sending: "Invio…",
+    retry: "Riprova",
+    locationNeeded: "In questa palestra il check-in richiede la posizione del telefono. Riprova e consenti l'accesso alla posizione.",
+    imprecise: "La posizione è troppo imprecisa. Spostati vicino all'ingresso o a una finestra e riprova.",
+    tooFar: (m: number) =>
+      `Risulti a circa ${m} m dalla palestra: il check-in si fa solo in palestra, entro 50 m.`,
+    geo: {
+      denied:
+        "Il browser non ha il permesso di leggere la posizione. Riattivalo nelle impostazioni del sito, oppure chiedi all'istruttore di segnarti con l'appello.",
+      unavailable: "Posizione non disponibile. Controlla che la localizzazione del telefono sia attiva e riprova.",
+      timeout: "La posizione non è arrivata in tempo. Riprova.",
+      unsupported: "Questo browser non fornisce la posizione. Chiedi all'istruttore di segnarti con l'appello.",
+    },
+  },
+
+  myGym: {
+    title: "La mia palestra",
+    lead: "La posizione della palestra e il QR code per il check-in.",
+    locationSection: "Posizione",
+    locationHelp:
+      "Con la posizione impostata, il check-in degli allievi riesce solo entro 50 m da questo punto. Il modo più preciso: dalla palestra, premi «Usa la mia posizione attuale».",
+    noLocation: "Posizione non impostata: il check-in funziona da qualsiasi luogo, durante la finestra della lezione.",
+    useCurrent: "Usa la mia posizione attuale",
+    locating: "Rilevo la posizione…",
+    save: "Salva posizione",
+    clear: "Rimuovi posizione",
+    qrSection: "QR code per il check-in",
+    qrHelp:
+      "Stampalo e appendilo in palestra. Inquadrandolo si apre la pagina del check-in, con lo stesso controllo della posizione del pulsante.",
+    qrCaption: "Inquadra per il check-in",
+    print: "Stampa",
+    saved: "Posizione salvata.",
+    cleared: "Posizione rimossa.",
+    failed: "Operazione non riuscita. Riprova.",
+  },
+
   rollCall: {
     notRecorded: "Non registrato",
     present: "Presente",
@@ -408,10 +452,11 @@ export const it = {
 
     addPerson: "Aggiungi persona",
     addToRegistry: "Aggiungi al registro",
-    defaultPasswordNoteBefore:
-      "Viene creato anche l'account, subito attivo e senza email di conferma. Password provvisoria:",
-    defaultPasswordNoteAfter:
-      "— comunicala alla persona. Al primo accesso le verrà chiesto di sostituirla prima di poter usare il resto dell'app.",
+    temporaryPasswordNote:
+      "Viene creato anche l'account, subito attivo e senza email di conferma. Dopo il salvataggio compare una password provvisoria valida solo per questo account: comunicala alla persona. Al primo accesso le verrà chiesto di sostituirla prima di poter usare il resto dell'app.",
+    temporaryPasswordFor: (email: string) => `Password provvisoria di ${email}:`,
+    temporaryPasswordHelp:
+      "Viene mostrata solo adesso: comunicala alla persona, che dovrà sostituirla al primo accesso.",
     select: "Seleziona…",
     stripes: "Tacche",
     beltNotForAdmin:
@@ -446,7 +491,7 @@ export const it = {
     invite: "Invita al portale",
     resetPassword: "Reimposta password",
     resetPasswordConfirm: (name: string) =>
-      `Reimpostare la password di ${name} su quella provvisoria? La password attuale smetterà di funzionare.`,
+      `Dare a ${name} una nuova password provvisoria? La password attuale smetterà di funzionare.`,
     revoke: "Revoca accesso",
     revokeConfirm: (name: string) =>
       `Revocare l'accesso a ${name}? La scheda resta nel registro, ma la persona non potrà più entrare nel portale.`,
@@ -516,16 +561,16 @@ export const it = {
     secretMissingRevoke: "SUPABASE_SECRET_KEY non è configurata: la revoca è disattivata.",
     accountNotCreated:
       "Account non creato: l'indirizzo email potrebbe essere già registrato.",
-    personAdded: (name: string, password: string) =>
-      `${name} aggiunta al registro. Account attivo: password provvisoria ${password}, da cambiare al primo accesso.`,
+    personAdded: (name: string) =>
+      `${name} aggiunta al registro. Account attivo, con una password provvisoria da cambiare al primo accesso.`,
     personAddedNoRole: (name: string) =>
       `${name} è stata aggiunta, ma il ruolo non è stato assegnato.`,
     accountCreatedNoProfile: (email: string) =>
       `Account creato per ${email}, ma i dati della scheda non sono stati salvati.`,
     inviteFailed: "Invito non riuscito. L'indirizzo potrebbe essere già registrato.",
     inviteSent: (email: string) => `Invito inviato a ${email}.`,
-    passwordReset: (who: string, password: string) =>
-      `Password di ${who} riportata a quella provvisoria (${password}): le verrà chiesto di cambiarla al primo accesso.`,
+    passwordReset: (who: string) =>
+      `${who} ha una nuova password provvisoria: le verrà chiesto di cambiarla al primo accesso.`,
     someUser: "l'utente",
     accessRevoked: "Accesso revocato. La scheda resta nel registro.",
 
@@ -737,6 +782,7 @@ export const it = {
           "Dati di contatto e anagrafici: nome e cognome, email, numero di telefono, data di nascita. Email e nome sono obbligatori per creare un account; telefono e data di nascita sono facoltativi.",
           "Dati di progressione tecnica: cintura, numero di gradi, data dell'ultimo cambio cintura, data dell'ultimo grado, data di iscrizione, ruolo ricoperto in palestra e relativo storico.",
           "Dati di frequenza: presenza o assenza a ciascuna lezione, con l'indicazione se la presenza è stata registrata dall'interessato (check-in) o dall'istruttore (appello).",
+          "Posizione del dispositivo: se la palestra ha impostato la propria posizione, al momento del check-in il browser chiede quella del telefono. Serve solo a verificare di trovarsi entro 50 m dalla palestra: viene confrontata e scartata, senza essere salvata né registrata nei log. Il browser chiede il permesso secondo le sue impostazioni; rifiutarlo impedisce solo il check-in da sé, perché l'istruttore può sempre registrare la presenza con l'appello.",
           "Note libere: un campo di annotazioni che lo staff può compilare. Non va usato per dati particolari ai sensi dell'articolo 9 del GDPR — in particolare informazioni su salute o infortuni — perché questa informativa non copre quel tipo di trattamento.",
           "Dati di accesso: credenziali gestite dal fornitore di autenticazione (la password è conservata solo come hash, mai in chiaro) e log tecnici del servizio.",
         ],
@@ -851,6 +897,11 @@ export const it = {
       trackingHelp: "Prima di questa data le ore si stimano, da questa data si contano le presenze. Non può essere nel futuro.",
       sessionLengthHours: "Durata di una lezione (ore)",
       lessonsPerWeek: "Lezioni a settimana, per la stima delle ore pregresse",
+      latitude: "Latitudine",
+      longitude: "Longitudine",
+      locationHelp:
+        "Facoltative. Con la posizione impostata, il check-in degli allievi riesce solo entro 50 m dalla palestra. Da Google Maps: tasto destro sul punto e copia le coordinate.",
+      openMap: "Controlla sulla mappa ↗",
     },
     create: "Crea palestra",
     settings: "Impostazioni",
@@ -867,7 +918,7 @@ export const it = {
     noAccount: "senza account",
     resetPassword: "Reimposta password",
     confirmReset: (email: string) =>
-      `Reimpostare la password di ${email} a quella predefinita? Dovrà cambiarla al prossimo accesso.`,
+      `Dare a ${email} una nuova password provvisoria? Dovrà cambiarla al prossimo accesso.`,
     revoke: "Revoca accesso",
     confirmRevoke: (email: string) =>
       `Revocare l'accesso di ${email}? L'account viene eliminato; la persona resta nel registro della palestra.`,
@@ -883,6 +934,8 @@ export const it = {
       trackingStartedOn: "La data di avvio deve essere una data valida, non nel futuro.",
       sessionLengthHours: "La durata della lezione deve essere tra 0 e 8 ore.",
       lessonsPerWeek: "Le lezioni a settimana devono essere tra 0 e 14.",
+      location:
+        "Latitudine e longitudine vanno indicate entrambe, come numeri: latitudine tra −90 e 90, longitudine tra −180 e 180.",
     },
     msg: {
       created: (name: string) => `${name} creata. Aggiungi ora il suo primo gestore.`,
@@ -896,8 +949,8 @@ export const it = {
       deleteNameMismatch: "Il nome digitato non corrisponde.",
       accountsNotDeleted: (n: number) =>
         `Palestra eliminata, ma ${n} account non sono stati rimossi: eliminali dal pannello di Supabase.`,
-      managerAdded: (email: string, password: string) =>
-        `Gestore ${email} creato con la password predefinita ${password}: la cambierà al primo accesso.`,
+      managerAdded: (email: string) =>
+        `Gestore ${email} creato con una password provvisoria: la cambierà al primo accesso.`,
       managerFailed: "Impossibile creare il gestore: l'email potrebbe essere già in uso.",
       managerMissing: "Nome ed email sono obbligatori.",
       notAManager: "Questa persona non è un gestore di questa palestra.",

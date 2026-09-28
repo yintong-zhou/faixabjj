@@ -53,6 +53,8 @@ export default async function NewGymPage({ searchParams }: { searchParams: Promi
             trackingStartedOn: today,
             sessionLengthHours: DEFAULT_SESSION_LENGTH_HOURS,
             lessonsPerWeek: DEFAULT_LESSONS_PER_WEEK,
+            latitude: null,
+            longitude: null,
           }}
         />
         <button

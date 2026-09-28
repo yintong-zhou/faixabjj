@@ -25,7 +25,7 @@ Faixa BJJ is the **product**; it hosts isolated gyms that share nothing. The fir
 
 ## Gym managers
 
-- A manager is the gym's existing `admin` role (portal-only, no belt — `isPortalOnly()`), created by the superadmin on the shared default password with the forced change.
+- A manager is the gym's existing `admin` role (portal-only, no belt — `isPortalOnly()`), created by the superadmin on a unique temporary password (shown once) with the forced change.
 - **An account's gym lives in `app_metadata.gym_id`**, set by whoever creates it; the auth trigger reads it to create or link the person row. No `gym_id`, no profile. **GoTrue's admin `createUser` writes `app_metadata` in an UPDATE after the insert**, so the trigger also runs on `update of raw_app_meta_data` (`20260925050000`), acting only when the gym just appeared on an account no person holds and that is not a platform admin; insert-only, every `addManager`/`addPerson` rolled back. Pre-tenancy accounts got it from their person row (`20260925040000`); `setTemporaryPassword`/`revokeAccess` refuse an account whose `gym_id` is not the caller's, or a platform admin.
 - `inviteUserByEmail` cannot set `app_metadata`, so `inviteToPortal` links the person row itself with the service role after checking the row is in the caller's gym and account-less. It takes the invite's email and name from the RLS-visible target row, never from the form, refuses an invited user who already belongs to another gym or is already linked to a person row, and links with `.select("id")` plus a zero-row check before it writes `app_metadata.gym_id` — an `.update()` that matches no row reports no error, so a lost race must be treated as a failure explicitly.
 - Every service-role action on an account first checks, through the user's own client (`personInMyGym()` in `app/members/actions.ts`, `gym_managers()` via `managerOf()` in `app/gyms/actions.ts`), that the target belongs to the gym being acted on.
@@ -38,6 +38,7 @@ Faixa BJJ is the **product**; it hosts isolated gyms that share nothing. The fir
 - `utils/hours.ts` and `utils/promotion.ts` take them as a required parameter (`HoursSettings`); the old constants survive only as defaults for a new gym in `utils/gym-defaults.ts`.
 - "Today" at a gym is `todayIn(gym.timezone)`, not the UTC date.
 - A new gym gets a copy of `promotion_criteria_template` (snapshot taken at migration time) via trigger `gym_seed_criteria`.
+- **Location** `gym.latitude`/`longitude` (both or neither, `gym_location_valid`). The superadmin sets it in the gym form; the manager, who has no update on `gym`, on **`/gym`** ("La mia palestra", `requireUserManager`, linked from `/account`) through `set_gym_location()` (`security definer`, own gym only, 42501 otherwise). `/gym` also renders the printable check-in QR (`qrcode`, SVG on the server, `SITE_URL/check-in`). Route prefixes match by segment (`underPath()`, `utils/paths.ts`) so `/gym` and `/gyms` never match each other.
 
 ## Deleting a gym
 

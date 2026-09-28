@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/server";
+import { underPath } from "@/utils/paths";
 
 export const PASSWORD_CHANGE_PATH = "/change-password";
 
@@ -105,7 +106,7 @@ export async function requireAdmin(path: string): Promise<AdminSessionWithAccess
     redirect(SUSPENDED_PATH);
   }
 
-  if (access.isPlatformAdmin && !PLATFORM_PATHS.some((p) => path.startsWith(p))) {
+  if (access.isPlatformAdmin && !PLATFORM_PATHS.some((p) => underPath(path, p))) {
     if (path === "/dashboard") redirect("/gyms");
     notFound();
   }

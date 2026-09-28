@@ -46,9 +46,10 @@ Server-rendered, state in the URL: `v=griglia` = month grid (default weekly list
 
 ## Check-in
 
-- RLS `insert` policy requires: own row, `present = true`, `checked_in_by = 'self'`, `session_checkin_open(session_id)`. Undo only on own `self` row while window open. `checked_in_by` makes staff rows un-undoable by the member.
-- **Window: 15 min before start, 0 after end** (`20260918000000_checkin_window_defaults.sql`; form defaults match). The old 60/30 let a member collect three hours from consecutive lessons. Forgot? Ask the instructor — roll call is authoritative.
-- **An error is not a closed window.** `checkIn` maps only `23505` → "already present", `42501` → "closed"; anything else generic + `logDbError()`. `undoCheckIn` likewise: a refusal deletes zero rows silently; an error is different. DB text never reaches the screen.
+- **A member checks in only through `check_in(session, lat, lng, accuracy)`** (`20260926000000`), `security definer`, returning jsonb `{result, distance_m}`: `closed` (no profile, window shut, other/suspended gym) → `already` → only if the gym has a position: `location_needed`, `imprecise` (accuracy missing or > 100 m), `too_far` (> 50 m, haversine `gym_distance_m`). Otherwise inserts own row, `present`, `'self'`. The direct-insert policy "members can check themselves in" is dropped by `20260926010000`. The coordinates are compared and discarded — never stored or logged. Undo is unchanged (own `self` row while the window is open).
+- **The position is asked only when the gym has one** (`CheckinButton`, `app/attendance/checkin-button.tsx`: `enableHighAccuracy`, 10 s timeout, `maximumAge 0`). Browser position is spoofable: this stops the lazy check-in from home, not a determined cheat; roll call stays authoritative.
+- **`/check-in`** is the fixed address printed on every gym's QR (the gym is the member's own): lists lessons open now (today and yesterday, for windows past midnight), checks in automatically when exactly one is open and nothing is recorded yet, never retries by itself after an answer. Staff see the roll-call notice.
+- **An error is not a closed window.** `checkIn` shows `check_in`'s outcome via `checkinMessage()` (`utils/checkin.ts`; `already` counts as success); an RPC error or an unknown shape is logged with `logDbError()` and shown as the generic failure. `undoCheckIn`: a refusal deletes zero rows silently; an error is different. DB text never reaches the screen.
 
 ## Course lifecycle
 

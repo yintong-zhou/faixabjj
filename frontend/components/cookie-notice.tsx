@@ -82,7 +82,7 @@ export function CookieNotice({
     <div
       role="region"
       aria-label={text}
-      className="fixed inset-x-0 bottom-16 z-30 px-3 pb-2 sm:bottom-0 sm:px-4 sm:pb-4"
+      className="fixed inset-x-0 bottom-16 z-30 px-3 pb-2 print:hidden sm:bottom-0 sm:px-4 sm:pb-4"
     >
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-lg sm:flex-row sm:items-center sm:gap-4">
         <p className="flex-1 text-sm leading-relaxed text-foreground/75">

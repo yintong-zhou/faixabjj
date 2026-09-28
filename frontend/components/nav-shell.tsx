@@ -133,7 +133,7 @@ export function NavShell({
 
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5 sm:px-8 sm:py-4">
           {/* Signed in, the logo goes to the dashboard rather than to "/",
               which would only bounce through the proxy's redirect — except for
@@ -210,7 +210,7 @@ export function NavShell({
           anywhere, signed in or not, and a footer is where people look for it.
           Extra bottom padding on small screens so the mobile tab bar does not
           cover it. */}
-      <footer className="mx-auto w-full max-w-5xl px-4 pb-24 sm:px-8 sm:pb-8">
+      <footer className="mx-auto w-full max-w-5xl px-4 pb-24 sm:px-8 sm:pb-8 print:hidden">
         <div className="border-t border-border pt-4 text-xs text-foreground/55">
           <Link href="/privacy" className="hover:text-foreground">
             {labels.privacy}
@@ -218,7 +218,7 @@ export function NavShell({
         </div>
       </footer>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 backdrop-blur sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 backdrop-blur sm:hidden print:hidden">
         <div className="flex items-stretch justify-around pb-[env(safe-area-inset-bottom)]">
           {navItems.map(({ href, key, icon: Icon }) => {
             const active = isActive(pathname, href);
