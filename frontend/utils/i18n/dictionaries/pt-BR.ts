@@ -481,6 +481,12 @@ export const ptBR: Dictionary = {
     revoke: "Revogar acesso",
     revokeConfirm: (name: string) =>
       `Revogar o acesso de ${name}? A ficha permanece no cadastro, mas a pessoa não poderá mais entrar no portal.`,
+    deletePerson: "Excluir do cadastro",
+    deletePersonConfirm: (name: string) =>
+      `Excluir ${name} do cadastro para sempre? Presenças, funções e histórico de graduações também serão apagados. Não é possível desfazer.`,
+    deleteSection: "Excluir a ficha",
+    deleteSectionHelp:
+      "Esta pessoa não tem mais uma conta. Excluir a ficha apaga também as presenças, as funções e o histórico de graduações, e as horas da academia mudam de acordo. Não é possível desfazer.",
 
     backToRegistry: "Alunos",
     detailReadOnly:
@@ -521,6 +527,8 @@ export const ptBR: Dictionary = {
     resetFailed: "A redefinição não foi concluída.",
     cannotRevokeSelf: "Você não pode revogar o seu próprio acesso.",
     revokeFailed: "A revogação não foi concluída.",
+    personDeleted: (name: string) => `${name} foi excluída do cadastro.`,
+    deleteNeedsRevoke: "Revogue o acesso da pessoa antes de excluir a ficha.",
     nameEmpty: "O nome não pode ficar vazio.",
     profileNotFound: "Perfil não encontrado.",
     profileSaveFailed: "Não foi possível salvar o perfil.",
@@ -556,7 +564,8 @@ export const ptBR: Dictionary = {
     passwordReset: (who: string) =>
       `${who} tem uma nova senha provisória: será pedido que a troque no primeiro acesso.`,
     someUser: "o usuário",
-    accessRevoked: "Acesso revogado. A ficha permanece no cadastro.",
+    accessRevoked:
+      "Acesso revogado. A ficha permanece no cadastro; se a pessoa não voltar, você pode excluí-la pelo menu da linha ou pelos detalhes.",
 
     courseNameRequired: "O nome da aula é obrigatório.",
     timesRequired: "Horário de início e de fim são obrigatórios.",

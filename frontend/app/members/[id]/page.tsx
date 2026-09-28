@@ -10,7 +10,8 @@ import { daysSince, formatDate, formatDays, todayIn } from "@/utils/dates";
 import { formatHours, hoursFor } from "@/utils/hours";
 import { isPortalOnly } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
-import { correctRankDates } from "../actions";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
+import { correctRankDates, deletePerson } from "../actions";
 import { PromotePanel } from "./promote-panel";
 import {
   AlertCircleIcon,
@@ -19,6 +20,7 @@ import {
   ChevronRightIcon,
   FileTextIcon,
   PencilIcon,
+  TrashIcon,
   TrendingUpIcon,
   UserIcon,
   UsersIcon,
@@ -488,6 +490,31 @@ export default async function MemberDetailPage({
           </ul>
         )}
       </section>
+
+      {/* Last on the page and only once the account is gone: deleting is the
+          step after revoking, and it takes the whole record with it. */}
+      {access.canManageUsers && !member.auth_user_id ? (
+        <section className="flex flex-col gap-3 rounded-xl border border-accent/40 p-4 sm:p-5">
+          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold text-accent">
+            <TrashIcon className="h-4.5 w-4.5 shrink-0" />
+            {t.registro.deleteSection}
+          </h2>
+          <p className="text-sm leading-relaxed text-foreground/65">
+            {t.registro.deleteSectionHelp}
+          </p>
+          <form action={deletePerson}>
+            <input type="hidden" name="_query" value={from ?? ""} />
+            <input type="hidden" name="person_id" value={member.id} />
+            <ConfirmSubmitButton
+              message={t.registro.deletePersonConfirm(member.full_name)}
+              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-accent/50 px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent/10 sm:min-h-0 sm:w-auto"
+            >
+              <TrashIcon className="h-4 w-4" />
+              {t.registro.deletePerson}
+            </ConfirmSubmitButton>
+          </form>
+        </section>
+      ) : null}
     </div>
   );
 }

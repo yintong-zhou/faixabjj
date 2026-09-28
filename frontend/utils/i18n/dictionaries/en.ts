@@ -479,6 +479,12 @@ export const en: Dictionary = {
     revoke: "Revoke access",
     revokeConfirm: (name: string) =>
       `Revoke ${name}'s access? The record stays in the registry, but the person will no longer be able to sign in.`,
+    deletePerson: "Delete from registry",
+    deletePersonConfirm: (name: string) =>
+      `Permanently delete ${name} from the registry? Their attendance, roles and promotion history go too. This cannot be undone.`,
+    deleteSection: "Delete record",
+    deleteSectionHelp:
+      "This person no longer has an account. Deleting the record also erases their attendance, roles and promotion history, and the gym's hours change accordingly. This cannot be undone.",
 
     backToRegistry: "Members",
     detailReadOnly:
@@ -519,6 +525,8 @@ export const en: Dictionary = {
     resetFailed: "The reset did not go through.",
     cannotRevokeSelf: "You cannot revoke your own access.",
     revokeFailed: "The revocation did not go through.",
+    personDeleted: (name: string) => `${name} has been deleted from the registry.`,
+    deleteNeedsRevoke: "Revoke the person's access before deleting their record.",
     nameEmpty: "The name cannot be empty.",
     profileNotFound: "Profile not found.",
     profileSaveFailed: "The profile could not be saved.",
@@ -554,7 +562,8 @@ export const en: Dictionary = {
     passwordReset: (who: string) =>
       `${who} has a new temporary password: they will be asked to change it on first sign-in.`,
     someUser: "the user",
-    accessRevoked: "Access revoked. The record stays in the registry.",
+    accessRevoked:
+      "Access revoked. The record stays in the registry; if the person is not coming back, you can delete it from the row menu or the details page.",
 
     courseNameRequired: "The class name is required.",
     timesRequired: "Start and end times are required.",

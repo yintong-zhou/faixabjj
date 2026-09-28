@@ -581,6 +581,57 @@ export async function revokeAccess(formData: FormData) {
   back({ ok: t.msg.accessRevoked }, query);
 }
 
+// Deletes a person from the registry for good — the step after revokeAccess,
+// for somebody who has left. Their attendance, roles and promotion history go
+// with the row (ON DELETE CASCADE), so it is offered only once the account is
+// gone, and the database holds the same line: the delete policy
+// (20260928000000) refuses a row still linked to an account.
+//
+// The user's own client, not the service role: RLS is the boundary here —
+// user managers only, inside their own gym — and requireUserManager is the
+// early, clear refusal. Posted from the Registro's row menu and from the detail
+// page; both hand the list's query back, so the redirect lands on the list the
+// person was deleted from.
+export async function deletePerson(formData: FormData) {
+  const { t } = await getDictionary();
+  const { supabase } = await requireUserManager(PATH);
+
+  const query = (formData.get("_query") as string | null) ?? "";
+  const personId = (formData.get("person_id") as string | null) ?? "";
+
+  const target = personId ? await personInMyGym(supabase, { personId }) : null;
+  if (!target) {
+    back({ error: t.msg.userNotInGym }, query);
+    return;
+  }
+  if (target.auth_user_id) {
+    back({ error: t.msg.deleteNeedsRevoke }, query);
+    return;
+  }
+
+  // Re-stated in the filter: an account linked between the check above and
+  // here matches no row, and the zero-row result is treated as a failure.
+  const { data, error } = await supabase
+    .from("person")
+    .delete()
+    .eq("id", target.id)
+    .is("auth_user_id", null)
+    .select("id");
+
+  if (error || !data || data.length === 0) {
+    logDbError(
+      "members",
+      "deletePerson",
+      error ?? { code: "no-rows", message: "delete matched no rows" },
+    );
+    back({ error: t.msg.deleteFailed }, query);
+    return;
+  }
+
+  revalidatePath(PATH);
+  back({ ok: t.msg.personDeleted(target.full_name ?? "") }, query);
+}
+
 // Recording a promotion is one RPC, not two writes: updating the person row
 // and inserting the history row have to happen together, and record_promotion()
 // does both in one transaction. The function is security *invoker*, so RLS and

@@ -17,6 +17,7 @@ import {
   FilterIcon,
   KeyIcon,
   MailIcon,
+  TrashIcon,
   TrendingUpIcon,
   UserMinusIcon,
   UserPlusIcon,
@@ -32,6 +33,7 @@ import {
   type PromotionInput,
 } from "@/utils/promotion";
 import {
+  deletePerson,
   inviteToPortal,
   revokeAccess,
   setTemporaryPassword,
@@ -667,6 +669,22 @@ export default async function RegistroPage({
                       </form>
                     </>
                   ) : null}
+
+                {/* Deleting is the step after revoking: offered only once the
+                    account is gone, which the delete policy also insists on. */}
+                {access.canManageUsers && !member.auth_user_id ? (
+                  <form action={deletePerson}>
+                    <input type="hidden" name="_query" value={currentQuery} />
+                    <input type="hidden" name="person_id" value={member.id} />
+                    <ConfirmSubmitButton
+                      message={t.registro.deletePersonConfirm(member.full_name)}
+                      className={`${menuItemClass} text-accent hover:bg-accent/10`}
+                    >
+                      <TrashIcon className={menuIconClass} />
+                      {t.registro.deletePerson}
+                    </ConfirmSubmitButton>
+                  </form>
+                ) : null}
               </RowMenu>
             </li>
           );
