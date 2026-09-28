@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { SearchIcon } from "@/components/icons";
+import { NAVIGATION_START_EVENT } from "@/components/pending-feedback";
 
 // How long typing has to pause before the list is fetched again: short enough
 // to feel immediate, long enough not to query on every keystroke.
@@ -75,8 +76,18 @@ export function NameSearch({
     }
   }, [initialQuery]);
 
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
+  // Following a link or submitting any other form while a search is waiting
+  // on its pause: the search must not fire afterwards and replace the page the
+  // reader just asked for with the list and the old filters.
+  useEffect(() => {
+    const cancel = () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+    window.addEventListener(NAVIGATION_START_EVENT, cancel);
+    return () => {
+      cancel();
+      window.removeEventListener(NAVIGATION_START_EVENT, cancel);
+    };
   }, []);
 
   const navigate = (next: string) => {
@@ -102,6 +113,8 @@ export function NameSearch({
   return (
     <form
       role="search"
+      // Has its own "loading" inside the field; no screen lock while typing.
+      data-pending-ignore=""
       method="get"
       action="/members"
       onSubmit={(event) => {
