@@ -504,6 +504,70 @@ do $$ begin
   end;
 end $$;
 
+-- T20: usernames are unique across gyms, well-formed, and a member changes
+-- only their own.
+update public.person set username = 'shared.name' where email = 'b2@test';
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', true);
+do $$ begin
+  update public.person set username = 'a2.new' where auth_user_id = auth.uid();
+  if not found then
+    raise exception 'FAIL T20: a2 could not change their own username';
+  end if;
+  begin
+    update public.person set username = 'shared.name' where auth_user_id = auth.uid();
+    raise exception 'FAIL T20: a2 took a username already used in gym B';
+  exception when unique_violation then null;
+  end;
+  begin
+    update public.person set username = 'A2@X' where auth_user_id = auth.uid();
+    raise exception 'FAIL T20: the format check let an invalid username through';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.person set username = 'a2.other' where email = 'a1@test';
+    if found then
+      raise exception 'FAIL T20: a2 changed a1''s username';
+    end if;
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
+-- T21: the login's username lookup is one call that answers the service role
+-- only — a member or an anonymous caller must never map a username to an email.
+update public.person set username = 'lookup.me' where email = 'a1@test';
+do $$ begin
+  if public.login_email_for_username('lookup.me') is distinct from 'a1@test' then
+    raise exception 'FAIL T21: the lookup did not return the account email';
+  end if;
+  if public.login_email_for_username('nobody.here') is not null then
+    raise exception 'FAIL T21: the lookup returned an email for an unknown username';
+  end if;
+end $$;
+begin;
+set local role anon;
+do $$ begin
+  begin
+    perform public.login_email_for_username('lookup.me');
+    raise exception 'FAIL T21: anon can map a username to an email';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', true);
+do $$ begin
+  begin
+    perform public.login_email_for_username('lookup.me');
+    raise exception 'FAIL T21: a member can map a username to an email';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
 -- T11: deleting gym B, as the superadmin, removes all of it and nothing of A.
 begin;
 set local role authenticated;

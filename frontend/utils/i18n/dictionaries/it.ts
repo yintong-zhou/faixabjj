@@ -96,6 +96,7 @@ export const it = {
     signInTitle: "Accedi",
     signInLead: "Area riservata ai membri della palestra.",
     email: "Email",
+    emailOrUsername: "Email o username",
     password: "Password",
     forgotLink: "Password dimenticata?",
     signInButton: "Accedi",
@@ -237,6 +238,8 @@ export const it = {
 
     personalData: "Dati personali",
     fullName: "Nome e cognome",
+    username: "Username",
+    usernameHelp: "Da 3 a 30 caratteri: lettere minuscole, cifre, punto, trattino e trattino basso. Si usa al posto dell'email per accedere.",
     phone: "Telefono",
     birthDate: "Data di nascita",
     notes: "Note",
@@ -288,7 +291,7 @@ export const it = {
     newMembers: (days: number) => `Nuovi (${days} gg)`,
     recentlyJoined: "iscritti di recente",
     withoutAccount: "Senza account",
-    neverInvited: "mai invitati o revocati",
+    neverInvited: "revocati, da riattivare",
     gymHours: "Ore della palestra",
     openingBalancesIncluded: "saldi iniziali inclusi",
 
@@ -455,6 +458,7 @@ export const it = {
     temporaryPasswordNote:
       "Viene creato anche l'account, subito attivo e senza email di conferma. Dopo il salvataggio compare una password provvisoria valida solo per questo account: comunicala alla persona. Al primo accesso le verrà chiesto di sostituirla prima di poter usare il resto dell'app.",
     temporaryPasswordFor: (email: string) => `Password provvisoria di ${email}:`,
+    temporaryUsernameIs: "Username:",
     temporaryPasswordHelp:
       "Viene mostrata solo adesso: comunicala alla persona, che dovrà sostituirla al primo accesso.",
     select: "Seleziona…",
@@ -488,7 +492,7 @@ export const it = {
 
     rowActions: (name: string) => `Azioni per ${name}`,
     details: "Dettagli",
-    invite: "Invita al portale",
+    restoreAccess: "Riattiva accesso",
     resetPassword: "Reimposta password",
     resetPasswordConfirm: (name: string) =>
       `Dare a ${name} una nuova password provvisoria? La password attuale smetterà di funzionare.`,
@@ -536,8 +540,8 @@ export const it = {
     restoreFailed: "Ripristino non riuscito.",
     pickBelt: "Seleziona una cintura.",
     pickRole: "Seleziona un ruolo.",
-    emailNeededToInvite:
-      "Serve un indirizzo email sulla scheda per invitare questa persona.",
+    emailNeededToRestore:
+      "Serve un indirizzo email sulla scheda per riattivare l'accesso.",
     resetFailed: "Reimpostazione non riuscita.",
     cannotRevokeSelf: "Non puoi revocare il tuo stesso accesso.",
     revokeFailed: "Revoca non riuscita.",
@@ -547,6 +551,8 @@ export const it = {
     nameEmpty: "Il nome non può essere vuoto.",
     profileNotFound: "Profilo non trovato.",
     profileSaveFailed: "Non è stato possibile salvare il profilo.",
+    usernameInvalid: "Username non valido: da 3 a 30 caratteri tra lettere minuscole, cifre, punto, trattino e trattino basso.",
+    usernameTaken: "Questo username è già in uso.",
     profileSaved: "Profilo aggiornato.",
     profileSavedEmailPending:
       "Profilo salvato. Conferma il nuovo indirizzo dal link che ti abbiamo inviato per email.",
@@ -564,7 +570,7 @@ export const it = {
     adminClientMissing: "Client di amministrazione non disponibile.",
     secretMissingCreate:
       "SUPABASE_SECRET_KEY non è configurata: non è possibile creare account.",
-    secretMissingInvite: "SUPABASE_SECRET_KEY non è configurata: gli inviti sono disattivati.",
+    secretMissingRestore: "SUPABASE_SECRET_KEY non è configurata: la riattivazione è disattivata.",
     secretMissingReset: "SUPABASE_SECRET_KEY non è configurata: il reset è disattivato.",
     secretMissingRevoke: "SUPABASE_SECRET_KEY non è configurata: la revoca è disattivata.",
     accountNotCreated:
@@ -575,8 +581,8 @@ export const it = {
       `${name} è stata aggiunta, ma il ruolo non è stato assegnato.`,
     accountCreatedNoProfile: (email: string) =>
       `Account creato per ${email}, ma i dati della scheda non sono stati salvati.`,
-    inviteFailed: "Invito non riuscito. L'indirizzo potrebbe essere già registrato.",
-    inviteSent: (email: string) => `Invito inviato a ${email}.`,
+    restoreAccessFailed: "Accesso non riattivato. L'indirizzo potrebbe essere già registrato.",
+    accessRestored: (email: string) => `Accesso riattivato per ${email}.`,
     passwordReset: (who: string) =>
       `${who} ha una nuova password provvisoria: le verrà chiesto di cambiarla al primo accesso.`,
     someUser: "l'utente",

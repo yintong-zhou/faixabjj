@@ -18,6 +18,7 @@ import {
 import { RowMenu } from "@/components/row-menu";
 import { formatDate, todayIn } from "@/utils/dates";
 import { TemporaryPasswordNotice } from "@/components/temporary-password-notice";
+import { NameUsernameFields } from "@/components/name-username-fields";
 import { getDictionary } from "@/utils/i18n/server";
 import { logDbError } from "@/utils/log";
 import { GYM_COLUMNS, toGymSettings, type GymRow } from "@/utils/supabase/gym";
@@ -207,10 +208,12 @@ export default async function GymDetailPage({
           <input type="hidden" name="gym_id" value={gym.id} />
           <p className="text-xs text-foreground/55">{t.registro.temporaryPasswordNote}</p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="full_name" className="text-sm font-medium">{t.gyms.managerName}</label>
-              <input id="full_name" name="full_name" required className={fieldClass} />
-            </div>
+            <NameUsernameFields
+              nameLabel={t.gyms.managerName}
+              usernameLabel={t.account.username}
+              usernameHelp={t.account.usernameHelp}
+              fieldClass={fieldClass}
+            />
             <div className="flex flex-col gap-1.5">
               <label htmlFor="email" className="text-sm font-medium">{t.gyms.managerEmail}</label>
               <input id="email" name="email" type="email" required className={fieldClass} />

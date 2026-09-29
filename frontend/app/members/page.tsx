@@ -17,7 +17,6 @@ import {
   FileTextIcon,
   FilterIcon,
   KeyIcon,
-  MailIcon,
   TrashIcon,
   TrendingUpIcon,
   UserMinusIcon,
@@ -28,6 +27,7 @@ import { estimateNote, formatHours, hoursFor } from "@/utils/hours";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
 import { readTemporaryPassword } from "@/utils/temporary-password-flash";
+import { searchWords } from "@/utils/search";
 import {
   promotionStatus,
   type Criterion,
@@ -35,7 +35,7 @@ import {
 } from "@/utils/promotion";
 import {
   deletePerson,
-  inviteToPortal,
+  restoreAccess,
   revokeAccess,
   setTemporaryPassword,
 } from "./actions";
@@ -247,18 +247,12 @@ export default async function RegistroPage({
       query = query.in("id", [...eligibleIds]);
     }
 
-    // Name only — searching by email was explicitly excluded. The strip keeps a
-    // stray comma or parenthesis from breaking PostgREST's filter syntax (`_`
-    // too: it is ilike's one-character wildcard). Each word must appear
-    // somewhere in the name, in any order, so "rossi mario" finds Mario Rossi
-    // and "mar ros" narrows as it is typed.
-    const words = (search.q ?? "")
-      .replace(/[%,()\\_]/g, " ")
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 5);
-    for (const word of words) {
-      query = query.ilike("full_name", `%${word}%`);
+    // Name only — searching by email was explicitly excluded. Each word must
+    // appear somewhere in the name, in any order, so "rossi mario" finds Mario
+    // Rossi and "mar ros" narrows as it is typed. Against search_name, the name
+    // without accents, with the words folded the same way: "jose" finds José.
+    for (const word of searchWords(search.q ?? "")) {
+      query = query.ilike("search_name", `%${word}%`);
     }
     if (search.ruolo) {
       query = query.contains("active_roles", [search.ruolo]);
@@ -551,7 +545,7 @@ export default async function RegistroPage({
 
       <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
         {members.map((member) => {
-          const canInvite =
+          const canRestore =
             !member.auth_user_id && member.email && isAdminClientConfigured();
           const canManageAccount = Boolean(member.auth_user_id);
           const hours = hoursFor(member.joined_at, member.total_hours, { ...gym, today });
@@ -635,15 +629,15 @@ export default async function RegistroPage({
                   </Link>
                 ) : null}
 
-                {access.canEditRegistry && canInvite ? (
-                    <form action={inviteToPortal}>
+                {access.canEditRegistry && canRestore ? (
+                    // A new account with a temporary password, shown once
+                    // above the list after the redirect — as for a new person.
+                    <form action={restoreAccess}>
                       <input type="hidden" name="_query" value={currentQuery} />
                       <input type="hidden" name="person_id" value={member.id} />
-                      <input type="hidden" name="email" value={member.email ?? ""} />
-                      <input type="hidden" name="full_name" value={member.full_name} />
                       <button type="submit" className={menuItemClass}>
-                        <MailIcon className={menuIconClass} />
-                        {t.registro.invite}
+                        <UserPlusIcon className={menuIconClass} />
+                        {t.registro.restoreAccess}
                       </button>
                     </form>
                   ) : null}

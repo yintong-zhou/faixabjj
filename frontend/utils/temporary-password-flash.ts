@@ -15,7 +15,7 @@ import { cookies } from "next/headers";
 const COOKIE = "faixa_temp_password";
 const MAX_AGE_SECONDS = 300;
 
-export type TemporaryPasswordFlash = { email: string; password: string };
+export type TemporaryPasswordFlash = { email: string; password: string; username?: string | null };
 
 export async function flashTemporaryPassword(flash: TemporaryPasswordFlash): Promise<string> {
   const id = globalThis.crypto.randomUUID();
@@ -40,11 +40,16 @@ export async function readTemporaryPassword(
       id?: unknown;
       email?: unknown;
       password?: unknown;
+      username?: unknown;
     };
     if (parsed.id !== id || typeof parsed.email !== "string" || typeof parsed.password !== "string") {
       return null;
     }
-    return { email: parsed.email, password: parsed.password };
+    return {
+      email: parsed.email,
+      password: parsed.password,
+      username: typeof parsed.username === "string" ? parsed.username : null,
+    };
   } catch {
     return null;
   }

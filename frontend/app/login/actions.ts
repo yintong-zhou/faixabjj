@@ -8,9 +8,20 @@ import { getDictionary } from "@/utils/i18n/server";
 import { logDbError } from "@/utils/log";
 import { safeNextPath } from "@/utils/paths";
 import { turnstileToken } from "@/utils/turnstile";
+import { parseLoginIdentifier, unknownAccountEmail } from "@/utils/login-identifier";
+import { emailForUsername } from "@/utils/supabase/login-identifier";
 
 export async function login(formData: FormData) {
-  const email = formData.get("email") as string;
+  // One field, email or username (see utils/login-identifier.ts). A username
+  // that matches no account still makes an attempt, against a random address
+  // no account can have (unknownAccountEmail).
+  const identifier = parseLoginIdentifier((formData.get("email") as string | null) ?? "");
+  const email =
+    identifier.kind === "email"
+      ? identifier.email
+      : identifier.kind === "username"
+        ? ((await emailForUsername(identifier.username)) ?? unknownAccountEmail())
+        : unknownAccountEmail();
   const password = formData.get("password") as string;
   // `next` arrives in the URL, so anybody can write it into a link: only a path
   // on this site is honoured (see safeNextPath).

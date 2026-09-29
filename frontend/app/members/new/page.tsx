@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ChevronLeftIcon, UserPlusIcon } from "@/components/icons";
+import { NameUsernameFields } from "@/components/name-username-fields";
 import { getDictionary } from "@/utils/i18n/server";
 import { beltLabels, roleLabels } from "@/utils/supabase/profile";
 import { requireRegistryEditor } from "@/utils/supabase/require-admin";
@@ -62,12 +63,12 @@ export default async function AddPersonPage({
         <p className="text-xs text-foreground/55">{t.registro.temporaryPasswordNote}</p>
 
         <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="full_name" className="text-sm font-medium">
-              {t.account.fullName}
-            </label>
-            <input id="full_name" name="full_name" required className={fieldClass} />
-          </div>
+          <NameUsernameFields
+            nameLabel={t.account.fullName}
+            usernameLabel={t.account.username}
+            usernameHelp={t.account.usernameHelp}
+            fieldClass={fieldClass}
+          />
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="email" className="text-sm font-medium">

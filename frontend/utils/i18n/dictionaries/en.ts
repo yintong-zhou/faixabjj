@@ -87,6 +87,7 @@ export const en: Dictionary = {
     signInTitle: "Sign in",
     signInLead: "Reserved for members of the gym.",
     email: "Email",
+    emailOrUsername: "Email or username",
     password: "Password",
     forgotLink: "Forgotten your password?",
     signInButton: "Sign in",
@@ -223,6 +224,8 @@ export const en: Dictionary = {
 
     personalData: "Personal details",
     fullName: "Full name",
+    username: "Username",
+    usernameHelp: "3 to 30 characters: lower-case letters, digits, dot, hyphen and underscore. It can be used instead of the email to sign in.",
     phone: "Phone",
     birthDate: "Date of birth",
     notes: "Notes",
@@ -272,7 +275,7 @@ export const en: Dictionary = {
     newMembers: (days: number) => `New (${days} days)`,
     recentlyJoined: "joined recently",
     withoutAccount: "Without an account",
-    neverInvited: "never invited, or revoked",
+    neverInvited: "revoked, access to restore",
     gymHours: "Gym hours",
     openingBalancesIncluded: "opening balances included",
 
@@ -439,6 +442,7 @@ export const en: Dictionary = {
     temporaryPasswordNote:
       "An account is created too, active immediately and with no confirmation email. Once saved, a temporary password for this account alone is shown: pass it on to the person. They will be asked to replace it on first sign-in, before anything else in the app opens.",
     temporaryPasswordFor: (email: string) => `Temporary password for ${email}:`,
+    temporaryUsernameIs: "Username:",
     temporaryPasswordHelp:
       "Shown only now: pass it on to the person, who will have to replace it on first sign-in.",
     select: "Select…",
@@ -472,7 +476,7 @@ export const en: Dictionary = {
 
     rowActions: (name: string) => `Actions for ${name}`,
     details: "Details",
-    invite: "Invite to the portal",
+    restoreAccess: "Restore access",
     resetPassword: "Reset password",
     resetPasswordConfirm: (name: string) =>
       `Give ${name} a new temporary password? The current password will stop working.`,
@@ -520,8 +524,8 @@ export const en: Dictionary = {
     restoreFailed: "The restore did not go through.",
     pickBelt: "Choose a belt.",
     pickRole: "Choose a role.",
-    emailNeededToInvite:
-      "An email address on the record is needed to invite this person.",
+    emailNeededToRestore:
+      "An email address on the record is needed to restore access.",
     resetFailed: "The reset did not go through.",
     cannotRevokeSelf: "You cannot revoke your own access.",
     revokeFailed: "The revocation did not go through.",
@@ -530,6 +534,8 @@ export const en: Dictionary = {
     nameEmpty: "The name cannot be empty.",
     profileNotFound: "Profile not found.",
     profileSaveFailed: "The profile could not be saved.",
+    usernameInvalid: "Invalid username: 3 to 30 characters among lower-case letters, digits, dot, hyphen and underscore.",
+    usernameTaken: "This username is already taken.",
     profileSaved: "Profile updated.",
     profileSavedEmailPending:
       "Profile saved. Confirm the new address from the link we have emailed you.",
@@ -546,7 +552,7 @@ export const en: Dictionary = {
     adminClientMissing: "The admin client is not available.",
     secretMissingCreate:
       "SUPABASE_SECRET_KEY is not configured: accounts cannot be created.",
-    secretMissingInvite: "SUPABASE_SECRET_KEY is not configured: invitations are disabled.",
+    secretMissingRestore: "SUPABASE_SECRET_KEY is not configured: restoring access is disabled.",
     secretMissingReset: "SUPABASE_SECRET_KEY is not configured: reset is disabled.",
     secretMissingRevoke: "SUPABASE_SECRET_KEY is not configured: revoking is disabled.",
     accountNotCreated:
@@ -557,8 +563,8 @@ export const en: Dictionary = {
       `${name} was added, but the role was not assigned.`,
     accountCreatedNoProfile: (email: string) =>
       `Account created for ${email}, but the record's details were not saved.`,
-    inviteFailed: "The invitation failed. The address may already be registered.",
-    inviteSent: (email: string) => `Invitation sent to ${email}.`,
+    restoreAccessFailed: "Access was not restored. The address may already be registered.",
+    accessRestored: (email: string) => `Access restored for ${email}.`,
     passwordReset: (who: string) =>
       `${who} has a new temporary password: they will be asked to change it on first sign-in.`,
     someUser: "the user",

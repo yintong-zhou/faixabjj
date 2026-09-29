@@ -12,6 +12,8 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { requirePlatformAdmin } from "@/utils/supabase/require-admin";
 import { generateTemporaryPassword } from "@/utils/temporary-password";
 import { flashTemporaryPassword } from "@/utils/temporary-password-flash";
+import { claimUsername } from "@/utils/supabase/username";
+import { isValidUsername, normalizeUsername, suggestUsername } from "@/utils/username";
 
 const LIST = "/gyms";
 
@@ -247,6 +249,9 @@ export async function addManager(formData: FormData) {
   const email = field(formData, "email")?.trim();
   if (!fullName || !email) to(detail, { error: t.gyms.msg.managerMissing });
 
+  const username = normalizeUsername(field(formData, "username") ?? "") || suggestUsername(fullName);
+  if (!isValidUsername(username)) to(detail, { error: t.msg.usernameInvalid });
+
   // The gym is verified on the superadmin's own (RLS-checked) client before
   // the service role is touched, so a hidden gym_id field posted for a gym
   // that does not exist cannot create an account anywhere.
@@ -280,7 +285,7 @@ export async function addManager(formData: FormData) {
 
   const { data: person, error: personError } = await admin
     .from("person")
-    .select("id")
+    .select("id, username")
     .eq("auth_user_id", created.user.id)
     .maybeSingle();
   if (personError) logDbError("gyms", "addManager:person", personError);
@@ -300,6 +305,17 @@ export async function addManager(formData: FormData) {
       .from("assigned_role")
       .insert({ person_id: person.id, role: "admin", gym_id: gymId });
     roleError = insertError && insertError.code !== "23505" ? insertError : null;
+  }
+
+  // A re-added manager's row keeps the username it already has.
+  let claimed: string | null = null;
+  if (!roleError && person) {
+    claimed =
+      (person as { username: string | null }).username ??
+      (await claimUsername(admin, person.id, username));
+    if (!claimed) {
+      roleError = { code: "no-username", message: "claimUsername found no free username" };
+    }
   }
 
   // A manager is never left as a bare account: if no person row exists to
@@ -322,7 +338,7 @@ export async function addManager(formData: FormData) {
   revalidatePath(LIST);
   to(detail, {
     ok: t.gyms.msg.managerAdded(email),
-    pw: await flashTemporaryPassword({ email, password }),
+    pw: await flashTemporaryPassword({ email, password, username: claimed }),
   });
 }
 
@@ -367,9 +383,20 @@ export async function resetManagerPassword(formData: FormData) {
     to(detail, { error: t.gyms.msg.failed });
   }
 
+  const { data: row, error: rowError } = await admin
+    .from("person")
+    .select("username")
+    .eq("auth_user_id", userId)
+    .maybeSingle();
+  if (rowError) logDbError("gyms", "resetManagerPassword:username", rowError);
+
   to(detail, {
     ok: t.gyms.msg.passwordReset(manager.email ?? ""),
-    pw: await flashTemporaryPassword({ email: manager.email ?? "", password }),
+    pw: await flashTemporaryPassword({
+      email: manager.email ?? "",
+      password,
+      username: (row as { username: string | null } | null)?.username ?? null,
+    }),
   });
 }
 
