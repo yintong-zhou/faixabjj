@@ -30,6 +30,7 @@ type Member = {
   id: string;
   auth_user_id: string | null;
   full_name: string;
+  username: string | null;
   email: string | null;
   phone: string | null;
   birth_date: string | null;
@@ -112,7 +113,7 @@ export default async function MemberDetailPage({
   const { data } = await supabase
     .from("person")
     .select(
-      "id, auth_user_id, full_name, email, phone, birth_date, joined_at, current_belt, current_stripes, rank_since, stripe_since, notes",
+      "id, auth_user_id, full_name, username, email, phone, birth_date, joined_at, current_belt, current_stripes, rank_since, stripe_since, notes",
     )
     .eq("id", id)
     .maybeSingle();
@@ -259,6 +260,7 @@ export default async function MemberDetailPage({
           {t.registro.personalSection}
         </h2>
         <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+          <Field label={t.account.username} value={member.username ?? t.common.dash} />
           <Field label={t.auth.email} value={member.email ?? t.common.dash} />
           <Field label={t.account.phone} value={member.phone ?? t.common.dash} />
           <Field label={t.account.birthDate} value={formatDate(member.birth_date)} />

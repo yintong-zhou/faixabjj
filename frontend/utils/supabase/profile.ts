@@ -10,6 +10,7 @@ export type Profile = {
   id: string;
   auth_user_id: string | null;
   full_name: string;
+  username: string | null;
   email: string | null;
   phone: string | null;
   birth_date: string | null;
@@ -22,7 +23,7 @@ export type Profile = {
 };
 
 const PROFILE_COLUMNS =
-  "id, auth_user_id, full_name, email, phone, birth_date, current_belt, current_stripes, rank_since, stripe_since, joined_at, notes";
+  "id, auth_user_id, full_name, username, email, phone, birth_date, current_belt, current_stripes, rank_since, stripe_since, joined_at, notes";
 
 // The on_auth_user_created trigger creates this row, but an account can
 // predate the trigger (or the migration can be applied late), so the row is

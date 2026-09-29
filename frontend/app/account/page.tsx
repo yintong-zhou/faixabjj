@@ -185,6 +185,24 @@ export default async function AccountPage({
           </div>
 
           <div className="flex flex-col gap-1.5">
+            <label htmlFor="username" className="text-sm font-medium">
+              {t.account.username}
+            </label>
+            <input
+              id="username"
+              name="username"
+              required
+              defaultValue={profile.username ?? ""}
+              maxLength={30}
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              className={fieldClass}
+            />
+            <p className="text-xs text-foreground/55">{t.account.usernameHelp}</p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
             <label htmlFor="email" className="text-sm font-medium">
               {t.auth.email}
             </label>
