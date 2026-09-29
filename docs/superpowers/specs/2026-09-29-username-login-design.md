@@ -79,8 +79,8 @@ Replay-safe (runs twice cleanly).
   `null`; never reaches the browser.
 - `login/actions.ts`: resolve the identifier first. When it is a username that
   resolves to nothing, is invalid, or the secret key is missing, still call
-  `signInWithPassword` with a fixed non-existent address
-  (`nobody@invalid.invalid`), so the reply is the same generic message and
+  `signInWithPassword` with a fresh random non-existent address per
+  attempt (`nobody-<uuid>@faixabjj.invalid`; a fixed one could be registered), so the reply is the same generic message and
   Turnstile is verified and consumed exactly as for a real attempt. Failures of
   the lookup are logged with `logDbError`, never shown.
 

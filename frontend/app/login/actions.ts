@@ -8,25 +8,20 @@ import { getDictionary } from "@/utils/i18n/server";
 import { logDbError } from "@/utils/log";
 import { safeNextPath } from "@/utils/paths";
 import { turnstileToken } from "@/utils/turnstile";
-import { parseLoginIdentifier } from "@/utils/login-identifier";
+import { parseLoginIdentifier, unknownAccountEmail } from "@/utils/login-identifier";
 import { emailForUsername } from "@/utils/supabase/login-identifier";
 
-// Where a username that matches no account signs in: an address no account can
-// have (.invalid is reserved). The attempt still goes to Supabase, so the reply
-// is the same "wrong credentials" as a wrong password and the Turnstile token
-// is checked and spent exactly as for a real account — nothing tells the two
-// apart.
-const NO_SUCH_ACCOUNT = "nobody@faixabjj.invalid";
-
 export async function login(formData: FormData) {
-  // One field, email or username (see utils/login-identifier.ts).
+  // One field, email or username (see utils/login-identifier.ts). A username
+  // that matches no account still makes an attempt, against a random address
+  // no account can have (unknownAccountEmail).
   const identifier = parseLoginIdentifier((formData.get("email") as string | null) ?? "");
   const email =
     identifier.kind === "email"
       ? identifier.email
       : identifier.kind === "username"
-        ? ((await emailForUsername(identifier.username)) ?? NO_SUCH_ACCOUNT)
-        : NO_SUCH_ACCOUNT;
+        ? ((await emailForUsername(identifier.username)) ?? unknownAccountEmail())
+        : unknownAccountEmail();
   const password = formData.get("password") as string;
   // `next` arrives in the URL, so anybody can write it into a link: only a path
   // on this site is honoured (see safeNextPath).

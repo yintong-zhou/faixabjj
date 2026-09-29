@@ -16,3 +16,13 @@ export function parseLoginIdentifier(raw: string): LoginIdentifier {
   const username = normalizeUsername(value);
   return isValidUsername(username) ? { kind: "username", username } : { kind: "invalid" };
 }
+
+// Where a username that matches no account signs in. The attempt still goes to
+// Supabase, so the reply is the same "wrong credentials" as a wrong password
+// and the Turnstile token is checked and spent exactly as for a real account.
+// A fresh random address per attempt, not a fixed one: Supabase would accept
+// an account created with a fixed sentinel address (.invalid only stops mail
+// delivery), and every unknown username would then sign in as that account.
+export function unknownAccountEmail(): string {
+  return `nobody-${globalThis.crypto.randomUUID()}@faixabjj.invalid`;
+}
