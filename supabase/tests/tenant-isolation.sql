@@ -504,6 +504,37 @@ do $$ begin
   end;
 end $$;
 
+-- T20: usernames are unique across gyms, well-formed, and a member changes
+-- only their own.
+update public.person set username = 'shared.name' where email = 'b2@test';
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', true);
+do $$ begin
+  update public.person set username = 'a2.new' where auth_user_id = auth.uid();
+  if not found then
+    raise exception 'FAIL T20: a2 could not change their own username';
+  end if;
+  begin
+    update public.person set username = 'shared.name' where auth_user_id = auth.uid();
+    raise exception 'FAIL T20: a2 took a username already used in gym B';
+  exception when unique_violation then null;
+  end;
+  begin
+    update public.person set username = 'A2@X' where auth_user_id = auth.uid();
+    raise exception 'FAIL T20: the format check let an invalid username through';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.person set username = 'a2.other' where email = 'a1@test';
+    if found then
+      raise exception 'FAIL T20: a2 changed a1''s username';
+    end if;
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
 -- T11: deleting gym B, as the superadmin, removes all of it and nothing of A.
 begin;
 set local role authenticated;
