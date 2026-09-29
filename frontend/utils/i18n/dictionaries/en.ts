@@ -224,6 +224,8 @@ export const en: Dictionary = {
 
     personalData: "Personal details",
     fullName: "Full name",
+    username: "Username",
+    usernameHelp: "3 to 30 characters: lower-case letters, digits, dot, hyphen and underscore. It can be used instead of the email to sign in.",
     phone: "Phone",
     birthDate: "Date of birth",
     notes: "Notes",
@@ -440,6 +442,7 @@ export const en: Dictionary = {
     temporaryPasswordNote:
       "An account is created too, active immediately and with no confirmation email. Once saved, a temporary password for this account alone is shown: pass it on to the person. They will be asked to replace it on first sign-in, before anything else in the app opens.",
     temporaryPasswordFor: (email: string) => `Temporary password for ${email}:`,
+    temporaryUsernameIs: "Username:",
     temporaryPasswordHelp:
       "Shown only now: pass it on to the person, who will have to replace it on first sign-in.",
     select: "Select…",
@@ -531,6 +534,8 @@ export const en: Dictionary = {
     nameEmpty: "The name cannot be empty.",
     profileNotFound: "Profile not found.",
     profileSaveFailed: "The profile could not be saved.",
+    usernameInvalid: "Invalid username: 3 to 30 characters among lower-case letters, digits, dot, hyphen and underscore.",
+    usernameTaken: "This username is already taken.",
     profileSaved: "Profile updated.",
     profileSavedEmailPending:
       "Profile saved. Confirm the new address from the link we have emailed you.",

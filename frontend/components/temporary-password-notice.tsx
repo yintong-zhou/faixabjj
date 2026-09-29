@@ -17,6 +17,14 @@ export function TemporaryPasswordNotice({
     <div className="flex items-start gap-2 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm">
       <KeyIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
       <div className="flex min-w-0 flex-col gap-1">
+        {flash.username ? (
+          <span>
+            {t.registro.temporaryUsernameIs}{" "}
+            <code className="select-all rounded bg-muted px-1.5 py-0.5 font-medium">
+              {flash.username}
+            </code>
+          </span>
+        ) : null}
         <span>
           {t.registro.temporaryPasswordFor(flash.email)}{" "}
           <code className="select-all rounded bg-muted px-1.5 py-0.5 font-medium">

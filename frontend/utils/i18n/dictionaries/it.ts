@@ -238,6 +238,8 @@ export const it = {
 
     personalData: "Dati personali",
     fullName: "Nome e cognome",
+    username: "Username",
+    usernameHelp: "Da 3 a 30 caratteri: lettere minuscole, cifre, punto, trattino e trattino basso. Si usa al posto dell'email per accedere.",
     phone: "Telefono",
     birthDate: "Data di nascita",
     notes: "Note",
@@ -456,6 +458,7 @@ export const it = {
     temporaryPasswordNote:
       "Viene creato anche l'account, subito attivo e senza email di conferma. Dopo il salvataggio compare una password provvisoria valida solo per questo account: comunicala alla persona. Al primo accesso le verrà chiesto di sostituirla prima di poter usare il resto dell'app.",
     temporaryPasswordFor: (email: string) => `Password provvisoria di ${email}:`,
+    temporaryUsernameIs: "Username:",
     temporaryPasswordHelp:
       "Viene mostrata solo adesso: comunicala alla persona, che dovrà sostituirla al primo accesso.",
     select: "Seleziona…",
@@ -548,6 +551,8 @@ export const it = {
     nameEmpty: "Il nome non può essere vuoto.",
     profileNotFound: "Profilo non trovato.",
     profileSaveFailed: "Non è stato possibile salvare il profilo.",
+    usernameInvalid: "Username non valido: da 3 a 30 caratteri tra lettere minuscole, cifre, punto, trattino e trattino basso.",
+    usernameTaken: "Questo username è già in uso.",
     profileSaved: "Profilo aggiornato.",
     profileSavedEmailPending:
       "Profilo salvato. Conferma il nuovo indirizzo dal link che ti abbiamo inviato per email.",

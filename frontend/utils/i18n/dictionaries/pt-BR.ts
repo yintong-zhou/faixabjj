@@ -226,6 +226,8 @@ export const ptBR: Dictionary = {
 
     personalData: "Dados pessoais",
     fullName: "Nome completo",
+    username: "Nome de usuário",
+    usernameHelp: "De 3 a 30 caracteres: letras minúsculas, números, ponto, hífen e sublinhado. Pode ser usado no lugar do e-mail para entrar.",
     phone: "Telefone",
     birthDate: "Data de nascimento",
     notes: "Observações",
@@ -442,6 +444,7 @@ export const ptBR: Dictionary = {
     temporaryPasswordNote:
       "A conta também é criada, ativa na hora e sem e-mail de confirmação. Depois de salvar, aparece uma senha provisória válida só para esta conta: informe-a à pessoa. No primeiro acesso será pedido que ela a substitua antes de poder usar o restante do aplicativo.",
     temporaryPasswordFor: (email: string) => `Senha provisória de ${email}:`,
+    temporaryUsernameIs: "Nome de usuário:",
     temporaryPasswordHelp:
       "Mostrada só agora: informe-a à pessoa, que terá de substituí-la no primeiro acesso.",
     select: "Selecione…",
@@ -533,6 +536,8 @@ export const ptBR: Dictionary = {
     nameEmpty: "O nome não pode ficar vazio.",
     profileNotFound: "Perfil não encontrado.",
     profileSaveFailed: "Não foi possível salvar o perfil.",
+    usernameInvalid: "Nome de usuário inválido: de 3 a 30 caracteres entre letras minúsculas, números, ponto, hífen e sublinhado.",
+    usernameTaken: "Este nome de usuário já está em uso.",
     profileSaved: "Perfil atualizado.",
     profileSavedEmailPending:
       "Perfil salvo. Confirme o novo endereço pelo link que enviamos por e-mail.",

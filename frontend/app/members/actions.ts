@@ -10,6 +10,8 @@ import {
 } from "@/utils/supabase/require-admin";
 import { getDictionary } from "@/utils/i18n/server";
 import { generateTemporaryPassword } from "@/utils/temporary-password";
+import { claimUsername } from "@/utils/supabase/username";
+import { isValidUsername, normalizeUsername, suggestUsername } from "@/utils/username";
 import { flashTemporaryPassword } from "@/utils/temporary-password-flash";
 import { todayIn } from "@/utils/dates";
 import { logDbError } from "@/utils/log";
@@ -87,10 +89,11 @@ async function personInMyGym(
   auth_user_id: string | null;
   email: string | null;
   full_name: string | null;
+  username: string | null;
 } | null> {
   const query = supabase
     .from("person")
-    .select("id, auth_user_id, email, full_name");
+    .select("id, auth_user_id, email, full_name, username");
   const { data, error } = await ("authUserId" in filter
     ? query.eq("auth_user_id", filter.authUserId)
     : query.eq("id", filter.personId)
@@ -102,6 +105,7 @@ async function personInMyGym(
       auth_user_id: string | null;
       email: string | null;
       full_name: string | null;
+      username: string | null;
     } | null) ?? null
   );
 }
@@ -215,6 +219,15 @@ export async function addPerson(formData: FormData) {
     return;
   }
 
+  // Proposed by the form from the name; suggested here too when it arrives
+  // empty (no JavaScript). Checked before the account exists, so a bad value
+  // never leaves a half-created account.
+  const username = normalizeUsername(text(formData, "username") ?? "") || suggestUsername(fullName);
+  if (!isValidUsername(username)) {
+    back({ error: t.msg.usernameInvalid }, query);
+    return;
+  }
+
   // The new account belongs to the caller's gym, named in app_metadata where
   // the member cannot change it; the auth trigger creates the person row there.
   const { data: gymId, error: gymIdError } = await supabase.rpc("current_gym_id");
@@ -307,6 +320,12 @@ export async function addPerson(formData: FormData) {
     return;
   }
 
+  const claimed = await claimUsername(admin, person.id, username);
+  if (!claimed) {
+    back({ error: t.msg.accountCreatedNoProfile(email) }, query);
+    return;
+  }
+
   const { error: roleError } = await supabase
     .from("assigned_role")
     .insert({ person_id: person.id, role });
@@ -323,7 +342,7 @@ export async function addPerson(formData: FormData) {
   back(
     {
       ok: t.msg.personAdded(fullName),
-      pw: await flashTemporaryPassword({ email, password }),
+      pw: await flashTemporaryPassword({ email, password, username: claimed }),
     },
     query,
   );
@@ -426,6 +445,15 @@ export async function restoreAccess(formData: FormData) {
     return;
   }
 
+  // A row revoked after usernames existed keeps its own; an older one gets
+  // one from the name, as the backfill would have given it.
+  const username =
+    target.username ?? (await claimUsername(admin, target.id, suggestUsername(target.full_name ?? "")));
+  if (!username) {
+    await undo("username", { code: "no-username", message: "claimUsername found no free username" });
+    return;
+  }
+
   const { error: metaError } = await admin.auth.admin.updateUserById(userId, {
     app_metadata: { must_change_password: true, gym_id: gymId },
   });
@@ -439,7 +467,7 @@ export async function restoreAccess(formData: FormData) {
   back(
     {
       ok: t.msg.accessRestored(email),
-      pw: await flashTemporaryPassword({ email, password }),
+      pw: await flashTemporaryPassword({ email, password, username }),
     },
     query,
   );
@@ -462,7 +490,8 @@ export async function setTemporaryPassword(formData: FormData) {
     return;
   }
 
-  if (!(await personInMyGym(supabase, { authUserId: targetId }))) {
+  const person = await personInMyGym(supabase, { authUserId: targetId });
+  if (!person) {
     back({ error: t.msg.userNotInGym }, query);
     return;
   }
@@ -498,7 +527,7 @@ export async function setTemporaryPassword(formData: FormData) {
   back(
     {
       ok: t.msg.passwordReset(who),
-      pw: await flashTemporaryPassword({ email: who, password }),
+      pw: await flashTemporaryPassword({ email: who, password, username: person.username }),
     },
     query,
   );
