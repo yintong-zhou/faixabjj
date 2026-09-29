@@ -17,7 +17,6 @@ import {
   FileTextIcon,
   FilterIcon,
   KeyIcon,
-  MailIcon,
   TrashIcon,
   TrendingUpIcon,
   UserMinusIcon,
@@ -35,7 +34,7 @@ import {
 } from "@/utils/promotion";
 import {
   deletePerson,
-  inviteToPortal,
+  restoreAccess,
   revokeAccess,
   setTemporaryPassword,
 } from "./actions";
@@ -551,7 +550,7 @@ export default async function RegistroPage({
 
       <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
         {members.map((member) => {
-          const canInvite =
+          const canRestore =
             !member.auth_user_id && member.email && isAdminClientConfigured();
           const canManageAccount = Boolean(member.auth_user_id);
           const hours = hoursFor(member.joined_at, member.total_hours, { ...gym, today });
@@ -635,15 +634,15 @@ export default async function RegistroPage({
                   </Link>
                 ) : null}
 
-                {access.canEditRegistry && canInvite ? (
-                    <form action={inviteToPortal}>
+                {access.canEditRegistry && canRestore ? (
+                    // A new account with a temporary password, shown once
+                    // above the list after the redirect — as for a new person.
+                    <form action={restoreAccess}>
                       <input type="hidden" name="_query" value={currentQuery} />
                       <input type="hidden" name="person_id" value={member.id} />
-                      <input type="hidden" name="email" value={member.email ?? ""} />
-                      <input type="hidden" name="full_name" value={member.full_name} />
                       <button type="submit" className={menuItemClass}>
-                        <MailIcon className={menuIconClass} />
-                        {t.registro.invite}
+                        <UserPlusIcon className={menuIconClass} />
+                        {t.registro.restoreAccess}
                       </button>
                     </form>
                   ) : null}

@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient, MissingSecretKeyError } from "@/utils/supabase/admin";
@@ -45,11 +44,6 @@ function backToCriteria(params: Record<string, string>, from?: string) {
   redirect(`${CRITERIA_PATH}?${search.toString()}`);
 }
 
-async function origin() {
-  const headersList = await headers();
-  return headersList.get("origin") ?? `https://${headersList.get("host")}`;
-}
-
 const ASSIGNABLE_ROLES = [
   "student",
   "assistant",
@@ -82,8 +76,8 @@ const number = (formData: FormData, key: string): number | null => {
 // caller's own people. RLS answers only inside the caller's gym: a user_id or
 // person_id from another gym, typed into a crafted POST, comes back empty.
 //
-// Selects email/full_name too, not just id/auth_user_id: inviteToPortal reads
-// the invite address and name off this row rather than trusting the form's
+// Selects email/full_name too, not just id/auth_user_id: restoreAccess reads
+// the account address and name off this row rather than trusting the form's
 // own fields, which a caller could otherwise set to someone else's address.
 async function personInMyGym(
   supabase: SupabaseClient,
@@ -335,13 +329,24 @@ export async function addPerson(formData: FormData) {
   );
 }
 
-// Grants portal access to someone in the registry who has none — in practice
-// a member whose access was revoked, since addPerson now creates the account
-// up front. Unlike addPerson this *does* send an email and lets the person pick
-// their own password, so no default password and no forced change are involved.
-// The trigger in 20260911160000 links the new auth user back to this person by
-// email instead of creating a duplicate row.
-export async function inviteToPortal(formData: FormData) {
+// Gives portal access back to someone in the registry who has none — in
+// practice a member whose access was revoked, since addPerson creates the
+// account up front. It works exactly like addPerson: a fresh temporary password
+// drawn for this account alone, shown once to the maestro to pass on by a
+// channel of their own, no email, the address confirmed at creation, and
+// must_change_password armed so the member replaces it at first login.
+//
+// The account is created with no gym in its app_metadata, so the auth trigger
+// (20260925050000) neither creates a second person row nor links by email —
+// which, with two account-less rows sharing an address, could pick the wrong
+// one. The row is linked here, by id, and only then does the gym go into
+// app_metadata (the trigger then finds the row linked and does nothing).
+//
+// Any step after createUser that fails deletes the new account again. That
+// covers the race with deletePerson too: if the row is deleted between the
+// check below and the link, the link matches no row and no orphan account is
+// left behind. Once linked, the row cannot be deleted (20260928000000).
+export async function restoreAccess(formData: FormData) {
   const { t } = await getDictionary();
   // The admin client below uses the secret key, which bypasses Row Level
   // Security entirely, so the database will not enforce the privilege here.
@@ -350,13 +355,12 @@ export async function inviteToPortal(formData: FormData) {
   const query = (formData.get("_query") as string | null) ?? "";
   const personId = (formData.get("person_id") as string | null) ?? "";
 
-  // The address and name come from the looked-up row, never from the form:
-  // the form's own `email`/`full_name` fields are only ever a display copy,
-  // and trusting them would let a caller post an account-less own-gym
-  // person_id together with a *different* person's email address.
+  // The address and name come from the looked-up row, never from the form, so
+  // a crafted POST cannot pair an account-less own-gym person_id with a
+  // different person's email address.
   const target = personId ? await personInMyGym(supabase, { personId }) : null;
   const { data: gymId, error: gymIdError } = await supabase.rpc("current_gym_id");
-  if (gymIdError) logDbError("members", "inviteToPortal:current_gym_id", gymIdError);
+  if (gymIdError) logDbError("members", "restoreAccess:current_gym_id", gymIdError);
   if (!target || target.auth_user_id || !gymId) {
     back({ error: t.msg.userNotInGym }, query);
     return;
@@ -364,10 +368,9 @@ export async function inviteToPortal(formData: FormData) {
 
   const email = target.email;
   if (!email) {
-    back({ error: t.msg.emailNeededToInvite }, query);
+    back({ error: t.msg.emailNeededToRestore }, query);
     return;
   }
-  const fullName = target.full_name ?? "";
 
   let admin;
   try {
@@ -377,7 +380,7 @@ export async function inviteToPortal(formData: FormData) {
       {
         error:
           cause instanceof MissingSecretKeyError
-            ? t.msg.secretMissingInvite
+            ? t.msg.secretMissingRestore
             : t.msg.adminClientMissing,
       },
       query,
@@ -385,87 +388,61 @@ export async function inviteToPortal(formData: FormData) {
     return;
   }
 
-  const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: fullName },
-    redirectTo: `${await origin()}/reset-password`,
+  const password = generateTemporaryPassword();
+  const { data: created, error: authError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: target.full_name ?? "" },
+    app_metadata: { must_change_password: true },
   });
 
-  if (error || !invited?.user) {
-    back({ error: t.msg.inviteFailed }, query);
+  if (authError || !created?.user) {
+    back({ error: t.msg.restoreAccessFailed }, query);
     return;
   }
+  const userId = created.user.id;
 
-  // For an unconfirmed existing user, GoTrue's inviteUserByEmail re-sends the
-  // invite and returns that same user instead of creating a new one. If that
-  // user already belongs to a gym (its own app_metadata, or a person row
-  // already pointing at it), it is not ours to touch — proceeding would move
-  // someone else's pending invitee into this gym.
-  const invitedGymId = (invited.user.app_metadata as { gym_id?: string } | undefined)
-    ?.gym_id;
-  if (invitedGymId && invitedGymId !== gymId) {
-    console.error(
-      "[members] inviteToPortal refused: invited user already belongs to another gym",
-    );
-    back({ error: t.msg.inviteFailed }, query);
-    return;
-  }
+  const undo = async (step: string, cause: { code?: string; message: string }) => {
+    logDbError("members", `restoreAccess:${step}`, cause);
+    const { error: undoError } = await admin.auth.admin.deleteUser(userId);
+    if (undoError) logDbError("members", "restoreAccess:undo", undoError);
+    back({ error: t.msg.restoreAccessFailed }, query);
+  };
 
-  const { data: existingPerson, error: existingPersonError } = await admin
-    .from("person")
-    .select("id")
-    .eq("auth_user_id", invited.user.id)
-    .maybeSingle();
-  if (existingPersonError) {
-    logDbError("members", "inviteToPortal:existingPerson", existingPersonError);
-  }
-  if (existingPerson) {
-    console.error(
-      "[members] inviteToPortal refused: invited user is already linked to a person row",
-    );
-    back({ error: t.msg.inviteFailed }, query);
-    return;
-  }
-
-  // inviteUserByEmail cannot set app_metadata, so the auth trigger saw no gym
-  // and made no profile. The link is made here instead: the registry row the
-  // maestro already has is pointed at the new account — only if it is still
-  // account-less, only in this gym — and only once that succeeds does the gym
-  // go into app_metadata, so a failed link never leaves the metadata rewritten
-  // on a user this gym was not entitled to touch.
+  // `.update()` reports no error when the filter matches nothing, so an empty
+  // result — the row was deleted, or linked by someone else, since the check
+  // above — is a failure too.
   const { data: linked, error: linkError } = await admin
     .from("person")
-    .update({ auth_user_id: invited.user.id })
+    .update({ auth_user_id: userId })
     .eq("id", target.id)
     .eq("gym_id", gymId as string)
     .is("auth_user_id", null)
     .select("id");
 
-  // `.update()` reports no error when the filter matches nothing, so an empty
-  // result — the row got linked by someone else between the check above and
-  // here — must be treated as a failure explicitly, or a lost race would show
-  // "invitation sent" while leaving an orphan auth user.
   if (linkError || !linked || linked.length === 0) {
-    logDbError(
-      "members",
-      "inviteToPortal:link",
-      linkError ?? { code: "no-rows", message: "link matched no rows" },
-    );
-    back({ error: t.msg.inviteFailed }, query);
+    await undo("link", linkError ?? { code: "no-rows", message: "link matched no rows" });
     return;
   }
 
-  const { error: metaError } = await admin.auth.admin.updateUserById(invited.user.id, {
-    app_metadata: { gym_id: gymId },
+  const { error: metaError } = await admin.auth.admin.updateUserById(userId, {
+    app_metadata: { must_change_password: true, gym_id: gymId },
   });
 
   if (metaError) {
-    logDbError("members", "inviteToPortal:meta", metaError);
-    back({ error: t.msg.inviteFailed }, query);
+    await undo("meta", metaError);
     return;
   }
 
   revalidatePath(PATH);
-  back({ ok: t.msg.inviteSent(email) }, query);
+  back(
+    {
+      ok: t.msg.accessRestored(email),
+      pw: await flashTemporaryPassword({ email, password }),
+    },
+    query,
+  );
 }
 
 // Gives a member a fresh temporary password, rather than emailing a recovery

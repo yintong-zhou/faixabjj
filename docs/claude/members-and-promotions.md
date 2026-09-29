@@ -4,7 +4,7 @@
 
 ## `/members`
 
-Lists every person (active roles, belt, hours, join date) and manages accounts (invite, password reset, revoke). Visible to instructor, head_coach, admin; **instructor is read-only** (no action controls, `access.canEditRegistry`; RLS refuses writes anyway).
+Lists every person (active roles, belt, hours, join date) and manages accounts (restore access, password reset, revoke, delete). Visible to instructor, head_coach, admin; **instructor is read-only** (no action controls, `access.canEditRegistry`; RLS refuses writes anyway).
 
 - **Data source:** view `member_overview` (`20260911140000`): one row per person with `active_roles` (text[]), `is_active`, `total_hours`. Needed so role filters paginate and count correctly.
 - **Filters and paging in the URL** (`q`, `ruolo`, `cintura`, `attivi`, `idonei`, `p`) via a plain `method="get"` form, no client JS. Row actions carry the query back in a `_query` hidden field.
@@ -24,9 +24,9 @@ Single home for the rule: **`frontend/utils/members.ts`** (`PORTAL_ONLY_ROLE`, `
 
 - **Adding a person also creates their account** (requirement reversed once; trust this). `addPerson`: auth user with a temporary password drawn for it alone (`generateTemporaryPassword()`, `utils/temporary-password.ts`), shown once via the flash cookie, `email_confirm: true` (**no email**, works immediately), `app_metadata.must_change_password`; then fills the trigger-created `person` row and assigns the role. Required, validated server-side: name, email, role, join date, belt (not for admin). Optional: phone, birth date, stripes, rank date, notes. **Auth user first** (fails on duplicate email, avoids a stranded person row). The profile update (starting belt included) runs with the **service role**, addressed by the new account and the caller's gym: the database accepts a belt change only inside `record_promotion()`. The role insert stays on the user's client.
 - **"Reimposta password"** (`setTemporaryPassword`): confirmed kebab button drawing a fresh temporary password, shown once on the list; no email. **Re-arms `must_change_password`**.
-- **"Invita al portale"** (`inviteToPortal`): for a member without an account; emails them to choose their own password (no default, no forced change). The only action that sends mail.
+- **"Riattiva accesso"** (`restoreAccess`): for a member without an account (in practice after a revoke). Same as `addPerson`: temporary password shown once, `email_confirm: true`, **no email**, forced change. **No Registro action sends mail** (the old email invite `inviteToPortal` was removed). Creates the account **without** `gym_id`, so the trigger does nothing; links the row by id with the service role (`.is("auth_user_id", null)` + zero-row check), then writes `gym_id` + `must_change_password`. Any failure after `createUser` deletes the new account — that also covers a `deletePerson` racing it (no orphan auth user).
 - **"Elimina dal registro"** (`deletePerson`): only for a row **with no account** (after revoke), user managers only; kebab item + a danger section at the bottom of `/members/[id]`, both confirmed. Deletes the row on the user's client (RLS is the boundary); cascades attendance, roles, promotion history; `led_by`/`instructor_id`/`promoted_by` elsewhere become null. The delete policy itself requires `auth_user_id is null` (`20260928000000`), so "revoke, then delete" holds for a crafted POST too.
-- `20260911160000_link_invited_person.sql`: the `auth.users` trigger **links** a new account to an account-less row with the same email (case-insensitive) instead of duplicating. Lives in the trigger so every path is covered.
+- `20260911160000_link_invited_person.sql`: the `auth.users` trigger **links** a new account to an account-less row with the same email (case-insensitive) instead of duplicating. Lives in the trigger so every path is covered. `restoreAccess` deliberately bypasses it (links by id: two account-less rows may share an email).
 
 ### `/members/[id]`
 

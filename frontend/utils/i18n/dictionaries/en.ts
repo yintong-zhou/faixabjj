@@ -272,7 +272,7 @@ export const en: Dictionary = {
     newMembers: (days: number) => `New (${days} days)`,
     recentlyJoined: "joined recently",
     withoutAccount: "Without an account",
-    neverInvited: "never invited, or revoked",
+    neverInvited: "revoked, access to restore",
     gymHours: "Gym hours",
     openingBalancesIncluded: "opening balances included",
 
@@ -472,7 +472,7 @@ export const en: Dictionary = {
 
     rowActions: (name: string) => `Actions for ${name}`,
     details: "Details",
-    invite: "Invite to the portal",
+    restoreAccess: "Restore access",
     resetPassword: "Reset password",
     resetPasswordConfirm: (name: string) =>
       `Give ${name} a new temporary password? The current password will stop working.`,
@@ -520,8 +520,8 @@ export const en: Dictionary = {
     restoreFailed: "The restore did not go through.",
     pickBelt: "Choose a belt.",
     pickRole: "Choose a role.",
-    emailNeededToInvite:
-      "An email address on the record is needed to invite this person.",
+    emailNeededToRestore:
+      "An email address on the record is needed to restore access.",
     resetFailed: "The reset did not go through.",
     cannotRevokeSelf: "You cannot revoke your own access.",
     revokeFailed: "The revocation did not go through.",
@@ -546,7 +546,7 @@ export const en: Dictionary = {
     adminClientMissing: "The admin client is not available.",
     secretMissingCreate:
       "SUPABASE_SECRET_KEY is not configured: accounts cannot be created.",
-    secretMissingInvite: "SUPABASE_SECRET_KEY is not configured: invitations are disabled.",
+    secretMissingRestore: "SUPABASE_SECRET_KEY is not configured: restoring access is disabled.",
     secretMissingReset: "SUPABASE_SECRET_KEY is not configured: reset is disabled.",
     secretMissingRevoke: "SUPABASE_SECRET_KEY is not configured: revoking is disabled.",
     accountNotCreated:
@@ -557,8 +557,8 @@ export const en: Dictionary = {
       `${name} was added, but the role was not assigned.`,
     accountCreatedNoProfile: (email: string) =>
       `Account created for ${email}, but the record's details were not saved.`,
-    inviteFailed: "The invitation failed. The address may already be registered.",
-    inviteSent: (email: string) => `Invitation sent to ${email}.`,
+    restoreAccessFailed: "Access was not restored. The address may already be registered.",
+    accessRestored: (email: string) => `Access restored for ${email}.`,
     passwordReset: (who: string) =>
       `${who} has a new temporary password: they will be asked to change it on first sign-in.`,
     someUser: "the user",

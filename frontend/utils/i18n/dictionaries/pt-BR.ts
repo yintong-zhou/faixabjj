@@ -274,7 +274,7 @@ export const ptBR: Dictionary = {
     newMembers: (days: number) => `Novos (${days} dias)`,
     recentlyJoined: "matriculados recentemente",
     withoutAccount: "Sem conta",
-    neverInvited: "nunca convidados ou revogados",
+    neverInvited: "revogados, acesso a reativar",
     gymHours: "Horas da academia",
     openingBalancesIncluded: "saldos iniciais incluídos",
 
@@ -474,7 +474,7 @@ export const ptBR: Dictionary = {
 
     rowActions: (name: string) => `Ações para ${name}`,
     details: "Detalhes",
-    invite: "Convidar para o portal",
+    restoreAccess: "Reativar acesso",
     resetPassword: "Redefinir senha",
     resetPasswordConfirm: (name: string) =>
       `Dar a ${name} uma nova senha provisória? A senha atual deixará de funcionar.`,
@@ -522,8 +522,8 @@ export const ptBR: Dictionary = {
     restoreFailed: "A restauração não foi concluída.",
     pickBelt: "Selecione uma faixa.",
     pickRole: "Selecione uma função.",
-    emailNeededToInvite:
-      "É necessário um endereço de e-mail na ficha para convidar esta pessoa.",
+    emailNeededToRestore:
+      "É necessário um endereço de e-mail na ficha para reativar o acesso.",
     resetFailed: "A redefinição não foi concluída.",
     cannotRevokeSelf: "Você não pode revogar o seu próprio acesso.",
     revokeFailed: "A revogação não foi concluída.",
@@ -548,7 +548,7 @@ export const ptBR: Dictionary = {
     adminClientMissing: "Cliente de administração indisponível.",
     secretMissingCreate:
       "SUPABASE_SECRET_KEY não está configurada: não é possível criar contas.",
-    secretMissingInvite: "SUPABASE_SECRET_KEY não está configurada: os convites estão desativados.",
+    secretMissingRestore: "SUPABASE_SECRET_KEY não está configurada: a reativação está desativada.",
     secretMissingReset: "SUPABASE_SECRET_KEY não está configurada: a redefinição está desativada.",
     secretMissingRevoke: "SUPABASE_SECRET_KEY não está configurada: a revogação está desativada.",
     accountNotCreated:
@@ -559,8 +559,8 @@ export const ptBR: Dictionary = {
       `${name} foi adicionada, mas a função não foi atribuída.`,
     accountCreatedNoProfile: (email: string) =>
       `Conta criada para ${email}, mas os dados da ficha não foram salvos.`,
-    inviteFailed: "O convite falhou. O endereço pode já estar cadastrado.",
-    inviteSent: (email: string) => `Convite enviado para ${email}.`,
+    restoreAccessFailed: "O acesso não foi reativado. O endereço pode já estar cadastrado.",
+    accessRestored: (email: string) => `Acesso reativado para ${email}.`,
     passwordReset: (who: string) =>
       `${who} tem uma nova senha provisória: será pedido que a troque no primeiro acesso.`,
     someUser: "o usuário",
