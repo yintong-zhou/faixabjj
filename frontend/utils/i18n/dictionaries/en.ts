@@ -87,6 +87,7 @@ export const en: Dictionary = {
     signInTitle: "Sign in",
     signInLead: "Reserved for members of the gym.",
     email: "Email",
+    emailOrUsername: "Email or username",
     password: "Password",
     forgotLink: "Forgotten your password?",
     signInButton: "Sign in",

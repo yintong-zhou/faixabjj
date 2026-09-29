@@ -96,6 +96,7 @@ export const it = {
     signInTitle: "Accedi",
     signInLead: "Area riservata ai membri della palestra.",
     email: "Email",
+    emailOrUsername: "Email o username",
     password: "Password",
     forgotLink: "Password dimenticata?",
     signInButton: "Accedi",

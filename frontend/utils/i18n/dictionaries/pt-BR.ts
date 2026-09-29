@@ -88,6 +88,7 @@ export const ptBR: Dictionary = {
     signInTitle: "Entrar",
     signInLead: "Área reservada aos membros da academia.",
     email: "E-mail",
+    emailOrUsername: "E-mail ou nome de usuário",
     password: "Senha",
     forgotLink: "Esqueceu a senha?",
     signInButton: "Entrar",

@@ -29,14 +29,16 @@ export default async function LoginPage({
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className="text-sm font-medium">
-            {t.auth.email}
+            {t.auth.emailOrUsername}
           </label>
           <input
             id="email"
             name="email"
-            type="email"
+            type="text"
             required
-            autoComplete="email"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-accent"
           />
         </div>
