@@ -18,6 +18,7 @@ import {
   TrendingUpIcon,
   UserIcon,
 } from "@/components/icons";
+import { suggestUsername } from "@/utils/username";
 import { updatePassword, updateProfile } from "./actions";
 
 const fieldClass =
@@ -191,8 +192,13 @@ export default async function AccountPage({
             <input
               id="username"
               name="username"
-              required
+              // An account made outside the app (the Supabase Dashboard) has
+              // none yet: saving the phone must not force one, so the field is
+              // required only once there is a username to keep, and the
+              // suggestion is a placeholder rather than a value.
+              required={Boolean(profile.username)}
               defaultValue={profile.username ?? ""}
+              placeholder={profile.username ? undefined : suggestUsername(profile.full_name)}
               maxLength={30}
               autoComplete="username"
               autoCapitalize="none"

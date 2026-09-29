@@ -535,6 +535,39 @@ do $$ begin
 end $$;
 rollback;
 
+-- T21: the login's username lookup is one call that answers the service role
+-- only — a member or an anonymous caller must never map a username to an email.
+update public.person set username = 'lookup.me' where email = 'a1@test';
+do $$ begin
+  if public.login_email_for_username('lookup.me') is distinct from 'a1@test' then
+    raise exception 'FAIL T21: the lookup did not return the account email';
+  end if;
+  if public.login_email_for_username('nobody.here') is not null then
+    raise exception 'FAIL T21: the lookup returned an email for an unknown username';
+  end if;
+end $$;
+begin;
+set local role anon;
+do $$ begin
+  begin
+    perform public.login_email_for_username('lookup.me');
+    raise exception 'FAIL T21: anon can map a username to an email';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', true);
+do $$ begin
+  begin
+    perform public.login_email_for_username('lookup.me');
+    raise exception 'FAIL T21: a member can map a username to an email';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
 -- T11: deleting gym B, as the superadmin, removes all of it and nothing of A.
 begin;
 set local role authenticated;
