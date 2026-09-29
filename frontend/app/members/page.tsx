@@ -27,6 +27,7 @@ import { estimateNote, formatHours, hoursFor } from "@/utils/hours";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
 import { readTemporaryPassword } from "@/utils/temporary-password-flash";
+import { searchWords } from "@/utils/search";
 import {
   promotionStatus,
   type Criterion,
@@ -246,18 +247,12 @@ export default async function RegistroPage({
       query = query.in("id", [...eligibleIds]);
     }
 
-    // Name only — searching by email was explicitly excluded. The strip keeps a
-    // stray comma or parenthesis from breaking PostgREST's filter syntax (`_`
-    // too: it is ilike's one-character wildcard). Each word must appear
-    // somewhere in the name, in any order, so "rossi mario" finds Mario Rossi
-    // and "mar ros" narrows as it is typed.
-    const words = (search.q ?? "")
-      .replace(/[%,()\\_]/g, " ")
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 5);
-    for (const word of words) {
-      query = query.ilike("full_name", `%${word}%`);
+    // Name only — searching by email was explicitly excluded. Each word must
+    // appear somewhere in the name, in any order, so "rossi mario" finds Mario
+    // Rossi and "mar ros" narrows as it is typed. Against search_name, the name
+    // without accents, with the words folded the same way: "jose" finds José.
+    for (const word of searchWords(search.q ?? "")) {
+      query = query.ilike("search_name", `%${word}%`);
     }
     if (search.ruolo) {
       query = query.contains("active_roles", [search.ruolo]);

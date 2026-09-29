@@ -23,7 +23,7 @@ Plain SQL migrations in `supabase/migrations/` (Supabase CLI layout). Supabase (
 
 Several objects are defined in more than one migration; only the **last one run** survives:
 - `current_access()`: `20260911120000`, `20260912010000`, `20260925030000` (now the last definition — adds `isPlatformAdmin`, `gymStatus`)
-- `member_overview`: `20260911140000`, `20260911200000`, `20260912000000`
+- `member_overview`: `20260911140000`, `20260911200000`, `20260912000000`, `20260920010000`, `20260929000000` (adds `search_name`; **the last word now** — re-pasting `20260920010000` drops the column and breaks the Registro search)
 - `person_hours`: `20260910000000`, `20260912000000`
 - `guard_person_auth_link()`: `20260911000000`, `20260911120000`, `20260911200000`, `20260911220000`, `20260927000000` (last)
 - `record_promotion()`: `20260918130000`, `20260919110000`, `20260927000000` (last — re-pasting an earlier one drops the marker, and every promotion then fails)
