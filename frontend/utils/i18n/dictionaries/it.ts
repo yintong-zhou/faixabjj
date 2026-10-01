@@ -661,6 +661,7 @@ export const it = {
       "Non è stato possibile caricare i corsi. Controlla che le migration del database siano state applicate.",
 
     addCourse: "Aggiungi corso",
+    viewAttendance: "Presenze",
     createCourse: "Crea corso",
     addHint:
       "Salvando il corso vengono generate le lezioni delle prossime otto settimane. Le lezioni già passate non vengono mai toccate. L'istruttore indicato qui è il predefinito: le lezioni generate lo ereditano e resta modificabile sulla singola lezione, dalla pagina dell'appello in Presenze.",

@@ -642,6 +642,7 @@ export const ptBR: Dictionary = {
       "Não foi possível carregar as aulas. Verifique se as migrações do banco de dados foram aplicadas.",
 
     addCourse: "Adicionar aula",
+    viewAttendance: "Presenças",
     createCourse: "Criar aula",
     addHint:
       "Ao salvar a aula são geradas as aulas das próximas oito semanas. As aulas já realizadas nunca são alteradas. O instrutor indicado aqui é o padrão: as aulas geradas o herdam e ele continua editável em cada aula, pela página da chamada em Presenças.",

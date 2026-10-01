@@ -25,7 +25,7 @@
 
 `can_manage_classes()` = instructor + head_coach + admin → `canManageClasses`, guard `requireClassManager()`. Not `can_edit_registry()` (see access doc).
 
-**`/attendance` is open to every signed-in member** (check-in lives where lessons are listed). Page calls `requireAdmin()` and branches: staff get roll-call link + presence count; members get a self check-in button.
+**`/attendance` is open to every signed-in member** (check-in lives where lessons are listed). Navigation: members have a *Presenze* tab; staff have none — they reach it from the button on `/courses` (tab *Corsi* stays active on `/attendance`). Page calls `requireAdmin()` and branches: staff get roll-call link + presence count; members get a self check-in button.
 
 ## Calendar views
 

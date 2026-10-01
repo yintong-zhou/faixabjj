@@ -640,6 +640,7 @@ export const en: Dictionary = {
       "The classes could not be loaded. Check that the database migrations have been applied.",
 
     addCourse: "Add class",
+    viewAttendance: "Attendance",
     createCourse: "Create class",
     addHint:
       "Saving the class generates the lessons for the next eight weeks. Lessons already held are never touched. The instructor set here is the default: generated lessons inherit it, and it can still be changed on a single lesson from the roll call under Attendance.",

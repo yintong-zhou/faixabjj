@@ -97,10 +97,19 @@ export default async function CorsiPage({
           fields and two columns wide at `sm:`, so opening it in place pushed
           every existing course off a phone screen — the same reason
           "Aggiungi persona" left the Registro for /members/new. */}
-      <Link href="/courses/new" className={PANEL_LINK}>
-        <CalendarPlusIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
-        {t.corsi.addCourse}
-      </Link>
+      <div className="flex flex-wrap gap-2">
+        <Link href="/courses/new" className={PANEL_LINK}>
+          <CalendarPlusIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          {t.corsi.addCourse}
+        </Link>
+
+        {/* Presenze has no tab of its own for staff: it is the calendar these
+            courses generate, so it is reached from here. */}
+        <Link href="/attendance" className={PANEL_LINK}>
+          <CalendarCheckIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+          {t.corsi.viewAttendance}
+        </Link>
+      </div>
 
       <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
         {courses.map((course) => (

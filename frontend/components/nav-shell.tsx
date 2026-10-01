@@ -89,13 +89,12 @@ function navItemsFor(
   // it is the landing page for people who arrive without logging in, and the
   // proxy redirects an authenticated visitor away from it.
   // Dashboard leads for everyone: it is where login lands, so the first tab and
-  // the landing page are the same place. Presenze follows it for everyone too,
-  // students included — check-in has to live where the lessons are listed, and
-  // there is only one such list.
-  const items: NavItem[] = [DASHBOARD_ITEM, PRESENZE_ITEM];
-  if (canManageClasses) {
-    items.push(CORSI_ITEM);
-  }
+  // the landing page are the same place. After it, one tab for the lessons:
+  // Corsi for whoever manages them, with Presenze as a button inside it (still
+  // one list of lessons, one page); Presenze itself for students, who cannot
+  // open Corsi and need it — check-in has to live where the lessons are listed.
+  const items: NavItem[] = [DASHBOARD_ITEM];
+  items.push(canManageClasses ? CORSI_ITEM : PRESENZE_ITEM);
   if (canViewRegistry) {
     // The eligibility queue is a summary line and a filter inside the
     // Registro, not a tab of its own: one list of people, not two.
@@ -106,7 +105,13 @@ function navItemsFor(
 }
 
 function isActive(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  if (href === "/") return pathname === "/";
+  // Corsi is only in the list for staff, and for them Presenze lives under it:
+  // without this no tab would be highlighted on /attendance.
+  if (href === "/courses") {
+    return pathname.startsWith("/courses") || pathname.startsWith("/attendance");
+  }
+  return pathname.startsWith(href);
 }
 
 export function NavShell({
