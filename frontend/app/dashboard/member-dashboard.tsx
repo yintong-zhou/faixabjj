@@ -19,6 +19,7 @@ import type { Profile } from "@/utils/supabase/profile";
 import type { GymSettings } from "@/utils/supabase/gym";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { addDays, formatDayHeading, formatTime } from "@/utils/schedule";
+import { CheckinScanner } from "./checkin-scanner";
 import { Section, Stat } from "./stat";
 
 // How far back the "recent training" figures look. Bounded on purpose: a
@@ -127,6 +128,28 @@ export async function MemberDashboard({
 
   return (
     <>
+      {/* First thing on the page, because it is the thing done most often and
+          on a phone: scan the gym's QR to check in. Drawn for everybody who
+          reaches this view — members and the staff's own view alike, since a
+          maestro trains too — and never for a portal-only admin, who gets no
+          personal view at all. */}
+      <CheckinScanner
+        labels={{
+          open: t.dashboard.scanQr,
+          title: t.dashboard.scanTitle,
+          help: t.dashboard.scanHelp,
+          starting: t.dashboard.scanStarting,
+          wrongQr: t.dashboard.scanWrongQr,
+          retry: t.checkin.retry,
+          close: t.common.close,
+          failure: {
+            denied: t.dashboard.scanDenied,
+            unavailable: t.dashboard.scanUnavailable,
+            unsupported: t.dashboard.scanUnsupported,
+          },
+        }}
+      />
+
       <Section title={t.dashboard.yourRank} icon={TrendingUpIcon}>
         <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
           <Belt

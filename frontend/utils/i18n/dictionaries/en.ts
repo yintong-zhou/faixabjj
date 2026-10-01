@@ -322,7 +322,18 @@ export const en: Dictionary = {
     nextLessons: "Next lessons",
     noUpcoming: "No lessons scheduled in the coming days.",
     checkinHint:
-      "Check-in happens in Attendance, when you are at the gym and the window is open.",
+      "Check-in happens in Attendance or by scanning the QR, when you are at the gym and the window is open.",
+    scanQr: "Scan the QR",
+    scanTitle: "Check in with the QR",
+    scanHelp:
+      "Point the camera at the QR displayed at the gym. The image stays on your phone: it is not sent or saved.",
+    scanStarting: "Starting the camera…",
+    scanWrongQr: "This is not the gym's check-in QR.",
+    scanDenied:
+      "Camera permission is needed. Allow it in the browser settings and try again.",
+    scanUnavailable: "No camera is available on this device.",
+    scanUnsupported:
+      "This browser cannot use the camera here. Scan the QR with your phone's own camera.",
   },
 
   presenze: {

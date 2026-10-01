@@ -338,7 +338,18 @@ export const it = {
     nextLessons: "Prossime lezioni",
     noUpcoming: "Nessuna lezione in calendario nei prossimi giorni.",
     checkinHint:
-      "Il check-in si fa da Presenze, quando sei in palestra e la finestra è aperta.",
+      "Il check-in si fa da Presenze o scansionando il QR, quando sei in palestra e la finestra è aperta.",
+    scanQr: "Scansiona il QR",
+    scanTitle: "Check-in con il QR",
+    scanHelp:
+      "Inquadra il QR esposto in palestra. L'immagine resta sul tuo telefono: non viene inviata né salvata.",
+    scanStarting: "Avvio della fotocamera…",
+    scanWrongQr: "Questo non è il QR di check-in della palestra.",
+    scanDenied:
+      "Serve il permesso di usare la fotocamera. Consentilo dalle impostazioni del browser e riprova.",
+    scanUnavailable: "Non è disponibile nessuna fotocamera su questo dispositivo.",
+    scanUnsupported:
+      "Questo browser non può usare la fotocamera qui. Inquadra il QR con la fotocamera del telefono.",
   },
 
   presenze: {

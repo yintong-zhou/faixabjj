@@ -7,7 +7,8 @@ import { getDictionary } from "@/utils/i18n/server";
 import { logDbError } from "@/utils/log";
 import { addDays, checkinState, formatTime } from "@/utils/schedule";
 import { requireGymSettings } from "@/utils/supabase/gym";
-import { getOrCreateProfile } from "@/utils/supabase/profile";
+import { isPortalOnly } from "@/utils/members";
+import { activeRoles, getOrCreateProfile } from "@/utils/supabase/profile";
 import { requireAdmin } from "@/utils/supabase/require-admin";
 
 import { CheckinButton, type CheckinButtonLabels } from "../attendance/checkin-button";
@@ -63,13 +64,20 @@ export default async function CheckInPage({
       }) === "open",
   );
 
-  // Staff take attendance with the roll call, as in /attendance.
-  const isStaff = access.canManageClasses;
+  // Everybody who trains checks in here, coaches included: they hold a belt and
+  // collect hours like anybody else, and the dashboard offers them the scanner.
+  // The exception is a portal-only admin, who runs the portal and does not
+  // train — the same person the dashboard gives no personal view — and who is
+  // still pointed at the roll call.
+  const profile = await getOrCreateProfile(supabase, userId, email);
+  const portalOnly =
+    access.canManageClasses && profile
+      ? isPortalOnly(await activeRoles(supabase, profile.id))
+      : false;
 
   const recorded = new Map<string, boolean>();
   let profileMissing = false;
-  if (!isStaff && open.length > 0) {
-    const profile = await getOrCreateProfile(supabase, userId, email);
+  if (!portalOnly && open.length > 0) {
     if (!profile) {
       profileMissing = true;
     } else {
@@ -100,7 +108,7 @@ export default async function CheckInPage({
   const auto =
     !ok &&
     !error &&
-    !isStaff &&
+    !portalOnly &&
     !profileMissing &&
     open.length === 1 &&
     !recorded.has(open[0].id);
@@ -137,7 +145,7 @@ export default async function CheckInPage({
         </p>
       ) : null}
 
-      {isStaff ? (
+      {portalOnly ? (
         <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/70 sm:p-4">
           {t.checkin.staffUseRollCall}
         </p>

@@ -324,7 +324,18 @@ export const ptBR: Dictionary = {
     nextLessons: "Próximas aulas",
     noUpcoming: "Nenhuma aula no calendário nos próximos dias.",
     checkinHint:
-      "O check-in é feito em Presenças, quando você está na academia e a janela está aberta.",
+      "O check-in é feito em Presenças ou escaneando o QR, quando você está na academia e a janela está aberta.",
+    scanQr: "Escanear o QR",
+    scanTitle: "Check-in com o QR",
+    scanHelp:
+      "Aponte a câmera para o QR exposto na academia. A imagem fica no seu celular: não é enviada nem salva.",
+    scanStarting: "Iniciando a câmera…",
+    scanWrongQr: "Este não é o QR de check-in da academia.",
+    scanDenied:
+      "É preciso permitir o uso da câmera. Autorize nas configurações do navegador e tente de novo.",
+    scanUnavailable: "Nenhuma câmera disponível neste dispositivo.",
+    scanUnsupported:
+      "Este navegador não pode usar a câmera aqui. Aponte a câmera do celular para o QR.",
   },
 
   presenze: {
