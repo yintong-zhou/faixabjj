@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { AlertCircleIcon } from "@/components/icons";
+import { AlertCircleIcon, QrCodeIcon } from "@/components/icons";
 import { isPortalOnly } from "@/utils/members";
 import { activeRoles, getOrCreateProfile } from "@/utils/supabase/profile";
 import { requireAdmin } from "@/utils/supabase/require-admin";
@@ -67,15 +67,29 @@ export default async function DashboardPage({
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             {t.dashboard.title}
           </h1>
-          {isStaff && !portalOnly ? (
-            <ViewToggle
-              showingMine={showingMine}
-              gymHref="/dashboard"
-              mineHref={`/dashboard?v=${MINE}`}
-              gymLabel={t.dashboard.viewGym}
-              mineLabel={t.dashboard.viewMine}
-            />
-          ) : null}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {/* The QR lives in /gym, which only those who manage users can open
+                (404 for the rest), so the shortcut is offered to the same
+                people. It is gym data: the personal view does not show it. */}
+            {!showingMine && access.canManageUsers ? (
+              <Link
+                href="/gym#qr"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+              >
+                <QrCodeIcon className="h-4 w-4" />
+                {t.dashboard.checkinQr}
+              </Link>
+            ) : null}
+            {isStaff && !portalOnly ? (
+              <ViewToggle
+                showingMine={showingMine}
+                gymHref="/dashboard"
+                mineHref={`/dashboard?v=${MINE}`}
+                gymLabel={t.dashboard.viewGym}
+                mineLabel={t.dashboard.viewMine}
+              />
+            ) : null}
+          </div>
         </div>
         <p className="text-sm leading-relaxed text-foreground/65">
           {showingMine ? t.dashboard.memberLead : t.dashboard.staffLead}

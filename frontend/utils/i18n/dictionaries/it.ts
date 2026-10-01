@@ -282,6 +282,7 @@ export const it = {
     // un allievo non ha niente fra cui scegliere.
     viewGym: "Palestra",
     viewMine: "Il mio percorso",
+    checkinQr: "QR check-in",
     profileUnavailable:
       "Il tuo profilo non è disponibile. Se il problema persiste, avvisa la segreteria della palestra.",
 

@@ -97,7 +97,9 @@ export default async function MyGymPage({
         </form>
       </section>
 
-      <section className={`${sectionClass} print:border-0 print:p-0`}>
+      {/* `scroll-mt` keeps the heading clear of the sticky header when the
+          dashboard's check-in QR button lands here on #qr. */}
+      <section id="qr" className={`${sectionClass} scroll-mt-20 print:border-0 print:p-0`}>
         <h2 className="font-heading text-base font-semibold sm:text-lg print:hidden">
           {t.myGym.qrSection}
         </h2>

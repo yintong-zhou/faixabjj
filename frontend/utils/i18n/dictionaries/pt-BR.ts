@@ -268,6 +268,7 @@ export const ptBR: Dictionary = {
     memberLead: "Seu caminho: graduação, horas de aula e próximos treinos.",
     viewGym: "Academia",
     viewMine: "Meu caminho",
+    checkinQr: "QR do check-in",
     profileUnavailable:
       "Seu perfil não está disponível. Se o problema persistir, avise a secretaria da academia.",
 

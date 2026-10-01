@@ -266,6 +266,7 @@ export const en: Dictionary = {
     memberLead: "Your path: rank, class hours and upcoming training.",
     viewGym: "Gym",
     viewMine: "My path",
+    checkinQr: "Check-in QR",
     profileUnavailable:
       "Your profile is not available. If the problem persists, let the gym office know.",
 
