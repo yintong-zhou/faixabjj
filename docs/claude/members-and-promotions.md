@@ -35,6 +35,7 @@ Reads `person` (+ `person_hours`), not `member_overview` (carries `notes`). Show
 
 - **`rank_since` vs `stripe_since`**: belt date ("Cambio cintura da") vs last stripe ("Ultima tacca", added `20260911220000`, correcting `20260911200000`'s `belt_since`). Different rates; eligibility hangs on time at belt — never infer it from the stripe date. Both frozen by `guard_person_auth_link`.
 - **Correcting the two dates**: collapsed panel in Percorso, editors only (`correctRankDates`). **Not a promotion**, writes no history (`record_promotion()` stays the only way a grade changes). Refuses future dates and `stripe_since < rank_since`, re-checked server-side. Revalidates `/members` too (dates feed `promotionStatus()`).
+- **Correcting the join date** (`joined_at`, "Iscritto dal"): `correctJoinedDate`, a collapsed editor **inside the "Iscritto dal" field** in Dati personali, registry editors only, **hidden on their own record** (`guard_person_auth_link` refuses anyone changing their own `joined_at`, editors included; no migration needed). Separate from the belt dates on purpose: no ordering against `rank_since` (a belt from another academy predates joining), but it moves the estimated opening hours and so eligibility. Refuses future dates server-side; the update uses `.select("id")` so a row RLS hides reads as failure, not "saved". `detailRedirect()` is the shared "back to the detail page with a flash" helper.
 
 ## Promotions
 

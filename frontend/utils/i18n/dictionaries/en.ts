@@ -506,6 +506,9 @@ export const en: Dictionary = {
     correctDates: "Correct the dates",
     correctDatesNote:
       "For fixing a date that is wrong, not for promoting: it records no promotion and changes neither belt nor stripes. Eligibility is measured from these two dates, so they are worth getting right.",
+    editJoinedOn: "Edit the join date",
+    joinedNote:
+      "Changes since when this person has trained here: it moves the estimated hours and can change eligibility. It does not record a promotion.",
     notesSection: "Notes",
     rolesSection: "Roles",
     noRoles: "No role assigned.",
@@ -625,6 +628,8 @@ export const en: Dictionary = {
     promotionNotForward: "A promotion has to move forward, not back",
     datesSaved: "Progress dates updated",
     datesFailed: "The dates could not be updated",
+    joinedSaved: "Join date updated",
+    joinedFailed: "The join date could not be updated",
     dateInFuture: "A date cannot be in the future",
     stripeBeforeBelt: "The last stripe cannot predate the belt change",
     criterionSaved: "Criterion updated",

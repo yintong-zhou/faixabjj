@@ -690,6 +690,19 @@ export async function recordPromotion(formData: FormData) {
   redirect(`/members/${personId}?ok=${encodeURIComponent(t.msg.promotionRecorded)}`);
 }
 
+// Back to a member's detail page with a flash message, keeping the list filters
+// the page was opened from (`_from`) so its back link still works.
+function detailRedirect(personId: string | null, formData: FormData) {
+  const fromQuery = (formData.get("_from") as string | null) ?? "";
+
+  return (params: Record<string, string>) => {
+    const search = new URLSearchParams();
+    if (fromQuery) search.set("from", fromQuery);
+    for (const [key, value] of Object.entries(params)) search.set(key, value);
+    redirect(`/members/${personId ?? ""}?${search.toString()}`);
+  };
+}
+
 // Corrects the two dates a member's progress is measured from.
 //
 // This is NOT a promotion and deliberately writes no history row: nothing was
@@ -712,14 +725,7 @@ export async function correctRankDates(formData: FormData) {
   const { supabase } = await requireRegistryEditor(PATH);
 
   const personId = text(formData, "person_id");
-  const fromQuery = (formData.get("_from") as string | null) ?? "";
-
-  const detail = (params: Record<string, string>) => {
-    const search = new URLSearchParams();
-    if (fromQuery) search.set("from", fromQuery);
-    for (const [key, value] of Object.entries(params)) search.set(key, value);
-    redirect(`/members/${personId ?? ""}?${search.toString()}`);
-  };
+  const detail = detailRedirect(personId, formData);
 
   const rankSince = text(formData, "rank_since");
   const stripeSince = text(formData, "stripe_since");
@@ -765,6 +771,59 @@ export async function correctRankDates(formData: FormData) {
   // `idonei` filter and the green dot all change with them.
   revalidatePath(PATH);
   detail({ ok: t.msg.datesSaved });
+}
+
+// Corrects the date a member joined the gym.
+//
+// Separate from correctRankDates because it answers a different question: not
+// "when did they get this belt" but "since when do they train here". It feeds
+// the estimated opening hours and the time-in-training figure, and through them
+// eligibility. Unlike the belt dates it has no order against them — a belt
+// earned at another academy predates the day somebody joined this one.
+//
+// A registry editor only, and never on their own row: guard_person_auth_link
+// refuses both (and an edit of anybody else's by a non-editor), so
+// requireRegistryEditor is the early, clear refusal and the trigger and RLS are
+// the boundary — this runs on the user's own client, not the service-role one.
+export async function correctJoinedDate(formData: FormData) {
+  const { t } = await getDictionary();
+  const { supabase } = await requireRegistryEditor(PATH);
+
+  const personId = text(formData, "person_id");
+  const joinedAt = text(formData, "joined_at");
+  const detail = detailRedirect(personId, formData);
+
+  if (!personId || !joinedAt || !/^\d{4}-\d{2}-\d{2}$/.test(joinedAt)) {
+    detail({ error: t.msg.joinedFailed });
+    return;
+  }
+
+  // Against the gym's own "today": the input's `max` does not bind a crafted
+  // POST. ISO strings sort chronologically.
+  const today = todayIn((await requireGymSettings()).timezone);
+  if (joinedAt > today) {
+    detail({ error: t.msg.dateInFuture });
+    return;
+  }
+
+  // `.select()` so a row RLS hides from this client reads as a failure rather
+  // than a silent zero-row update reported as saved.
+  const { data, error } = await supabase
+    .from("person")
+    .update({ joined_at: joinedAt })
+    .eq("id", personId)
+    .select("id");
+
+  if (error || !data || data.length === 0) {
+    if (error) logDbError("members", "correctJoinedDate", error);
+    detail({ error: t.msg.joinedFailed });
+    return;
+  }
+
+  revalidatePath(`/members/${personId}`);
+  // The Registro lists the join date, the time in training and the estimate.
+  revalidatePath(PATH);
+  detail({ ok: t.msg.joinedSaved });
 }
 
 // Tunes one row of promotion_criteria. The grade itself is never editable:

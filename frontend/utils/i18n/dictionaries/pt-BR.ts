@@ -508,6 +508,9 @@ export const ptBR: Dictionary = {
     correctDates: "Corrigir as datas",
     correctDatesNote:
       "Serve para corrigir uma data errada, não para promover: não registra nenhuma promoção e não altera faixa nem graus. A elegibilidade é medida a partir dessas duas datas, então vale a pena que estejam certas.",
+    editJoinedOn: "Editar a data de matrícula",
+    joinedNote:
+      "Muda desde quando a pessoa treina aqui: desloca as horas estimadas e pode mudar a elegibilidade. Não registra nenhuma promoção.",
     notesSection: "Observações",
     rolesSection: "Funções",
     noRoles: "Nenhuma função atribuída.",
@@ -627,6 +630,8 @@ export const ptBR: Dictionary = {
     promotionNotForward: "Uma promoção precisa avançar, não retroceder",
     datesSaved: "Datas da trajetória atualizadas",
     datesFailed: "Não foi possível atualizar as datas",
+    joinedSaved: "Data de matrícula atualizada",
+    joinedFailed: "Não foi possível atualizar a data de matrícula",
     dateInFuture: "Uma data não pode estar no futuro",
     stripeBeforeBelt: "O último grau não pode ser anterior à troca de faixa",
     criterionSaved: "Critério atualizado",

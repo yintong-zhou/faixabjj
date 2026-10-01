@@ -11,7 +11,7 @@ import { formatHours, hoursFor } from "@/utils/hours";
 import { isPortalOnly } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
-import { correctRankDates, deletePerson } from "../actions";
+import { correctJoinedDate, correctRankDates, deletePerson } from "../actions";
 import { PromotePanel } from "./promote-panel";
 import {
   AlertCircleIcon,
@@ -101,7 +101,7 @@ export default async function MemberDetailPage({
   const { from, ok, error } = await searchParams;
   const { t } = await getDictionary();
   // Same gate as the list: staff only, 404 for everyone else.
-  const { supabase, access } = await requireRegistryViewer(`/members/${id}`);
+  const { supabase, access, userId } = await requireRegistryViewer(`/members/${id}`);
   const gym = await requireGymSettings();
   // The gym's own calendar day: ages, days at rank and the estimate cutoff are
   // all measured to it, and it bounds the date inputs below.
@@ -206,6 +206,10 @@ export default async function MemberDetailPage({
 
   const promotions = (promotionRows ?? []) as PromotionRow[];
 
+  // Nobody changes their own join date, editors included — the database refuses
+  // it, so the control is not offered rather than offered and then rejected.
+  const canEditJoinedOn = access.canEditRegistry && member.auth_user_id !== userId;
+
   // Carries the list's filters and page back, so closing the detail view
   // returns to exactly the list you opened it from.
   const backHref = from ? `/members?${from}` : "/members";
@@ -264,7 +268,49 @@ export default async function MemberDetailPage({
           <Field label={t.auth.email} value={member.email ?? t.common.dash} />
           <Field label={t.account.phone} value={member.phone ?? t.common.dash} />
           <Field label={t.account.birthDate} value={formatDate(member.birth_date)} />
-          <Field label={t.account.joinedOn} value={formatDate(member.joined_at)} />
+          <Field label={t.account.joinedOn}>
+            {formatDate(member.joined_at)}
+            {canEditJoinedOn ? (
+              <details className="mt-1 font-normal">
+                <summary className="flex w-fit cursor-pointer select-none list-none items-center gap-1.5 text-xs font-medium text-accent [&::-webkit-details-marker]:hidden">
+                  <PencilIcon className="h-3.5 w-3.5 shrink-0" />
+                  {t.registro.editJoinedOn}
+                </summary>
+
+                <form
+                  action={correctJoinedDate}
+                  className="flex flex-col gap-2 pt-2"
+                >
+                  <input type="hidden" name="person_id" value={member.id} />
+                  <input type="hidden" name="_from" value={from ?? ""} />
+
+                  {/* ISO on purpose: it is what the element accepts and posts
+                      back. `max` blocks a future date in the browser; the action
+                      checks it again against the gym's own today. */}
+                  <input
+                    type="date"
+                    name="joined_at"
+                    defaultValue={member.joined_at}
+                    max={today}
+                    required
+                    aria-label={t.account.joinedOn}
+                    className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm sm:w-44"
+                  />
+
+                  <button
+                    type="submit"
+                    className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-fit"
+                  >
+                    {t.common.saveChanges}
+                  </button>
+
+                  <p className="text-xs leading-relaxed text-foreground/55">
+                    {t.registro.joinedNote}
+                  </p>
+                </form>
+              </details>
+            ) : null}
+          </Field>
         </dl>
       </section>
 

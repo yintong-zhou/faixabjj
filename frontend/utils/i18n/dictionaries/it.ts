@@ -522,6 +522,9 @@ export const it = {
     correctDates: "Correggi le date",
     correctDatesNote:
       "Serve a correggere una data sbagliata, non a promuovere: non registra nessuna promozione e non cambia cintura né tacche. Da qui dipende il calcolo dell'idoneità, quindi vale la pena che siano giuste.",
+    editJoinedOn: "Modifica la data di iscrizione",
+    joinedNote:
+      "Cambia da quando la persona si allena qui: sposta le ore stimate e può cambiare l'idoneità. Non registra nessuna promozione.",
     notesSection: "Note",
     rolesSection: "Ruoli",
     noRoles: "Nessun ruolo assegnato.",
@@ -645,6 +648,8 @@ export const it = {
     promotionNotForward: "Una promozione deve andare avanti, non indietro",
     datesSaved: "Date del percorso aggiornate",
     datesFailed: "Non è stato possibile aggiornare le date",
+    joinedSaved: "Data di iscrizione aggiornata",
+    joinedFailed: "Non è stato possibile aggiornare la data di iscrizione",
     dateInFuture: "Una data non può essere nel futuro",
     stripeBeforeBelt:
       "L'ultima tacca non può essere precedente al cambio di cintura",
