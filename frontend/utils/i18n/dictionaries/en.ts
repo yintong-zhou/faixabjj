@@ -443,6 +443,9 @@ export const en: Dictionary = {
       "An account is created too, active immediately and with no confirmation email. Once saved, a temporary password for this account alone is shown: pass it on to the person. They will be asked to replace it on first sign-in, before anything else in the app opens.",
     temporaryPasswordFor: (email: string) => `Temporary password for ${email}:`,
     temporaryUsernameIs: "Username:",
+    copyPassword: "Copy the password",
+    passwordCopied: "Copied",
+    passwordCopyFailed: "Copy failed: select it and copy it by hand",
     temporaryPasswordHelp:
       "Shown only now: pass it on to the person, who will have to replace it on first sign-in.",
     select: "Select…",

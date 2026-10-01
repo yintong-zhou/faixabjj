@@ -1,3 +1,4 @@
+import { CopyPassword } from "@/components/copy-password";
 import { KeyIcon } from "@/components/icons";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import type { TemporaryPasswordFlash } from "@/utils/temporary-password-flash";
@@ -27,9 +28,12 @@ export function TemporaryPasswordNotice({
         ) : null}
         <span>
           {t.registro.temporaryPasswordFor(flash.email)}{" "}
-          <code className="select-all rounded bg-muted px-1.5 py-0.5 font-medium">
-            {flash.password}
-          </code>
+          <CopyPassword
+            password={flash.password}
+            copyLabel={t.registro.copyPassword}
+            copiedLabel={t.registro.passwordCopied}
+            failedLabel={t.registro.passwordCopyFailed}
+          />
         </span>
         <span className="text-xs text-foreground/60">{t.registro.temporaryPasswordHelp}</span>
       </div>

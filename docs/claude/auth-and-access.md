@@ -66,7 +66,7 @@ Looks simplifiable, is not:
 ## Forced password change
 
 Accounts from `addPerson` / `addManager`, and every staff reset, start on a **temporary password unique to that account** (`generateTemporaryPassword()`); nothing else opens until it's replaced. **Never a shared default**: a shared password let anyone who knew it take over any pending account, a manager's in another gym included (removed 2026-09-25; `supabase/scripts/pending-temporary-passwords.sql` lists accounts that may still be on it).
-- The password reaches the maestro **once**, through `flashTemporaryPassword()` (`utils/temporary-password-flash.ts`): an httpOnly 5-minute cookie, with only a random `pw` id in the redirect URL; `<TemporaryPasswordNotice>` shows it when the id matches. Never put it in `?ok=` (browser history, request logs).
+- The password reaches the maestro **once**, through `flashTemporaryPassword()` (`utils/temporary-password-flash.ts`): an httpOnly 5-minute cookie, with only a random `pw` id in the redirect URL; `<TemporaryPasswordNotice>` shows it when the id matches. Never put it in `?ok=` (browser history, request logs). The password is a click-to-copy button (`components/copy-password.tsx`, Client Component, words as props): `navigator.clipboard`, then `execCommand("copy")` on the selected text, else it stays selected with a failure message.
 - Flag in **`app_metadata.must_change_password`** (only service role can write; rides in the JWT). Never `user_metadata` (user could clear it).
 - Enforced in `proxy.ts` (every path → `/change-password`, `/auth/*` and `/privacy` exempt) and in `requireAdmin()`.
 - `requireSession()` = `requireAdmin()` minus that check; `/change-password` is the only page using it (else infinite redirect).

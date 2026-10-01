@@ -445,6 +445,9 @@ export const ptBR: Dictionary = {
       "A conta também é criada, ativa na hora e sem e-mail de confirmação. Depois de salvar, aparece uma senha provisória válida só para esta conta: informe-a à pessoa. No primeiro acesso será pedido que ela a substitua antes de poder usar o restante do aplicativo.",
     temporaryPasswordFor: (email: string) => `Senha provisória de ${email}:`,
     temporaryUsernameIs: "Nome de usuário:",
+    copyPassword: "Copiar a senha",
+    passwordCopied: "Copiada",
+    passwordCopyFailed: "Falha ao copiar: selecione e copie manualmente",
     temporaryPasswordHelp:
       "Mostrada só agora: informe-a à pessoa, que terá de substituí-la no primeiro acesso.",
     select: "Selecione…",

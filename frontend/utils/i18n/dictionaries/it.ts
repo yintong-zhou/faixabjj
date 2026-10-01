@@ -459,6 +459,9 @@ export const it = {
       "Viene creato anche l'account, subito attivo e senza email di conferma. Dopo il salvataggio compare una password provvisoria valida solo per questo account: comunicala alla persona. Al primo accesso le verrà chiesto di sostituirla prima di poter usare il resto dell'app.",
     temporaryPasswordFor: (email: string) => `Password provvisoria di ${email}:`,
     temporaryUsernameIs: "Username:",
+    copyPassword: "Copia la password",
+    passwordCopied: "Copiata",
+    passwordCopyFailed: "Copia non riuscita: selezionala e copiala a mano",
     temporaryPasswordHelp:
       "Viene mostrata solo adesso: comunicala alla persona, che dovrà sostituirla al primo accesso.",
     select: "Seleziona…",
