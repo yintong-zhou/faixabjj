@@ -49,12 +49,12 @@ Reads `person` (+ `person_hours`), not `member_overview` (carries `notes`). Show
 - **`min_hours` is clock hours**; `SESSION_LENGTH_HOURS` (`utils/hours.ts`) is the only conversion point. Lessons are 1h so it's `1`; the document, seeds and constant were divided by 1.5 together when this was confirmed. Time/age minimums untouched (IBJJF). Never convert elsewhere.
 - **Hours counted from the current grade** (`person_rank_hours`, `lessons_since_rank`/`lessons_since_stripe`), not lifetime. Estimated opening balance anchored at `max(joined_at, anchor)`.
 - **`promotion_criteria` readable by registry viewers only** (`can_view_registry()`) — DB policy, because the table tells a student how far they are.
-- **Product rule: nothing a member can open states a remaining amount, a next-grade name, or a verdict.** Member dashboard adds only "ore al grado attuale" — a fact about the present.
+- **Product rule: nothing a member can open states a remaining amount, a next-grade name, or a verdict.** The member dashboard shows the present only (belt, days at belt and since the last stripe, join date, training totals); the former "ore al grado attuale" tile was removed as redundant with the training section — don't re-add it.
 - **`record_promotion()` is `security invoker`, never definer** (`20260918130000`); re-checks `can_edit_registry()`. Rejects future-dated, sideways/backward, stripes outside `0..4` (kids: `KID_MAX_STRIPES` = 3); accepts backdated. Belt change resets stripes to target and moves both dates; stripe alone moves only `stripe_since`.
 - **Promotion can be deleted, never updated** (`20260918120000`, no update policy). `promoted_by` is `on delete set null`.
 - **Suggestion follows a ladder** (next stripe under 4, belt at 4, nothing at black); the panel and `record_promotion()` accept any forward jump. Four-stripes-first is academy practice, binds only `nextStep()`.
 - Panel's technical/behavioural reminders are **text from the `promotions` dictionary**, never a saved checklist.
-- `t.promotions.hoursNote` stays visible text (tooltips don't exist on phones). Criteria and lesson counts coerced with `Number(...)` — PostgREST returns `numeric`/`bigint` as strings.
+- `t.promotions.hoursNote` stays visible text (tooltips don't exist on phones) in the Registro and the criteria editor. The **personal dashboard no longer shows it** (nor the "belts are assigned by your instructor" line, `dashboard.promotionNote`, now deleted) — removed on request as unnecessary there; don't re-add. Criteria and lesson counts coerced with `Number(...)` — PostgREST returns `numeric`/`bigint` as strings.
 - Kebab has "Promuovi" for registry editors.
 
 ### Ladders, ages, children

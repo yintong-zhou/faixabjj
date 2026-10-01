@@ -17,7 +17,7 @@
 - **Opening balance + recorded.** `frontend/utils/hours.ts` is the single definition: before `TRACKING_STARTED_ON`, `LESSONS_PER_WEEK` (3) per week since `joined_at` (pro rata for partial weeks); from that date on, counted. The estimate is **frozen** from go-live (unit-tested).
 - **`TRACKING_STARTED_ON` must be the real go-live date** — without the cutoff every week double-counts. The code clamps at today, but that's a guard.
 - One constant for everybody: it's a declared estimate, not a measurement.
-- **Every estimated total must say so**: Registro "(stima)" + `title`; member detail splits *Ore totali / registrate / stimate* with the method; `/account` same caveat.
+- **Every estimated total must say so**: Registro "(stima)" + `title`; member detail splits *Ore totali / registrate / stimate* with the method; `/account` same caveat. The member dashboard carries only the short hint "saldo iniziale incluso" under the total — the long explanation (`memberEstimateNote`) was removed on request; don't re-add it.
 - After go-live, hours arrive **only** via member check-in or instructor roll call (RLS-enforced). **This module must never become a second way of adding an hour.**
 - Gym-wide totals go through `hoursFor()` too.
 

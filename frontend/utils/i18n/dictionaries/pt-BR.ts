@@ -299,8 +299,6 @@ export const ptBR: Dictionary = {
     yourRank: "Sua graduação",
     atThisBelt: "Nesta faixa",
     sinceLastStripe: "Desde o último grau",
-    promotionNote:
-      "Faixa e graus são atribuídos pelo seu professor: aqui você vê apenas a situação atual, a graduação nunca é automática.",
 
     yourTraining: "Seu treino",
     totalHours: "Horas totais",
@@ -312,8 +310,6 @@ export const ptBR: Dictionary = {
     lessonsPerWeek: "aulas por semana",
     lastTime: "Última vez",
     noneInWindow: (days: number) => `nenhuma nos últimos ${days} dias`,
-    memberEstimateNote: (perWeek: number) =>
-      `O total inclui um saldo inicial, estimado em ${perWeek} aulas por semana para o período anterior ao registro. A partir daí só aumenta com o seu check-in ou com a chamada do professor.`,
 
     nextLessons: "Próximas aulas",
     noUpcoming: "Nenhuma aula no calendário nos próximos dias.",
@@ -707,7 +703,6 @@ export const ptBR: Dictionary = {
     queueEmpty: "Ninguém atingiu os mínimos no momento.",
     eligibleCount: (n: number) => (n === 1 ? "1 pessoa" : `${n} pessoas`),
     hoursNote: "Horas de aula, calculadas a 1 hora por aula",
-    atCurrentRank: "Horas na graduação atual",
     criteriaTitle: "Critérios",
     criteriaPageTitle: "Critérios de Graduação",
     criteriaIntro:

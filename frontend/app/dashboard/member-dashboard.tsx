@@ -3,18 +3,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { Belt } from "@/components/belt";
 import {
-  AlertCircleIcon,
   CalendarCheckIcon,
   ChevronRightIcon,
   TrendingUpIcon,
 } from "@/components/icons";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
-import {
-  clockHours,
-  estimatedHours,
-  formatHours,
-  hoursFor,
-} from "@/utils/hours";
+import { hoursFor } from "@/utils/hours";
 import type { Profile } from "@/utils/supabase/profile";
 import type { GymSettings } from "@/utils/supabase/gym";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
@@ -51,7 +45,7 @@ export async function MemberDashboard({
 }) {
   const since = addDays(today, -WINDOW_DAYS);
 
-  const [{ data: hoursRow }, { data: pastRows }, { data: nextRows }, { data: rankRow }] =
+  const [{ data: hoursRow }, { data: pastRows }, { data: nextRows }] =
     await Promise.all([
       supabase
         .from("person_hours")
@@ -72,11 +66,6 @@ export async function MemberDashboard({
         .order("session_date")
         .order("start_time")
         .limit(3),
-      supabase
-        .from("person_rank_hours")
-        .select("lessons_since_rank")
-        .eq("person_id", profile.id)
-        .maybeSingle(),
     ]);
 
   const past = (pastRows ?? []) as Session[];
@@ -110,21 +99,6 @@ export async function MemberDashboard({
 
   const hours = hoursFor(profile.joined_at, hoursRow?.total_hours, { ...gym, today });
   const perWeek = recentCount / (RECENT_DAYS / 7);
-
-  // Hours at the current belt, composed exactly as promotionStatus() composes
-  // them: the counted lessons plus the estimated opening balance, anchored at
-  // the later of the join date and the belt date — the estimate is not
-  // attendance and must not be credited to a grade held before they joined.
-  // Showing only the counted part here would put two different meanings under
-  // one label, since the figure eligibility is judged on includes the estimate.
-  // This page still says nothing about thresholds, distance or eligibility:
-  // only the composition of this one number changes.
-  const rankAnchor =
-    profile.joined_at > profile.rank_since ? profile.joined_at : profile.rank_since;
-  const hoursAtRank = clockHours(
-    Number(rankRow?.lessons_since_rank ?? 0) + estimatedHours(rankAnchor, { ...gym, today }),
-    gym,
-  );
 
   return (
     <>
@@ -176,33 +150,12 @@ export async function MemberDashboard({
             </div>
             <div>
               <dt className="text-xs uppercase tracking-wide text-foreground/55">
-                {t.promotions.atCurrentRank}
-              </dt>
-              <dd className="text-sm font-medium" title={t.promotions.hoursNote}>
-                {formatHours(hoursAtRank, t)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-foreground/55">
                 {t.account.joinedOn}
               </dt>
               <dd className="text-sm font-medium">{formatDate(profile.joined_at)}</dd>
             </div>
           </dl>
         </div>
-
-        {/* Visible, not only a `title`: this app is used on a phone, where a
-            tooltip never appears — the same reason the roll call replaced its
-            tooltips with a legend. A unit explained nowhere visible is a unit
-            the reader has to guess. */}
-        <p className="text-xs leading-relaxed text-foreground/55">
-          {t.promotions.hoursNote}
-        </p>
-
-        <p className="flex items-start gap-2 text-xs leading-relaxed text-foreground/55">
-          <AlertCircleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          {t.dashboard.promotionNote}
-        </p>
       </Section>
 
       <Section
@@ -248,12 +201,6 @@ export async function MemberDashboard({
             }
           />
         </div>
-
-        {hours.isPartlyEstimated ? (
-          <p className="text-xs leading-relaxed text-foreground/55">
-            {t.dashboard.memberEstimateNote(gym.lessonsPerWeek)}
-          </p>
-        ) : null}
       </Section>
 
       <Section title={t.dashboard.nextLessons} icon={CalendarCheckIcon}>

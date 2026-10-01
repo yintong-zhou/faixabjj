@@ -297,8 +297,6 @@ export const en: Dictionary = {
     yourRank: "Your rank",
     atThisBelt: "At this belt",
     sinceLastStripe: "Since the last stripe",
-    promotionNote:
-      "Your instructor awards belts and stripes: this only shows where you stand, promotion is never automatic.",
 
     yourTraining: "Your training",
     totalHours: "Total hours",
@@ -310,8 +308,6 @@ export const en: Dictionary = {
     lessonsPerWeek: "classes a week",
     lastTime: "Last time",
     noneInWindow: (days: number) => `none in the last ${days} days`,
-    memberEstimateNote: (perWeek: number) =>
-      `The total includes an opening balance, estimated at ${perWeek} classes a week for the period before tracking began. From then on it only grows through your check-in or the instructor's roll call.`,
 
     nextLessons: "Next lessons",
     noUpcoming: "No lessons scheduled in the coming days.",
@@ -705,7 +701,6 @@ export const en: Dictionary = {
     queueEmpty: "Nobody has met the minimums right now.",
     eligibleCount: (n: number) => (n === 1 ? "1 person" : `${n} people`),
     hoursNote: "Mat hours, counted at 1 hour a lesson",
-    atCurrentRank: "Hours at the current grade",
     criteriaTitle: "Criteria",
     criteriaPageTitle: "Graduation Criteria",
     criteriaIntro:

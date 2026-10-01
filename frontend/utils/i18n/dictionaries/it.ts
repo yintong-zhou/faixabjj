@@ -313,8 +313,6 @@ export const it = {
     yourRank: "Il tuo grado",
     atThisBelt: "Con questa cintura",
     sinceLastStripe: "Dall'ultima tacca",
-    promotionNote:
-      "Cintura e tacche le assegna il tuo istruttore: qui vedi solo lo stato attuale, la promozione non è mai automatica.",
 
     yourTraining: "Il tuo allenamento",
     totalHours: "Ore totali",
@@ -326,8 +324,6 @@ export const it = {
     lessonsPerWeek: "lezioni a settimana",
     lastTime: "Ultima volta",
     noneInWindow: (days: number) => `nessuna negli ultimi ${days} gg`,
-    memberEstimateNote: (perWeek: number) =>
-      `Il totale include un saldo di partenza, stimato a ${perWeek} lezioni a settimana per il periodo prima del tracciamento. Da lì in poi cresce solo con il tuo check-in o con l'appello dell'istruttore.`,
 
     nextLessons: "Prossime lezioni",
     noUpcoming: "Nessuna lezione in calendario nei prossimi giorni.",
@@ -726,7 +722,6 @@ export const it = {
     queueEmpty: "Nessuno ha raggiunto i minimi al momento.",
     eligibleCount: (n: number) => (n === 1 ? "1 persona" : `${n} persone`),
     hoursNote: "Ore di lezione, calcolate a 1 ora per lezione",
-    atCurrentRank: "Ore al grado attuale",
     criteriaTitle: "Criteri",
     // Il titolo della pagina, distinto dall'etichetta del chip sul Registro:
     // quello deve restare corto per stare su una riga del telefono, come
