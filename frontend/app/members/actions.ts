@@ -466,7 +466,7 @@ export async function restoreAccess(formData: FormData) {
   revalidatePath(PATH);
   back(
     {
-      ok: t.msg.accessRestored(email),
+      ok: t.msg.accessRestored(target.full_name?.trim() || email),
       pw: await flashTemporaryPassword({ email, password, username }),
     },
     query,
@@ -523,11 +523,14 @@ export async function setTemporaryPassword(formData: FormData) {
     return;
   }
 
-  const who = data.user.email ?? t.msg.someUser;
+  // The message names the person, the way the maestro knows them; the email
+  // belongs in the credentials block, where it is a field to pass on.
+  const email = data.user.email ?? t.msg.someUser;
+  const who = person.full_name?.trim() || email;
   back(
     {
       ok: t.msg.passwordReset(who),
-      pw: await flashTemporaryPassword({ email: who, password, username: person.username }),
+      pw: await flashTemporaryPassword({ email, password, username: person.username }),
     },
     query,
   );

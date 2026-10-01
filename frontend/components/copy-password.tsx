@@ -1,75 +1,59 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { CheckIcon, CopyIcon } from "@/components/icons";
+import { useCopyFeedback } from "@/components/use-copy";
 
-// The words are props: this is a Client Component and cannot read the locale
-// cookie, so the server hands it its own.
-type CopyPasswordProps = {
-  password: string;
+// The words are props: these are Client Components and cannot read the locale
+// cookie, so the server hands them their own.
+type CopyLabels = {
   copyLabel: string;
   copiedLabel: string;
   failedLabel: string;
 };
 
-type State = "idle" | "copied" | "failed";
+function Status({ state, copiedLabel, failedLabel }: { state: string } & Pick<CopyLabels, "copiedLabel" | "failedLabel">) {
+  return (
+    <span
+      role="status"
+      aria-live="polite"
+      className={`text-xs ${state === "failed" ? "text-danger" : "text-success"}`}
+    >
+      {state === "copied" ? copiedLabel : state === "failed" ? failedLabel : ""}
+    </span>
+  );
+}
 
 // A temporary password that copies itself when clicked. It is a <button>, so
 // the keyboard gets it for free; the text stays selectable, which is also the
-// fallback when the clipboard refuses (insecure context, denied permission).
+// fallback when the clipboard refuses: the password is left selected, so Ctrl+C
+// is one keystroke away.
 export function CopyPassword({
   password,
   copyLabel,
   copiedLabel,
   failedLabel,
-}: CopyPasswordProps) {
-  const [state, setState] = useState<State>("idle");
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const text = useRef<HTMLSpanElement>(null);
+}: CopyLabels & { password: string }) {
+  const { state, copy } = useCopyFeedback();
+  const text = useRef<HTMLElement>(null);
 
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
-
-  // Selects the password and asks the browser to copy the selection. Needs no
-  // clipboard permission, only the user gesture we are already inside, so it
-  // still works where navigator.clipboard is refused. Either way the password
-  // is left selected, so Ctrl+C is one keystroke away if this fails too.
-  function copyBySelection(): boolean {
+  async function onClick() {
+    const ok = await copy(password);
     const node = text.current;
-    if (!node) return false;
-    const range = document.createRange();
-    range.selectNodeContents(node);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-    try {
-      return document.execCommand("copy");
-    } catch {
-      return false;
+    if (!ok && node) {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
     }
-  }
-
-  async function copy() {
-    let next: State = "copied";
-    try {
-      await navigator.clipboard.writeText(password);
-    } catch {
-      next = copyBySelection() ? "copied" : "failed";
-    }
-    setState(next);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setState("idle"), next === "failed" ? 4000 : 2000);
   }
 
   return (
     <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
       <button
         type="button"
-        onClick={copy}
+        onClick={onClick}
         title={copyLabel}
         aria-label={`${copyLabel}: ${password}`}
         className="inline-flex cursor-pointer items-center gap-1.5 rounded bg-muted px-1.5 py-0.5 text-left transition-opacity hover:opacity-80"
@@ -83,13 +67,36 @@ export function CopyPassword({
           <CopyIcon className="h-3.5 w-3.5 shrink-0 text-foreground/55" />
         )}
       </button>
-      <span
-        role="status"
-        aria-live="polite"
-        className={`text-xs ${state === "failed" ? "text-danger" : "text-success"}`}
+      <Status state={state} copiedLabel={copiedLabel} failedLabel={failedLabel} />
+    </span>
+  );
+}
+
+// Copies a block of text composed on the server — here the whole set of
+// credentials, ready to paste into the message that passes them on.
+export function CopyCredentials({
+  text,
+  copyLabel,
+  copiedLabel,
+  failedLabel,
+}: CopyLabels & { text: string }) {
+  const { state, copy } = useCopyFeedback();
+
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+      <button
+        type="button"
+        onClick={() => copy(text)}
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
       >
-        {state === "copied" ? copiedLabel : state === "failed" ? failedLabel : ""}
-      </span>
+        {state === "copied" ? (
+          <CheckIcon className="h-3.5 w-3.5 shrink-0 text-success" />
+        ) : (
+          <CopyIcon className="h-3.5 w-3.5 shrink-0" />
+        )}
+        {copyLabel}
+      </button>
+      <Status state={state} copiedLabel={copiedLabel} failedLabel={failedLabel} />
     </span>
   );
 }

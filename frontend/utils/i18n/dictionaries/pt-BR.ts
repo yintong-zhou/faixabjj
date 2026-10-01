@@ -444,8 +444,12 @@ export const ptBR: Dictionary = {
     addToRegistry: "Adicionar ao cadastro",
     temporaryPasswordNote:
       "A conta também é criada, ativa na hora e sem e-mail de confirmação. Depois de salvar, aparece uma senha provisória válida só para esta conta: informe-a à pessoa. No primeiro acesso será pedido que ela a substitua antes de poder usar o restante do aplicativo.",
-    temporaryPasswordFor: (email: string) => `Senha provisória de ${email}:`,
     temporaryUsernameIs: "Nome de usuário:",
+    temporaryEmailIs: "E-mail:",
+    temporaryPasswordIs: "Senha provisória:",
+    copyCredentials: "Copiar as credenciais",
+    credentialsCopied: "Credenciais copiadas",
+    credentialsMustChange: "A senha provisória deverá ser trocada no primeiro acesso.",
     copyPassword: "Copiar a senha",
     passwordCopied: "Copiada",
     passwordCopyFailed: "Falha ao copiar: selecione e copie manualmente",
@@ -570,7 +574,7 @@ export const ptBR: Dictionary = {
     accountCreatedNoProfile: (email: string) =>
       `Conta criada para ${email}, mas os dados da ficha não foram salvos.`,
     restoreAccessFailed: "O acesso não foi reativado. O endereço pode já estar cadastrado.",
-    accessRestored: (email: string) => `Acesso reativado para ${email}.`,
+    accessRestored: (name: string) => `Acesso reativado para ${name}.`,
     passwordReset: (who: string) =>
       `${who} tem uma nova senha provisória: será pedido que a troque no primeiro acesso.`,
     someUser: "o usuário",
@@ -945,12 +949,12 @@ export const ptBR: Dictionary = {
       deleteNameMismatch: "O nome digitado não confere.",
       accountsNotDeleted: (n: number) =>
         `Academia excluída, mas ${n} contas não foram removidas: exclua-as pelo painel do Supabase.`,
-      managerAdded: (email: string) =>
-        `Gestor ${email} criado com uma senha provisória: vai trocá-la no primeiro acesso.`,
+      managerAdded: (name: string) =>
+        `Gestor ${name} criado com uma senha provisória: vai trocá-la no primeiro acesso.`,
       managerFailed: "Não foi possível criar o gestor: o e-mail pode já estar em uso.",
       managerMissing: "Nome e e-mail são obrigatórios.",
       notAManager: "Esta pessoa não é gestora desta academia.",
-      passwordReset: (email: string) => `A senha de ${email} foi redefinida.`,
+      passwordReset: (name: string) => `A senha de ${name} foi redefinida.`,
       revoked: (email: string) => `O acesso de ${email} foi revogado.`,
       secretMissing: "Chave de serviço não configurada: operações de conta indisponíveis.",
     },

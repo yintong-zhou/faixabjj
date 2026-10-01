@@ -442,8 +442,12 @@ export const en: Dictionary = {
     addToRegistry: "Add to the registry",
     temporaryPasswordNote:
       "An account is created too, active immediately and with no confirmation email. Once saved, a temporary password for this account alone is shown: pass it on to the person. They will be asked to replace it on first sign-in, before anything else in the app opens.",
-    temporaryPasswordFor: (email: string) => `Temporary password for ${email}:`,
     temporaryUsernameIs: "Username:",
+    temporaryEmailIs: "Email:",
+    temporaryPasswordIs: "Temporary password:",
+    copyCredentials: "Copy the credentials",
+    credentialsCopied: "Credentials copied",
+    credentialsMustChange: "The temporary password must be replaced on first sign-in.",
     copyPassword: "Copy the password",
     passwordCopied: "Copied",
     passwordCopyFailed: "Copy failed: select it and copy it by hand",
@@ -568,7 +572,7 @@ export const en: Dictionary = {
     accountCreatedNoProfile: (email: string) =>
       `Account created for ${email}, but the record's details were not saved.`,
     restoreAccessFailed: "Access was not restored. The address may already be registered.",
-    accessRestored: (email: string) => `Access restored for ${email}.`,
+    accessRestored: (name: string) => `Access restored for ${name}.`,
     passwordReset: (who: string) =>
       `${who} has a new temporary password: they will be asked to change it on first sign-in.`,
     someUser: "the user",
@@ -943,12 +947,12 @@ export const en: Dictionary = {
       deleteNameMismatch: "The name you typed does not match.",
       accountsNotDeleted: (n: number) =>
         `Gym deleted, but ${n} accounts were not removed: delete them from the Supabase dashboard.`,
-      managerAdded: (email: string) =>
-        `Manager ${email} created with a temporary password: they will change it at first login.`,
+      managerAdded: (name: string) =>
+        `Manager ${name} created with a temporary password: they will change it at first login.`,
       managerFailed: "Could not create the manager: the email may already be in use.",
       managerMissing: "Name and email are required.",
       notAManager: "This person is not a manager of this gym.",
-      passwordReset: (email: string) => `${email}'s password has been reset.`,
+      passwordReset: (name: string) => `${name}'s password has been reset.`,
       revoked: (email: string) => `${email}'s access has been revoked.`,
       secretMissing: "Service key not configured: account operations are unavailable.",
     },

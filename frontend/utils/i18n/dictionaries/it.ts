@@ -458,8 +458,12 @@ export const it = {
     addToRegistry: "Aggiungi al registro",
     temporaryPasswordNote:
       "Viene creato anche l'account, subito attivo e senza email di conferma. Dopo il salvataggio compare una password provvisoria valida solo per questo account: comunicala alla persona. Al primo accesso le verrà chiesto di sostituirla prima di poter usare il resto dell'app.",
-    temporaryPasswordFor: (email: string) => `Password provvisoria di ${email}:`,
     temporaryUsernameIs: "Username:",
+    temporaryEmailIs: "Email:",
+    temporaryPasswordIs: "Password provvisoria:",
+    copyCredentials: "Copia le credenziali",
+    credentialsCopied: "Credenziali copiate",
+    credentialsMustChange: "La password provvisoria dovrà essere sostituita al primo accesso.",
     copyPassword: "Copia la password",
     passwordCopied: "Copiata",
     passwordCopyFailed: "Copia non riuscita: selezionala e copiala a mano",
@@ -586,7 +590,7 @@ export const it = {
     accountCreatedNoProfile: (email: string) =>
       `Account creato per ${email}, ma i dati della scheda non sono stati salvati.`,
     restoreAccessFailed: "Accesso non riattivato. L'indirizzo potrebbe essere già registrato.",
-    accessRestored: (email: string) => `Accesso riattivato per ${email}.`,
+    accessRestored: (name: string) => `Accesso riattivato per ${name}.`,
     passwordReset: (who: string) =>
       `${who} ha una nuova password provvisoria: le verrà chiesto di cambiarla al primo accesso.`,
     someUser: "l'utente",
@@ -968,12 +972,12 @@ export const it = {
       deleteNameMismatch: "Il nome digitato non corrisponde.",
       accountsNotDeleted: (n: number) =>
         `Palestra eliminata, ma ${n} account non sono stati rimossi: eliminali dal pannello di Supabase.`,
-      managerAdded: (email: string) =>
-        `Gestore ${email} creato con una password provvisoria: la cambierà al primo accesso.`,
+      managerAdded: (name: string) =>
+        `Gestore ${name} creato con una password provvisoria: la cambierà al primo accesso.`,
       managerFailed: "Impossibile creare il gestore: l'email potrebbe essere già in uso.",
       managerMissing: "Nome ed email sono obbligatori.",
       notAManager: "Questa persona non è un gestore di questa palestra.",
-      passwordReset: (email: string) => `Password di ${email} reimpostata.`,
+      passwordReset: (name: string) => `Password di ${name} reimpostata.`,
       revoked: (email: string) => `Accesso di ${email} revocato.`,
       secretMissing: "Chiave di servizio non configurata: operazione sugli account non disponibile.",
     },

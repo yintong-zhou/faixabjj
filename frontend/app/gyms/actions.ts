@@ -337,7 +337,7 @@ export async function addManager(formData: FormData) {
   revalidatePath(detail);
   revalidatePath(LIST);
   to(detail, {
-    ok: t.gyms.msg.managerAdded(email),
+    ok: t.gyms.msg.managerAdded(fullName),
     pw: await flashTemporaryPassword({ email, password, username: claimed }),
   });
 }
@@ -385,17 +385,18 @@ export async function resetManagerPassword(formData: FormData) {
 
   const { data: row, error: rowError } = await admin
     .from("person")
-    .select("username")
+    .select("username, full_name")
     .eq("auth_user_id", userId)
     .maybeSingle();
   if (rowError) logDbError("gyms", "resetManagerPassword:username", rowError);
 
+  const person = row as { username: string | null; full_name: string | null } | null;
   to(detail, {
-    ok: t.gyms.msg.passwordReset(manager.email ?? ""),
+    ok: t.gyms.msg.passwordReset(person?.full_name?.trim() || manager.email || ""),
     pw: await flashTemporaryPassword({
       email: manager.email ?? "",
       password,
-      username: (row as { username: string | null } | null)?.username ?? null,
+      username: person?.username ?? null,
     }),
   });
 }
