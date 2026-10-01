@@ -276,7 +276,7 @@ export const it = {
   dashboard: {
     title: "Dashboard",
     staffLead:
-      "Il quadro della palestra: allievi, lezioni del mese e distribuzione delle cinture.",
+      "Il quadro della palestra: allievi, presenze per giorno e distribuzione delle cinture.",
     memberLead: "Il tuo percorso: grado, ore di lezione e prossimi allenamenti.",
     // Le due viste del controllo segmentato, visibile solo a chi ha entrambe:
     // un allievo non ha niente fra cui scegliere.
@@ -289,22 +289,16 @@ export const it = {
     students: "Allievi",
     activeMembers: "Membri attivi",
     ofTotal: (n: number) => `${n} in totale`,
-    newMembers: (days: number) => `Nuovi (${days} gg)`,
-    recentlyJoined: "iscritti di recente",
     withoutAccount: "Senza account",
     neverInvited: "revocati, da riattivare",
-    gymHours: "Ore della palestra",
-    openingBalancesIncluded: "saldi iniziali inclusi",
 
-    monthLessons: "Lezioni del mese",
-    scheduled: "In calendario",
-    activeCourses: (n: number) => `${n} corsi attivi`,
-    held: "Già svolte",
-    cancelledCount: (n: number) => `${n} annullate`,
-    attendances: "Presenze",
-    recordedThisMonth: "registrate questo mese",
-    averagePerLesson: "Media per lezione",
-    studentsPresent: "allievi presenti",
+    attendanceTitle: "Presenze",
+    periodWeek: "Settimana",
+    periodMonth: "Mese",
+    chartHint: "Passa sopra una barra o toccala per vedere il giorno.",
+    chartSummary: (period: string) => `Presenze per giorno: ${period}`,
+    noLessonThatDay: "nessuna lezione",
+    dayToCome: "non ancora",
     todayHeading: "Oggi",
     noLessonsToday: "Nessuna lezione in programma oggi.",
     noInstructor: "nessun istruttore",

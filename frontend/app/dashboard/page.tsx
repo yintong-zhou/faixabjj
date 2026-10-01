@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AlertCircleIcon, QrCodeIcon } from "@/components/icons";
+import { parsePeriod } from "@/utils/attendance-series";
 import { isPortalOnly } from "@/utils/members";
 import { activeRoles, getOrCreateProfile } from "@/utils/supabase/profile";
 import { requireAdmin } from "@/utils/supabase/require-admin";
@@ -21,17 +22,21 @@ export async function generateMetadata(): Promise<Metadata> {
 // somebody's own figures is then just a URL, and a reload keeps the view.
 const MINE = "mia";
 
-type Search = { v?: string };
+// `periodo` and `da` belong to the staff view's attendance chart: week or month,
+// and a day inside the one to show. Read like the calendar's `da`.
+type Search = { v?: string; periodo?: string; da?: string };
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<Search>;
 }) {
-  const { v } = await searchParams;
+  const { v, periodo, da } = await searchParams;
   const { supabase, userId, email, access } = await requireAdmin("/dashboard");
   const gym = await requireGymSettings();
-  const { t } = await getDictionary();
+  const { locale, t } = await getDictionary();
 
   // The same predicate that opens Corsi and the roll call: instructors,
   // maestri and admin. Everybody else sees their own figures and nothing
@@ -97,7 +102,15 @@ export default async function DashboardPage({
       </header>
 
       {!showingMine ? (
-        <StaffDashboard supabase={supabase} today={today} gym={gym} t={t} />
+        <StaffDashboard
+          supabase={supabase}
+          today={today}
+          gym={gym}
+          t={t}
+          locale={locale}
+          period={parsePeriod(periodo)}
+          anchor={da && ISO_DATE.test(da) ? da : today}
+        />
       ) : profile ? (
         <MemberDashboard supabase={supabase} profile={profile} today={today} gym={gym} t={t} />
       ) : (

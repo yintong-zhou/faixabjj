@@ -5,22 +5,36 @@ import { Belt } from "@/components/belt";
 import {
   AlertCircleIcon,
   CalendarCheckIcon,
+  ChevronLeftIcon,
   ChevronRightIcon,
   TrendingUpIcon,
   UsersIcon,
 } from "@/components/icons";
-import { daysSince } from "@/utils/dates";
-import { hoursFor } from "@/utils/hours";
+import {
+  attendanceSeries,
+  niceMax,
+  periodRange,
+  shiftPeriod,
+  type Period,
+  type SeriesSession,
+} from "@/utils/attendance-series";
+import { formatDate } from "@/utils/dates";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLES } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
 import { ADULT_BELTS, BELT_ORDER, beltLabel } from "@/utils/supabase/profile";
 import type { GymSettings } from "@/utils/supabase/gym";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
-import { addDays, formatTime, monthStart, shiftMonth } from "@/utils/schedule";
+import type { Locale } from "@/utils/i18n/locales";
+import {
+  formatDayHeading,
+  formatDayNumber,
+  formatMonthHeading,
+  formatTime,
+  weekdayLabels,
+} from "@/utils/schedule";
+import { AttendanceChart, type ChartDay } from "./attendance-chart";
 import { Section, Stat } from "./stat";
-
-const NEW_MEMBER_DAYS = 30;
 
 type Member = {
   id: string;
@@ -34,7 +48,6 @@ type Member = {
   birth_date: string | null;
   active_roles: string[];
   is_active: boolean;
-  total_hours: number;
 };
 
 type RankHours = {
@@ -43,12 +56,10 @@ type RankHours = {
   lessons_since_stripe: number;
 };
 
-type Session = {
+type TodaySession = {
   id: string;
   course_name: string;
-  session_date: string;
   start_time: string;
-  end_time: string;
   status: string;
   instructor_name: string | null;
   present_count: number;
@@ -59,43 +70,49 @@ export async function StaffDashboard({
   today,
   gym,
   t,
+  locale,
+  period,
+  anchor,
 }: {
   supabase: SupabaseClient;
   today: string;
   gym: GymSettings;
   t: Dictionary;
+  locale: Locale;
+  // What the attendance chart shows: a calendar week or month, and any day
+  // inside it. Both come from the URL (`periodo`, `da`), like every other bit
+  // of view state here.
+  period: Period;
+  anchor: string;
 }) {
-  const from = monthStart(today);
-  const until = addDays(shiftMonth(from, 1), -1);
+  const range = periodRange(period, anchor);
 
   const [
     { data: memberRows, error: memberError },
-    { data: sessionRows, error: sessionError },
-    { count: activeCourses, error: courseError },
+    { data: chartRows, error: chartError },
+    { data: todayRows, error: todayError },
     { data: rankRows, error: rankError },
     { data: criteriaRows, error: criteriaError },
   ] = await Promise.all([
       supabase
         .from("member_overview")
         .select(
-          "id, full_name, auth_user_id, joined_at, current_belt, current_stripes, rank_since, stripe_since, birth_date, active_roles, is_active, total_hours",
+          "id, full_name, auth_user_id, joined_at, current_belt, current_stripes, rank_since, stripe_since, birth_date, active_roles, is_active",
         )
         // Whoever only runs the portal is not a student of the gym and would
         // skew every count on this page.
         .not("active_roles", "eq", PORTAL_ONLY_ROLES),
+      // Only what the chart needs, and only for the period it shows.
       supabase
         .from("session_overview")
-        .select(
-          "id, course_name, session_date, start_time, end_time, status, instructor_name, present_count",
-        )
-        .gte("session_date", from)
-        .lte("session_date", until)
-        .order("session_date")
-        .order("start_time"),
+        .select("session_date, status, present_count")
+        .gte("session_date", range.from)
+        .lte("session_date", range.until),
       supabase
-        .from("course")
-        .select("id", { count: "exact", head: true })
-        .eq("is_active", true),
+        .from("session_overview")
+        .select("id, course_name, start_time, status, instructor_name, present_count")
+        .eq("session_date", today)
+        .order("start_time"),
       supabase
         .from("person_rank_hours")
         .select("person_id, lessons_since_rank, lessons_since_stripe"),
@@ -110,8 +127,8 @@ export async function StaffDashboard({
   // because a dashboard is not worth a 500, but the reason is now in the log.
   for (const [where, error] of [
     ["member_overview", memberError],
-    ["session_overview", sessionError],
-    ["course", courseError],
+    ["session_overview:chart", chartError],
+    ["session_overview:today", todayError],
     ["person_rank_hours", rankError],
     ["promotion_criteria", criteriaError],
   ] as const) {
@@ -119,11 +136,10 @@ export async function StaffDashboard({
   }
 
   const members = (memberRows ?? []) as Member[];
-  const sessions = (sessionRows ?? []) as Session[];
+  const todaySessions = (todayRows ?? []) as TodaySession[];
 
   const active = members.filter((m) => m.is_active);
   const withoutAccount = members.filter((m) => !m.auth_user_id);
-  const recent = members.filter((m) => (daysSince(m.joined_at, today) ?? 999) <= NEW_MEMBER_DAYS);
 
   // Same computation the Registro's summary line runs, over the same rows
   // (active members only) — this count and the one on the Registro must
@@ -155,16 +171,49 @@ export async function StaffDashboard({
     return status.eligible;
   }).length;
 
-  // "Held" means the day has passed and the lesson was not called off — the
-  // only sessions whose attendance says anything about turnout.
-  const held = sessions.filter(
-    (s) => s.status !== "cancelled" && s.session_date <= today,
-  );
-  const cancelled = sessions.filter((s) => s.status === "cancelled");
-  const attendances = held.reduce((sum, s) => sum + (s.present_count ?? 0), 0);
-  const averageTurnout = held.length > 0 ? attendances / held.length : 0;
+  // The chart: one bar per day of the period. The strings are composed here, in
+  // the reader's language, so the client component holds no dictionary.
+  const series = attendanceSeries((chartRows ?? []) as SeriesSession[], range, today);
+  const weekdays = weekdayLabels(t);
+  const chartDays: ChartDay[] = series.map((day, index) => {
+    const dayOfMonth = Number(formatDayNumber(day.date));
+    return {
+      date: day.date,
+      total: day.total,
+      isFuture: day.isFuture,
+      // A week labels every column with its weekday; a month has 31 narrow
+      // ones, so only the 1st and the multiples of 5 are numbered.
+      tick:
+        period === "week"
+          ? weekdays[index].short
+          : dayOfMonth === 1 || dayOfMonth % 5 === 0
+            ? String(dayOfMonth)
+            : null,
+      heading: formatDayHeading(day.date, t),
+      value: day.isFuture
+        ? t.dashboard.dayToCome
+        : day.lessons === 0
+          ? t.dashboard.noLessonThatDay
+          : t.dashboard.presentCount(day.total),
+    };
+  });
+  const axisMax = niceMax(Math.max(0, ...series.map((day) => day.total)));
 
-  const todaySessions = sessions.filter((s) => s.session_date === today);
+  const periodHeading =
+    period === "week"
+      ? t.presenze.weekOf(formatDate(range.from))
+      : formatMonthHeading(anchor, locale);
+
+  // The anchor travels with the toggle, so switching week/month keeps your
+  // place; it is left out when it is simply today.
+  const href = (target: Period, da: string | null) => {
+    const query = new URLSearchParams();
+    if (target === "week") query.set("periodo", "settimana");
+    if (da) query.set("da", da);
+    const text = query.toString();
+    return text ? `/dashboard?${text}` : "/dashboard";
+  };
+  const keepAnchor = anchor === today ? null : anchor;
 
   // Drawn with no stripes: the row stands for the belt, not for any one
   // member's degree at it.
@@ -186,13 +235,6 @@ export async function StaffDashboard({
     (m) => !BELT_ORDER.includes(m.current_belt as (typeof BELT_ORDER)[number]),
   );
 
-  // Total hours across the gym, opening balances included, so the figure is
-  // not "zero" for a school that has trained for years.
-  const gymHours = members.reduce(
-    (sum, m) => sum + hoursFor(m.joined_at, m.total_hours, { ...gym, today }).total,
-    0,
-  );
-
   return (
     <>
       <Section
@@ -208,26 +250,16 @@ export async function StaffDashboard({
           </Link>
         }
       >
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <Stat
             label={t.dashboard.activeMembers}
             value={active.length}
             hint={t.dashboard.ofTotal(members.length)}
           />
           <Stat
-            label={t.dashboard.newMembers(NEW_MEMBER_DAYS)}
-            value={recent.length}
-            hint={t.dashboard.recentlyJoined}
-          />
-          <Stat
             label={t.dashboard.withoutAccount}
             value={withoutAccount.length}
             hint={t.dashboard.neverInvited}
-          />
-          <Stat
-            label={t.dashboard.gymHours}
-            value={Math.round(gymHours)}
-            hint={t.dashboard.openingBalancesIncluded}
           />
         </div>
 
@@ -242,7 +274,7 @@ export async function StaffDashboard({
       </Section>
 
       <Section
-        title={t.dashboard.monthLessons}
+        title={t.dashboard.attendanceTitle}
         icon={CalendarCheckIcon}
         action={
           <Link
@@ -254,26 +286,54 @@ export async function StaffDashboard({
           </Link>
         }
       >
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-          <Stat
-            label={t.dashboard.scheduled}
-            value={sessions.length}
-            hint={t.dashboard.activeCourses(activeCourses ?? 0)}
-          />
-          <Stat
-            label={t.dashboard.held}
-            value={held.length}
-            hint={t.dashboard.cancelledCount(cancelled.length)}
-          />
-          <Stat
-            label={t.dashboard.attendances}
-            value={attendances}
-            hint={t.dashboard.recordedThisMonth}
-          />
-          <Stat
-            label={t.dashboard.averagePerLesson}
-            value={averageTurnout.toFixed(1)}
-            hint={t.dashboard.studentsPresent}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-heading text-base font-semibold">{periodHeading}</h3>
+            <PeriodToggle
+              period={period}
+              weekHref={href("week", keepAnchor)}
+              monthHref={href("month", keepAnchor)}
+              weekLabel={t.dashboard.periodWeek}
+              monthLabel={t.dashboard.periodMonth}
+            />
+          </div>
+
+          <nav className="flex items-center justify-between gap-2">
+            <Link
+              href={href(period, shiftPeriod(period, anchor, -1))}
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              <ChevronLeftIcon className="h-4 w-4" />
+              {period === "week" ? t.presenze.previousWeek : t.presenze.previousMonth}
+            </Link>
+
+            <Link
+              href={href(period, null)}
+              className="rounded-full px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-muted"
+            >
+              {t.common.today}
+            </Link>
+
+            <Link
+              href={href(period, shiftPeriod(period, anchor, 1))}
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              {period === "week" ? t.presenze.nextWeek : t.presenze.nextMonth}
+              <ChevronRightIcon className="h-4 w-4" />
+            </Link>
+          </nav>
+
+          {/* Keyed by the period: moving to another week or month starts from
+              a clean selection instead of carrying a stale day across. */}
+          <AttendanceChart
+            key={`${period}-${range.from}`}
+            days={chartDays}
+            max={axisMax}
+            today={today}
+            labels={{
+              summary: t.dashboard.chartSummary(periodHeading),
+              hint: t.dashboard.chartHint,
+            }}
           />
         </div>
 
@@ -369,5 +429,44 @@ export async function StaffDashboard({
         ) : null}
       </Section>
     </>
+  );
+}
+
+// Two links, not a client-side toggle: switching period is a navigation and
+// survives a reload, like the calendar's list/grid control.
+function PeriodToggle({
+  period,
+  weekHref,
+  monthHref,
+  weekLabel,
+  monthLabel,
+}: {
+  period: Period;
+  weekHref: string;
+  monthHref: string;
+  weekLabel: string;
+  monthLabel: string;
+}) {
+  const base = "rounded-full px-3 py-1.5 text-xs font-medium transition-colors";
+  const on = "bg-foreground text-background";
+  const off = "text-foreground/60 hover:bg-muted";
+
+  return (
+    <div className="flex shrink-0 items-center gap-1 rounded-full border border-border p-1">
+      <Link
+        href={weekHref}
+        aria-current={period === "week" ? "page" : undefined}
+        className={`${base} ${period === "week" ? on : off}`}
+      >
+        {weekLabel}
+      </Link>
+      <Link
+        href={monthHref}
+        aria-current={period === "month" ? "page" : undefined}
+        className={`${base} ${period === "month" ? on : off}`}
+      >
+        {monthLabel}
+      </Link>
+    </div>
   );
 }
