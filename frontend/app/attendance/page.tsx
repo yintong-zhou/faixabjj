@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   AlertCircleIcon,
@@ -26,6 +27,7 @@ import {
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { undoCheckIn } from "./actions";
 import { CheckinButton, type CheckinButtonLabels } from "./checkin-button";
+import { DayDialog } from "./day-dialog";
 
 type Session = {
   id: string;
@@ -271,51 +273,71 @@ export default async function PresenzePage({
 
       {isGrid ? (
         <>
-          {/* min-w on the scroller, not on the page: seven columns cannot get
-              narrower than this and stay readable, so the grid scrolls inside
-              its own box rather than making the whole page scroll sideways. */}
-          <div className="-mx-1 overflow-x-auto px-1">
-            <div className="min-w-[34rem]">
-              <div className="grid grid-cols-7 gap-1 pb-1">
-                {weekdayLabels(t).map((day) => (
-                  <span
-                    key={day.value}
-                    className="px-1 text-center text-xs font-medium uppercase tracking-wide text-foreground/50"
-                  >
-                    {day.short}
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex flex-col gap-1">
-                {chunk(days, 7).map((week) => (
-                  <div key={week[0]} className="grid grid-cols-7 gap-1">
-                    {week.map((date) => (
-                      <DayCell
-                        key={date}
-                        date={date}
-                        sessions={byDay.get(date) ?? []}
-                        inMonth={date.slice(0, 7) === anchorMonth}
-                        isToday={date === today}
-                        isOpen={date === openDay}
-                        dayHref={`${href({ g: date })}#giorno`}
-                        query={currentQuery}
-                        ownAttendance={ownAttendance}
-                        isStaff={isStaff}
-                        t={t}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
+          {/* Seven columns share the width, so there is nothing to scroll: on a
+              phone a cell holds a number and dots, never text. */}
+          <div className="flex flex-col gap-1">
+            <div className="grid grid-cols-7 gap-1 pb-1">
+              {weekdayLabels(t).map((day) => (
+                <span
+                  key={day.value}
+                  className="truncate text-center text-xs font-medium uppercase tracking-wide text-foreground/50"
+                >
+                  {day.short}
+                </span>
+              ))}
             </div>
+
+            {chunk(days, 7).map((week) => (
+              <div key={week[0]} className="grid grid-cols-7 gap-1">
+                {week.map((date) => {
+                  const daySessions = byDay.get(date) ?? [];
+                  return (
+                    <DayCell
+                      key={date}
+                      date={date}
+                      sessions={daySessions}
+                      inMonth={date.slice(0, 7) === anchorMonth}
+                      isToday={date === today}
+                      isOpen={date === openDay}
+                      dayHref={`${href({ g: date })}#giorno`}
+                      query={currentQuery}
+                      ownAttendance={ownAttendance}
+                      isStaff={isStaff}
+                      title={`${formatDayHeading(date, t)}${
+                        date === today ? t.presenze.todaySuffix : ""
+                      }`}
+                      panel={
+                        daySessions.length > 0 ? (
+                          <GridSessionList
+                            sessions={daySessions}
+                            isStaff={isStaff}
+                            ownAttendance={ownAttendance}
+                            now={now}
+                            profileMissing={profileMissing}
+                            query={currentQuery}
+                            needsLocation={needsLocation}
+                            checkinLabels={checkinLabels}
+                            t={t}
+                          />
+                        ) : null
+                      }
+                      t={t}
+                    />
+                  );
+                })}
+              </div>
+            ))}
           </div>
 
           {openDay ? (
-            // The anchor is what makes opening a multi-lesson day feel like
-            // something happened: the panel is usually below the fold on a
-            // phone, and the links into it carry "#giorno".
-            <section id="giorno" className="flex scroll-mt-20 flex-col gap-2">
+            // From `sm` up only: on a phone the day opens in a modal from the
+            // cell, and a second copy of it under the grid would just repeat
+            // it. The anchor is what makes opening a multi-lesson day feel
+            // like something happened when the panel is below the fold.
+            <section
+              id="giorno"
+              className="hidden scroll-mt-20 flex-col gap-2 sm:flex"
+            >
               <h3 className="font-heading text-sm font-semibold text-foreground/70">
                 {formatDayHeading(openDay, t)}
                 {openDay === today ? t.presenze.todaySuffix : ""}
@@ -326,26 +348,17 @@ export default async function PresenzePage({
                   {t.presenze.noLessonsThisDay}
                 </p>
               ) : (
-                <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
-                  {openSessions.map((session) => (
-                    <SessionRow
-                      key={session.id}
-                      session={session}
-                      isStaff={isStaff}
-                      // The grid is for seeing the picture; the check-in
-                      // button lives in the list view, where a row has the
-                      // width for it.
-                      allowCheckin={false}
-                      checkedIn={ownAttendance.get(session.id)}
-                      now={now}
-                      profileMissing={profileMissing}
-                      query={currentQuery}
-                      needsLocation={needsLocation}
-                      checkinLabels={checkinLabels}
-                      t={t}
-                    />
-                  ))}
-                </ul>
+                <GridSessionList
+                  sessions={openSessions}
+                  isStaff={isStaff}
+                  ownAttendance={ownAttendance}
+                  now={now}
+                  profileMissing={profileMissing}
+                  query={currentQuery}
+                  needsLocation={needsLocation}
+                  checkinLabels={checkinLabels}
+                  t={t}
+                />
               )}
             </section>
           ) : null}
@@ -433,17 +446,66 @@ function ViewToggle({
   );
 }
 
-// One cell of the month grid.
+// The lessons of one day as the grid shows them: the panel under the grid on
+// desktop, the modal on a phone. The grid is for seeing the picture; the
+// check-in button lives in the list view, where a row has the width for it.
+function GridSessionList({
+  sessions,
+  isStaff,
+  ownAttendance,
+  now,
+  profileMissing,
+  query,
+  needsLocation,
+  checkinLabels,
+  t,
+}: {
+  sessions: Session[];
+  isStaff: boolean;
+  ownAttendance: Map<string, boolean>;
+  now: Date;
+  profileMissing: boolean;
+  query: string;
+  needsLocation: boolean;
+  checkinLabels: CheckinButtonLabels;
+  t: Dictionary;
+}) {
+  return (
+    <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+      {sessions.map((session) => (
+        <SessionRow
+          key={session.id}
+          session={session}
+          isStaff={isStaff}
+          allowCheckin={false}
+          checkedIn={ownAttendance.get(session.id)}
+          now={now}
+          profileMissing={profileMissing}
+          query={query}
+          needsLocation={needsLocation}
+          checkinLabels={checkinLabels}
+          t={t}
+        />
+      ))}
+    </ul>
+  );
+}
+
+// One cell of the month grid, rendered differently by width.
 //
-// Where the cell leads depends on what is actually behind it. For staff, a day
-// holding a single lesson opens that lesson's roll call directly — going
-// through a day panel to click the only thing in it is a step that does
-// nothing. A day with several lessons, and any day for a member, opens the
-// panel instead, because there is a choice to make.
+// Phone: a number and one dot per lesson (no room for text). A day with
+// lessons is a button that opens them in a modal (`DayDialog`), so a tap always
+// shows the lessons — it never jumps to a roll call unseen.
 //
-// The whole cell is the link rather than the entries inside it: the entries
-// are a few pixels tall on a phone, and an anchor inside an anchor is not
-// valid HTML anyway. A day with no lesson is not a link at all.
+// Desktop: the course names in the cell, and the cell is a link. Where it leads
+// depends on what is behind it. For staff, a day holding a single lesson opens
+// that lesson's roll call directly — going through a day panel to click the
+// only thing in it is a step that does nothing. A day with several lessons, and
+// any day for a member, opens the panel under the grid instead. The whole cell
+// is the link rather than the entries inside it: an anchor inside an anchor is
+// not valid HTML.
+//
+// A day with no lesson is neither a link nor a button.
 function DayCell({
   date,
   sessions,
@@ -454,6 +516,8 @@ function DayCell({
   query,
   ownAttendance,
   isStaff,
+  title,
+  panel,
   t,
 }: {
   date: string;
@@ -465,15 +529,20 @@ function DayCell({
   query: string;
   ownAttendance: Map<string, boolean>;
   isStaff: boolean;
+  title: string;
+  panel: ReactNode;
   t: Dictionary;
 }) {
   const single = isStaff && sessions.length === 1 ? sessions[0] : null;
   const href = single
     ? `/attendance/${single.id}?from=${encodeURIComponent(query)}`
     : dayHref;
+  // Display is left out on purpose: each rendering adds its own, so `hidden`
+  // never has to win a fight with `flex` on the same element. The open-day
+  // highlight is `sm:` only, because the panel it points at is too.
   const shell = [
-    "flex min-h-16 flex-col gap-1 rounded-lg border p-1 text-left sm:min-h-24 sm:p-1.5",
-    isOpen ? "border-accent bg-accent/5" : "border-border",
+    "min-h-14 flex-col gap-1 rounded-lg border border-border p-1 text-left sm:min-h-24 sm:p-1.5",
+    isOpen ? "sm:border-accent sm:bg-accent/5" : "",
     inMonth ? "" : "opacity-45",
   ].join(" ");
 
@@ -484,66 +553,84 @@ function DayCell({
       : "px-0.5 text-foreground/70",
   ].join(" ");
 
-  const body = (
-    <>
-      <span className={number}>{formatDayNumber(date)}</span>
+  const dots = (
+    <span className="flex flex-wrap gap-1 px-0.5">
+      {sessions.slice(0, 4).map((session) => (
+        <span
+          key={session.id}
+          className={`h-2 w-2 rounded-full ${
+            session.status === "cancelled"
+              ? "bg-foreground/25"
+              : !isStaff && ownAttendance.get(session.id)
+                ? "bg-accent"
+                : "bg-foreground/45"
+          }`}
+        />
+      ))}
+    </span>
+  );
 
-      {/* Two renderings of the same lessons: the phone has no room for the
-          course names, the desktop does. */}
-      <span className="flex flex-wrap gap-1 sm:hidden">
-        {sessions.slice(0, 4).map((session) => (
-          <span
-            key={session.id}
-            className={`h-1.5 w-1.5 rounded-full ${
-              session.status === "cancelled"
-                ? "bg-foreground/25"
-                : !isStaff && ownAttendance.get(session.id)
-                  ? "bg-accent"
-                  : "bg-foreground/45"
-            }`}
-          />
-        ))}
-      </span>
-
-      <span className="hidden flex-col gap-0.5 sm:flex">
-        {sessions.slice(0, 2).map((session) => (
-          <span
-            key={session.id}
-            className={`truncate text-[0.7rem] leading-tight ${
-              session.status === "cancelled"
-                ? "text-foreground/40 line-through"
-                : "text-foreground/75"
-            }`}
-          >
-            {!isStaff && ownAttendance.get(session.id) ? "✓ " : ""}
-            {formatTime(session.start_time)} {session.course_name}
-          </span>
-        ))}
-        {sessions.length > 2 ? (
-          <span className="text-[0.7rem] leading-tight text-foreground/50">
-            +{sessions.length - 2}
-          </span>
-        ) : null}
-      </span>
-    </>
+  const names = (
+    <span className="hidden flex-col gap-0.5 sm:flex">
+      {sessions.slice(0, 2).map((session) => (
+        <span
+          key={session.id}
+          className={`truncate text-[0.7rem] leading-tight ${
+            session.status === "cancelled"
+              ? "text-foreground/40 line-through"
+              : "text-foreground/75"
+          }`}
+        >
+          {!isStaff && ownAttendance.get(session.id) ? "✓ " : ""}
+          {formatTime(session.start_time)} {session.course_name}
+        </span>
+      ))}
+      {sessions.length > 2 ? (
+        <span className="text-[0.7rem] leading-tight text-foreground/50">
+          +{sessions.length - 2}
+        </span>
+      ) : null}
+    </span>
   );
 
   if (sessions.length === 0) {
-    return <div className={shell}>{body}</div>;
+    return (
+      <div className={`flex ${shell}`}>
+        <span className={number}>{formatDayNumber(date)}</span>
+      </div>
+    );
   }
 
   return (
-    <Link
-      href={href}
-      title={
-        single
-          ? t.presenze.cellRollCall(single.course_name)
-          : t.presenze.cellOpenDay(sessions.length)
-      }
-      className={`${shell} transition-colors hover:border-accent`}
-    >
-      {body}
-    </Link>
+    <>
+      <DayDialog
+        cellClassName={`flex w-full ${shell} transition-colors active:border-accent`}
+        cell={
+          <>
+            <span className={number}>{formatDayNumber(date)}</span>
+            {dots}
+          </>
+        }
+        label={`${title} — ${t.presenze.cellOpenDay(sessions.length)}`}
+        title={title}
+        closeLabel={t.common.close}
+      >
+        {panel}
+      </DayDialog>
+
+      <Link
+        href={href}
+        title={
+          single
+            ? t.presenze.cellRollCall(single.course_name)
+            : t.presenze.cellOpenDay(sessions.length)
+        }
+        className={`hidden sm:flex ${shell} transition-colors hover:border-accent`}
+      >
+        <span className={number}>{formatDayNumber(date)}</span>
+        {names}
+      </Link>
+    </>
   );
 }
 
