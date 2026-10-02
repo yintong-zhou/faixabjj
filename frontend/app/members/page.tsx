@@ -135,6 +135,16 @@ export default async function RegistroPage({
   const { t } = await getDictionary();
   // Staff only: an allievo or assistente gets a 404 here, not a redirect.
   const { supabase, access } = await requireRegistryViewer("/members");
+  // Pending self-registrations, for the chip below. User managers only: RLS
+  // would show an instructor none anyway, so the query is skipped for them.
+  let requestCount = 0;
+  if (access.canManageUsers) {
+    const { count, error: requestCountError } = await supabase
+      .from("registration_request")
+      .select("id", { count: "exact", head: true });
+    if (requestCountError) logDbError("members", "registration_request:count", requestCountError);
+    requestCount = count ?? 0;
+  }
   const gym = await requireGymSettings();
   const temporaryPassword = await readTemporaryPassword(search.pw);
   // Eligibility, hours and days at rank are all measured to the gym's own day.
@@ -362,6 +372,13 @@ export default async function RegistroPage({
             <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
             <span className="truncate">{t.promotions.criteriaTitle}</span>
           </Link>
+
+          {requestCount > 0 ? (
+            <Link href="/members/requests" className={PANEL_LINK}>
+              <UserPlusIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+              <span className="truncate">{t.requests.chip(requestCount)}</span>
+            </Link>
+          ) : null}
         </div>
       ) : null}
 

@@ -331,6 +331,26 @@ export const ptBR: Dictionary = {
     },
   },
 
+  requests: {
+    title: "Solicitações de inscrição",
+    lead: "Pessoas que se inscreveram com o link da academia. Confira e corrija os dados, depois aprove: entrarão no Registro como alunos.",
+    chip: (n: number) => `Solicitações de inscrição (${n})`,
+    empty: "Nenhuma solicitação pendente.",
+    sentOn: (date: string) => `Enviada em ${date}`,
+    review: "Conferir e aprovar",
+    approve: "Aprovar",
+    reject: "Recusar",
+    rejectConfirm: (name: string) =>
+      `Recusar a solicitação de ${name}? A conta criada com a solicitação será excluída.`,
+    linkWarning: (name: string) =>
+      `Este e-mail corresponde a ${name}, já no Registro sem conta: ao aprovar, a conta será vinculada a esse cadastro, que mantém a faixa e as datas atuais.`,
+    approved: (name: string) => `${name} agora está no Registro.`,
+    rejected: (name: string) => `Solicitação de ${name} recusada.`,
+    alreadyHandled: "Esta solicitação não está mais pendente.",
+    emailTaken: "Não foi possível usar este e-mail: ele pode já pertencer a outra conta.",
+    failed: "Operação não concluída. Tente novamente.",
+  },
+
   dashboard: {
     title: "Painel",
     staffLead:

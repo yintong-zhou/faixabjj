@@ -344,6 +344,26 @@ export const it = {
     },
   },
 
+  requests: {
+    title: "Richieste di iscrizione",
+    lead: "Persone che si sono iscritte con il link della palestra. Controlla e correggi i dati, poi approva: entreranno nel Registro come allievi.",
+    chip: (n: number) => `Richieste di iscrizione (${n})`,
+    empty: "Nessuna richiesta in attesa.",
+    sentOn: (date: string) => `Inviata il ${date}`,
+    review: "Controlla e approva",
+    approve: "Approva",
+    reject: "Rifiuta",
+    rejectConfirm: (name: string) =>
+      `Rifiutare la richiesta di ${name}? L'account creato con la richiesta verrà eliminato.`,
+    linkWarning: (name: string) =>
+      `Questa email corrisponde a ${name}, già nel Registro senza account: approvando, l'account verrà collegato a quella scheda, che conserva cintura e date attuali.`,
+    approved: (name: string) => `${name} è ora nel Registro.`,
+    rejected: (name: string) => `Richiesta di ${name} rifiutata.`,
+    alreadyHandled: "Questa richiesta non è più in attesa.",
+    emailTaken: "Non è stato possibile usare questa email: potrebbe appartenere già a un altro account.",
+    failed: "Operazione non riuscita. Riprova.",
+  },
+
   dashboard: {
     title: "Dashboard",
     staffLead:

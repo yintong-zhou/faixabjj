@@ -328,6 +328,26 @@ export const en: Dictionary = {
     },
   },
 
+  requests: {
+    title: "Registration requests",
+    lead: "People who signed up with the gym's link. Check and correct their details, then approve: they join the Registry as students.",
+    chip: (n: number) => `Registration requests (${n})`,
+    empty: "No pending requests.",
+    sentOn: (date: string) => `Sent on ${date}`,
+    review: "Review and approve",
+    approve: "Approve",
+    reject: "Reject",
+    rejectConfirm: (name: string) =>
+      `Reject ${name}'s request? The account created with the request will be deleted.`,
+    linkWarning: (name: string) =>
+      `This email matches ${name}, already in the Registry without an account: approving links the account to that record, which keeps its current belt and dates.`,
+    approved: (name: string) => `${name} is now in the Registry.`,
+    rejected: (name: string) => `${name}'s request rejected.`,
+    alreadyHandled: "This request is no longer pending.",
+    emailTaken: "This email could not be used: it may already belong to another account.",
+    failed: "Operation failed. Try again.",
+  },
+
   dashboard: {
     title: "Dashboard",
     staffLead:
