@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import QRCode from "qrcode";
 
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
+import { CopyCredentials } from "@/components/copy-password";
 import { AlertCircleIcon, CheckCircleIcon } from "@/components/icons";
 import { LocationFields } from "@/components/location-fields";
 import { getDictionary } from "@/utils/i18n/server";
+import { logDbError } from "@/utils/log";
 import { SITE_URL } from "@/utils/site";
 import { requireGymSettings } from "@/utils/supabase/gym";
 import { requireUserManager } from "@/utils/supabase/require-admin";
 
-import { setGymLocation } from "./actions";
+import { regenerateInvite, setGymLocation } from "./actions";
 import { PrintButton } from "./print-button";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,8 +31,16 @@ export default async function MyGymPage({
 }) {
   const { ok, error } = await searchParams;
   const { t } = await getDictionary();
-  await requireUserManager("/gym");
+  const { supabase } = await requireUserManager("/gym");
   const gym = await requireGymSettings();
+
+  // RLS: only user managers of this gym read it. No row = no link generated yet.
+  const { data: invite, error: inviteError } = await supabase
+    .from("gym_invite")
+    .select("token")
+    .maybeSingle();
+  if (inviteError) logDbError("gym", "gym_invite", inviteError);
+  const inviteUrl = invite ? `${SITE_URL}/join/${(invite as { token: string }).token}` : null;
 
   // Generated here, from our own URL: no external service, no client script.
   const qrSvg = await QRCode.toString(`${SITE_URL}/check-in`, {
@@ -94,6 +105,43 @@ export default async function MyGymPage({
               </button>
             ) : null}
           </div>
+        </form>
+      </section>
+
+      <section className={`${sectionClass} print:hidden`}>
+        <h2 className="font-heading text-base font-semibold sm:text-lg">{t.myGym.inviteSection}</h2>
+        <p className="text-sm text-foreground/65">{t.myGym.inviteHelp}</p>
+        {inviteUrl ? (
+          <div className="flex flex-col gap-2">
+            <code className="break-all rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+              {inviteUrl}
+            </code>
+            <CopyCredentials
+              text={inviteUrl}
+              copyLabel={t.myGym.inviteCopy}
+              copiedLabel={t.myGym.inviteCopied}
+              failedLabel={t.myGym.inviteCopyFailed}
+            />
+          </div>
+        ) : (
+          <p className="text-sm text-foreground/65">{t.myGym.inviteNone}</p>
+        )}
+        <form action={regenerateInvite}>
+          {inviteUrl ? (
+            <ConfirmSubmitButton
+              message={t.myGym.inviteRegenerateConfirm}
+              className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              {t.myGym.inviteRegenerate}
+            </ConfirmSubmitButton>
+          ) : (
+            <button
+              type="submit"
+              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            >
+              {t.myGym.inviteGenerate}
+            </button>
+          )}
         </form>
       </section>
 

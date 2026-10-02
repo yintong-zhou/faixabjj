@@ -413,6 +413,19 @@ export const ptBR: Dictionary = {
     saved: "Localização salva.",
     cleared: "Localização removida.",
     failed: "Não foi possível concluir. Tente de novo.",
+    inviteSection: "Link de inscrição",
+    inviteHelp:
+      "Quem abrir este link pode pedir para se inscrever na academia. Cada solicitação precisa ser aprovada no Registro, em “Solicitações de inscrição”.",
+    inviteNone: "Nenhum link ativo.",
+    inviteGenerate: "Gerar link",
+    inviteRegenerate: "Gerar novo link",
+    inviteRegenerateConfirm:
+      "O link atual deixará de funcionar. As solicitações já enviadas são mantidas. Continuar?",
+    inviteCopy: "Copiar link",
+    inviteCopied: "Link copiado",
+    inviteCopyFailed: "Falha ao copiar: selecione e copie manualmente",
+    inviteGenerated: "Novo link de inscrição pronto.",
+    inviteFailed: "Não foi possível gerar o link. Tente novamente.",
   },
 
   rollCall: {

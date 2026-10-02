@@ -43,3 +43,20 @@ export async function setGymLocation(formData: FormData) {
   revalidatePath("/check-in");
   to({ ok: location ? t.myGym.saved : t.myGym.cleared });
 }
+
+// The manager has no write on gym_invite: regenerate_invite_token() draws a new
+// link for their own gym and re-checks can_manage_users() itself. The old link
+// stops working at once; requests already sent are not touched.
+export async function regenerateInvite() {
+  const { t } = await getDictionary();
+  const { supabase } = await requireUserManager(PAGE);
+
+  const { error } = await supabase.rpc("regenerate_invite_token");
+  if (error) {
+    logDbError("gym", "regenerateInvite", error);
+    to({ error: t.myGym.inviteFailed });
+  }
+
+  revalidatePath(PAGE);
+  to({ ok: t.myGym.inviteGenerated });
+}

@@ -427,6 +427,19 @@ export const it = {
     saved: "Posizione salvata.",
     cleared: "Posizione rimossa.",
     failed: "Operazione non riuscita. Riprova.",
+    inviteSection: "Link di iscrizione",
+    inviteHelp:
+      "Chi apre questo link può chiedere di iscriversi alla palestra. Ogni richiesta va approvata nel Registro, alla voce «Richieste di iscrizione».",
+    inviteNone: "Nessun link attivo.",
+    inviteGenerate: "Genera link",
+    inviteRegenerate: "Rigenera link",
+    inviteRegenerateConfirm:
+      "Il link attuale smetterà di funzionare. Le richieste già inviate restano. Continuare?",
+    inviteCopy: "Copia il link",
+    inviteCopied: "Link copiato",
+    inviteCopyFailed: "Copia non riuscita: selezionalo e copialo a mano",
+    inviteGenerated: "Nuovo link di iscrizione pronto.",
+    inviteFailed: "Non è stato possibile generare il link. Riprova.",
   },
 
   rollCall: {

@@ -411,6 +411,19 @@ export const en: Dictionary = {
     saved: "Location saved.",
     cleared: "Location removed.",
     failed: "Something went wrong. Try again.",
+    inviteSection: "Registration link",
+    inviteHelp:
+      "Whoever opens this link can ask to join the gym. Every request must be approved in the Registry, under “Registration requests”.",
+    inviteNone: "No active link.",
+    inviteGenerate: "Generate link",
+    inviteRegenerate: "Regenerate link",
+    inviteRegenerateConfirm:
+      "The current link will stop working. Requests already sent are kept. Continue?",
+    inviteCopy: "Copy link",
+    inviteCopied: "Link copied",
+    inviteCopyFailed: "Copy failed: select it and copy it by hand",
+    inviteGenerated: "New registration link ready.",
+    inviteFailed: "The link could not be generated. Try again.",
   },
 
   rollCall: {
