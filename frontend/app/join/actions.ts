@@ -62,6 +62,20 @@ export async function register(token: string, prev: JoinState, formData: FormDat
   if (!parsed.ok) return fail(t.join.errors[parsed.error]);
   const r = parsed.value;
 
+  // Before createUser, never after: if the username check came second, a taken
+  // username would be reported only for an email with no account (createUser
+  // succeeds, the insert fails, the account is rolled back) and as the generic
+  // message for one that has. The reply must not depend on whether the email
+  // has an account.
+  const { data: usernameFree, error: usernameError } = await admin.rpc("username_available", {
+    p_username: r.username,
+  });
+  if (usernameError) {
+    logDbError("join", "register:username_available", usernameError);
+    return fail(t.join.errors.failed);
+  }
+  if (usernameFree !== true) return fail(t.join.errors.usernameTaken);
+
   const { data: created, error: authError } = await admin.auth.admin.createUser({
     email: r.email,
     password: r.password as string,
