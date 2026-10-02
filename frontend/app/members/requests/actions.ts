@@ -48,8 +48,8 @@ async function requestInMyGym(supabase: SupabaseClient, id: string): Promise<Req
 // the service role, because the starting belt is not a promotion and the
 // database accepts a belt change only inside record_promotion() otherwise.
 //
-// Repeating it is harmless (the trigger, the update and the role check are all
-// idempotent), so two managers approving at once end in the same state. A step
+// A repeat is refused once the account has a gym (clearing a leftover
+// request); two approvals racing past that check write the same values. A step
 // that fails after the gym was assigned puts the account back as pending.
 export async function approveRegistration(formData: FormData) {
   const { t } = await getDictionary();
@@ -89,12 +89,23 @@ export async function approveRegistration(formData: FormData) {
     });
     back({ error: t.requests.failed });
   }
-  if ((existing.user.app_metadata as { gym_id?: string | null }).gym_id) {
+  const assignedGym = (existing.user.app_metadata as { gym_id?: string | null }).gym_id;
+  if (assignedGym) {
+    // Approved here already, but the request outlived it (its delete failed):
+    // clear it, so it stops showing as pending.
+    if (assignedGym === gym.id) {
+      const { error } = await supabase.from("registration_request").delete().eq("id", request.id);
+      if (error) logDbError("requests", "approve:cleanup", error);
+      revalidatePath("/members");
+      revalidatePath(PATH);
+    }
     back({ error: t.requests.alreadyHandled });
   }
 
   // First, so a taken address stops everything while nothing has changed yet.
-  if (r.email !== request.email) {
+  // Compared with the account's current address, not the request's: the two
+  // differ after an earlier attempt changed the address and failed later.
+  if (r.email !== existing.user.email) {
     const { error } = await admin.auth.admin.updateUserById(uid, { email: r.email, email_confirm: true });
     if (error) {
       // Generic on screen: a specific message would tell the gym's staff whether
@@ -121,7 +132,15 @@ export async function approveRegistration(formData: FormData) {
   // existing row it linked is unlinked again. One update for the unlink: the
   // username goes back with it, or the request that holds it would collide.
   async function undo(personId: string | null) {
-    await admin.auth.admin.updateUserById(uid, { app_metadata: { gym_id: null, pending_gym_id: gym.id } });
+    const { error: metaUndoError } = await admin.auth.admin.updateUserById(uid, {
+      app_metadata: { gym_id: null, pending_gym_id: gym.id },
+    });
+    if (metaUndoError) {
+      logDbError("requests", "approve:undo:app_metadata", {
+        code: metaUndoError.code ?? null,
+        message: metaUndoError.message,
+      });
+    }
     if (!personId) return;
     const { error } = linked
       ? await admin
