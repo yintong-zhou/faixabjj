@@ -2,7 +2,7 @@
 
 ## Authentication
 
-**No self-serve signup and no signup page, on purpose** (confirmed with the user). Accounts are created in the Supabase Dashboard (`poksgledkecwviypspmi`) or via `/members`. Don't add one without asking.
+**No open signup** (decided with the user, 2026-10-02). Accounts are created in the Supabase Dashboard, via `/members` (`addPerson`), or by a person registering through **their gym's invite link** and then being approved — see "Invite registration" below. Supabase's own public signup stays disabled. Don't add any other way in without asking.
 
 - `app/login/page.tsx` + `actions.ts` — `"use server"` `signInWithPassword`. Failure → `/login?error=...` with a deliberately generic message; never surface the raw Supabase error (email enumeration).
 - **Email or username** (`20260930000000`): one field (`name="email"`, `autocomplete="username"`). `parseLoginIdentifier()` (`utils/login-identifier.ts`) tells them apart by `@`; a username is resolved to the **account's** email by `emailForUsername()` (`utils/supabase/login-identifier.ts`, server-only) with **one** RPC, `login_email_for_username()` (`20260930010000`, security definer, executable by `service_role` only — found and not-found cost the same round trip, so timing does not reveal a username) and goes through the same `signInWithPassword`. An unknown or invalid username signs in against a **fresh random** `nobody-<uuid>@faixabjj.invalid` (`unknownAccountEmail()`; a fixed sentinel could be registered as a real account, and every unknown username would then sign in as it), so the reply and the Turnstile consumption match a wrong password. Recovery stays email only; the superadmin has no username.
@@ -15,10 +15,11 @@
 
 ## Bot protection (Cloudflare Turnstile)
 
-Challenged: `/login` and `/forgot-password`. `/reset-password` is not (the recovery token is the gate); there is no signup form.
+Challenged: `/login`, `/forgot-password` and `/join/<token>`. `/reset-password` is not (the recovery token is the gate).
 
 - **Supabase verifies; the app only draws the widget.** Supabase Auth → Attack Protection (provider Turnstile) holds the secret. `components/turnstile.tsx` renders; `turnstileToken()` in `utils/turnstile.ts` passes `captchaToken` to `signInWithPassword` / `resetPasswordForEmail`.
 - **Never also verify in the server action.** A token is redeemed exactly once: our siteverify consumed it, Supabase got none → `captcha_failed` → correct password reported as wrong. Supabase's check is the one that matters (anyone can POST straight to the endpoint). Trade-off: GoTrue does not check `action`/`hostname`.
+- **The exception is `/join`**: its account is created by the service role, not `signUp()`, so no Supabase check runs and `register` verifies the token itself (`utils/turnstile-verify.ts`, secret `TURNSTILE_SECRET_KEY`, server-only, fails closed without it). Because the token is redeemed there, the form cannot sign the athlete in afterwards: it redirects to `/login?registered=1`.
 - Only the sitekey is an env var (`NEXT_PUBLIC_TURNSTILE_SITEKEY`, public). The secret is nowhere in the repo/deployment. No sitekey → no token → Supabase refuses: fails closed with no app logic.
 - `captcha_failed` is the one login error with its own message (`t.auth.captchaFailed`); everything else stays generic. Real reason → `logDbError()`.
 - A refused reset still answers `?sent=1`; the call's result is deliberately not read.
@@ -62,6 +63,17 @@ Looks simplifiable, is not:
 - Profile = `person` row linked by `person.auth_user_id`. `getOrCreateProfile()` (`utils/supabase/profile.ts`) creates it on demand as fallback to the trigger.
 - Service-role actions in `app/members/actions.ts` each re-check `requireUserManager()`. Without the key the page renders but destructive controls are disabled.
 - Revoking access deletes the `auth` user only; `auth_user_id` is `ON DELETE SET NULL` so registry and attendance survive. Deleting the record is a separate, later step (`deletePerson`, see members doc), refused by the policy while an account is linked.
+
+## Invite registration (`/join`, `/pending`, `/members/requests`)
+
+Spec: `docs/superpowers/specs/2026-10-02-gym-invite-registration-design.md`.
+
+- **One link per gym** (`gym_invite`, its own table because every member reads their gym row). Generated and regenerated on `/gym` by user managers through `regenerate_invite_token()`; the old link stops at once, sent requests stay. `gym_for_invite()` (service role) resolves a link only for an **active** gym; anything else is a 404.
+- **Signup** (`app/join/actions.ts` `register`): Turnstile, link re-read, `parseRegistration()` (`utils/registration.ts`, the one validation for signup and approval), then `createUser` with the athlete's own password, `email_confirm: true` (no email), `app_metadata.pending_gym_id` and **no** `gym_id` (so the auth trigger creates no profile), then the `registration_request` row; any failure after `createUser` deletes the account. A taken email gets the generic error; a taken username (race with the live check) gets its own.
+- **Username reserved at signup**, unique across `person` and `registration_request` (trigger `username_cross_unique`, 23505). The live check (`checkUsername`) answers only behind a valid link — an accepted trade-off against the login's username secrecy. `login_email_for_username()` also resolves pending accounts.
+- **Pending account**: `requireAdmin()` and the proxy send it to `/pending` (`/privacy`, `/auth/*` exempt); `current_gym_id()` is null, so RLS shows nothing anyway. "Check again" refreshes the session (the JWT keeps `pending_gym_id` until refreshed); a failed refresh (rejected = deleted account) signs out.
+- **Approval** (`app/members/requests/actions.ts`, `requireUserManager`): request read through the user's client (gym proof), edited values re-validated, refused with "no longer pending" if the account already has a gym; email change first (a failure stops everything, with the generic error — never "address taken"), then `app_metadata = { gym_id, pending_gym_id: null }` → trigger creates or **links** the person (an account-less row with the same email keeps its own grade and dates; the page warns). Whether the row was linked is decided after the trigger, from the row itself (`person.created_at` earlier than the request), and a linked row's undo restores its previous username while unlinking. Profile filled with the service role as in `addPerson`, role `student` unless the linked row has an open role, request deleted. A failure after the gym is assigned puts the account back as pending. Idempotent, so concurrent approvals converge.
+- **Rejection** deletes the auth account (the request cascades); refused when the account already has a gym or is not pending for this gym, and for a platform admin.
 
 ## Forced password change
 

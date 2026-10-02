@@ -885,6 +885,7 @@ export const en: Dictionary = {
         heading: "2. What data we process",
         paragraphs: [
           "Contact and identity data: name, email, phone number, date of birth. Name and email are required to create an account; phone and date of birth are optional.",
+          "Registration request through the gym's link: full name, email, username, date of birth, join date and, if stated, belt, stripes and their dates. Here the date of birth is required, because it decides which belt system applies. While the request is pending, only the gym's manager and head coaches can see this data: if they approve it, it becomes your profile; if they reject it, it is deleted together with the account.",
           "Technical progression data: belt, number of stripes, date of the last belt promotion, date of the last stripe, join date, role held at the gym and its history.",
           "Attendance data: present or absent for each lesson, recording whether the presence was entered by the member (check-in) or by the instructor (roll call).",
           "Device location: if the gym has set its location, at check-in the browser asks for your phone's. It is used only to check that you are within 50 m of the gym: it is compared and discarded, never stored or written to logs. The browser asks for permission according to its settings; refusing only prevents checking yourself in, since the instructor can always record your attendance in the roll call.",
