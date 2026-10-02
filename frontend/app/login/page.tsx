@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertCircleIcon } from "@/components/icons";
+import { AlertCircleIcon, CheckCircleIcon } from "@/components/icons";
 import { PasswordInput } from "@/components/password-input";
 import { Turnstile } from "@/components/turnstile";
 import { getDictionary } from "@/utils/i18n/server";
@@ -8,9 +8,9 @@ import { login } from "./actions";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; next?: string }>;
+  searchParams: Promise<{ error?: string; next?: string; registered?: string }>;
 }) {
-  const { error, next } = await searchParams;
+  const { error, next, registered } = await searchParams;
   const { t } = await getDictionary();
 
   return (
@@ -26,6 +26,13 @@ export default async function LoginPage({
 
       <form action={login} className="flex flex-col gap-4">
         {next ? <input type="hidden" name="next" value={next} /> : null}
+
+        {registered === "1" ? (
+          <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
+            <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+            {t.auth.registeredNotice}
+          </p>
+        ) : null}
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className="text-sm font-medium">

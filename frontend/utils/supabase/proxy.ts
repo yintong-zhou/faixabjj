@@ -101,9 +101,10 @@ export const updateSession = async (request: NextRequest) => {
 
   // The landing page and the login form are both for signed-out visitors
   // only; once there is a session, neither has anything left to show.
+  // So is a gym's invite form: an account has nothing to sign up for.
   const VISITOR_ONLY = ["/login", "/"];
 
-  if (isLoggedIn && VISITOR_ONLY.includes(pathname)) {
+  if (isLoggedIn && (VISITOR_ONLY.includes(pathname) || underPath(pathname, "/join"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.search = "";

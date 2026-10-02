@@ -123,6 +123,7 @@ export const ptBR: Dictionary = {
 
     showPassword: "Mostrar a senha",
     hidePassword: "Ocultar a senha",
+    registeredNotice: "Solicitação enviada. Entre com seu e-mail ou nome de usuário para acompanhar o status.",
   },
 
   reset: {
@@ -265,6 +266,69 @@ export const ptBR: Dictionary = {
     title: "Solicitação pendente",
     body: "Sua solicitação de inscrição foi enviada. A equipe da academia precisa aprová-la: assim que isso acontecer, você poderá usar o app com esta conta.",
     checkAgain: "Verificar novamente",
+  },
+
+  join: {
+    title: (gym: string) => `Inscreva-se em ${gym}`,
+    lead: "Preencha seus dados e envie a solicitação: a equipe da academia a revisa e aprova. Enquanto isso você já pode entrar, mas verá apenas o status da solicitação.",
+    form: {
+      fullName: "Nome completo",
+      email: "E-mail",
+      username: "Nome de usuário",
+      usernameHelp:
+        "De 3 a 30 caracteres: letras minúsculas, números, ponto, hífen e sublinhado. Você poderá usá-lo para entrar no lugar do e-mail.",
+      usernameChecking: "Verificando disponibilidade…",
+      usernameAvailable: "Disponível",
+      usernameTaken: "Já em uso: escolha outro",
+      usernameInvalid: "Formato inválido",
+      usernameUnknown: "Não foi possível verificar agora: verificaremos no envio",
+      password: "Senha",
+      passwordRepeat: "Repita a senha",
+      passwordHint: "Pelo menos 8 caracteres.",
+      showPassword: "Mostrar a senha",
+      hidePassword: "Ocultar a senha",
+      birthDate: "Data de nascimento",
+      joinedAt: "Na academia desde",
+      experienced: "Você já treinou BJJ?",
+      experiencedYes: "Sim",
+      experiencedNo: "Não, é a primeira vez",
+      beginnerNote: "Você começará na faixa branca, 0 graus.",
+      belt: "Faixa atual",
+      select: "Selecione…",
+      stripes: "Graus",
+      rankSince: "Data da faixa atual (se lembrar)",
+      stripeSince: "Data do último grau (se lembrar)",
+      datesHint: "Se não lembrar uma data, deixe em branco: a equipe poderá corrigi-la.",
+      privacyConsent: "Li o aviso de privacidade",
+      privacyLink: "Ler o aviso",
+      submit: "Enviar solicitação",
+      sending: "Enviando…",
+    },
+    errors: {
+      nameRequired: "Informe o nome completo.",
+      emailInvalid: "Informe um endereço de e-mail válido.",
+      usernameInvalid:
+        "O nome de usuário deve ter de 3 a 30 caracteres: letras minúsculas, números, ponto, hífen, sublinhado.",
+      usernameTaken: "Este nome de usuário já está em uso: escolha outro.",
+      passwordTooShort: "A senha deve ter pelo menos 8 caracteres.",
+      passwordMismatch: "As duas senhas não coincidem.",
+      passwordWeak: "A senha não atende aos requisitos de segurança: escolha uma mais longa ou variada.",
+      birthDateInvalid: "Informe uma data de nascimento válida, no passado.",
+      joinedAtInvalid: "Informe a data de inscrição na academia.",
+      dateInvalid: "Uma das datas não é válida.",
+      dateInFuture: "As datas não podem estar no futuro.",
+      experienceRequired: "Informe se você já treinou BJJ.",
+      beltInvalid: "Escolha a faixa.",
+      beltForAge:
+        "Esta faixa não corresponde à idade: abaixo de 16 anos usam-se as faixas infantis, a partir dos 18 as adultas.",
+      stripesInvalid: "Número de graus inválido para esta faixa.",
+      stripeBeforeBelt: "O último grau não pode ser anterior à faixa atual.",
+      consentRequired: "Para enviar a solicitação, confirme que leu o aviso de privacidade.",
+      captchaFailed: "Verificação de segurança falhou. Tente novamente.",
+      linkExpired: "Este link de convite não é mais válido. Peça um novo à sua academia.",
+      failed:
+        "Não foi possível enviar a solicitação. Se você já tem uma conta, entre; caso contrário, tente mais tarde.",
+    },
   },
 
   dashboard: {

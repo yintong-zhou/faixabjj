@@ -133,6 +133,7 @@ export const it = {
 
     showPassword: "Mostra la password",
     hidePassword: "Nascondi la password",
+    registeredNotice: "Richiesta inviata. Accedi con la tua email o il tuo username per seguirne lo stato.",
   },
 
   reset: {
@@ -277,6 +278,70 @@ export const it = {
     title: "Richiesta in attesa",
     body: "La tua richiesta di iscrizione è stata inviata. Lo staff della palestra deve approvarla: appena lo farà potrai usare l'app con questo account.",
     checkAgain: "Verifica di nuovo",
+  },
+
+  join: {
+    title: (gym: string) => `Iscriviti a ${gym}`,
+    lead: "Compila i tuoi dati e invia la richiesta: lo staff della palestra la controlla e la approva. Nel frattempo puoi già accedere, ma vedrai solo lo stato della richiesta.",
+    // Solo stringhe: viene passato così com'è a un Client Component.
+    form: {
+      fullName: "Nome e cognome",
+      email: "Email",
+      username: "Username",
+      usernameHelp:
+        "Da 3 a 30 caratteri: lettere minuscole, numeri, punto, trattino e trattino basso. Potrai usarlo per accedere al posto dell'email.",
+      usernameChecking: "Controllo disponibilità…",
+      usernameAvailable: "Disponibile",
+      usernameTaken: "Già in uso: scegline un altro",
+      usernameInvalid: "Formato non valido",
+      usernameUnknown: "Impossibile verificare adesso: lo controlliamo all'invio",
+      password: "Password",
+      passwordRepeat: "Ripeti la password",
+      passwordHint: "Almeno 8 caratteri.",
+      showPassword: "Mostra la password",
+      hidePassword: "Nascondi la password",
+      birthDate: "Data di nascita",
+      joinedAt: "Iscritto in palestra dal",
+      experienced: "Hai già praticato BJJ?",
+      experiencedYes: "Sì",
+      experiencedNo: "No, è la prima volta",
+      beginnerNote: "Partirai da cintura bianca, 0 tacche.",
+      belt: "Cintura attuale",
+      select: "Seleziona…",
+      stripes: "Tacche",
+      rankSince: "Data della cintura attuale (se la ricordi)",
+      stripeSince: "Data dell'ultima tacca (se la ricordi)",
+      datesHint: "Se non ricordi una data lasciala vuota: lo staff potrà correggerla.",
+      privacyConsent: "Ho letto l'informativa sulla privacy",
+      privacyLink: "Leggi l'informativa",
+      submit: "Invia la richiesta",
+      sending: "Invio…",
+    },
+    errors: {
+      nameRequired: "Inserisci nome e cognome.",
+      emailInvalid: "Inserisci un indirizzo email valido.",
+      usernameInvalid:
+        "Lo username deve avere da 3 a 30 caratteri: lettere minuscole, numeri, punto, trattino, trattino basso.",
+      usernameTaken: "Questo username è già in uso: scegline un altro.",
+      passwordTooShort: "La password deve avere almeno 8 caratteri.",
+      passwordMismatch: "Le due password non coincidono.",
+      passwordWeak: "La password non rispetta i requisiti di sicurezza: scegline una più lunga o più varia.",
+      birthDateInvalid: "Inserisci una data di nascita valida, nel passato.",
+      joinedAtInvalid: "Inserisci la data di iscrizione in palestra.",
+      dateInvalid: "Una delle date non è valida.",
+      dateInFuture: "Le date non possono essere nel futuro.",
+      experienceRequired: "Indica se hai già praticato BJJ.",
+      beltInvalid: "Scegli la cintura.",
+      beltForAge:
+        "Questa cintura non corrisponde all'età: sotto i 16 anni si usano le cinture bambini, dai 18 quelle adulti.",
+      stripesInvalid: "Numero di tacche non valido per questa cintura.",
+      stripeBeforeBelt: "L'ultima tacca non può essere precedente alla cintura attuale.",
+      consentRequired: "Per inviare la richiesta devi confermare di aver letto l'informativa sulla privacy.",
+      captchaFailed: "Verifica di sicurezza non riuscita. Riprova.",
+      linkExpired: "Questo link di invito non è più valido. Chiedine uno nuovo alla tua palestra.",
+      failed:
+        "Non è stato possibile inviare la richiesta. Se hai già un account, accedi; altrimenti riprova più tardi.",
+    },
   },
 
   dashboard: {
