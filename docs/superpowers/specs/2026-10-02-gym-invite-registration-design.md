@@ -33,7 +33,7 @@ Migration `supabase/migrations/20261002000000_gym_invite_registration.sql`, repl
 - Table `registration_request`:
   `id uuid pk`, `gym_id not null references gym on delete cascade`,
   `auth_user_id uuid not null unique references auth.users on delete cascade`,
-  `full_name`, `email`, `username` (wanted, not reserved), `birth_date`, `joined_at`,
+  `full_name`, `email`, `username not null` (reserved), `birth_date`, `joined_at`,
   `current_belt`, `current_stripes`, `rank_since`, `stripe_since`, `created_at default now()`.
   Same check constraints as `person` for belt/stripes/username format where they exist.
 - `gym_scope` trigger + restrictive `"gym isolation"` policy, like every domain table.
@@ -45,9 +45,23 @@ Migration `supabase/migrations/20261002000000_gym_invite_registration.sql`, repl
 - `supabase/tests/tenant-isolation.sql` gets a check for `registration_request` (another gym's requests are
   invisible and undeletable; a student sees none).
 
-The username is **not** reserved at signup. It is claimed at approval with `claimUsername()` (first free of
-`x`, `x2`, …), so it lives only in `person.username` and the public form never reveals whether a username exists.
-While pending, the athlete signs in with the email.
+### Username reserved at signup
+
+The athlete picks a username checked live, and can sign in with it while pending. Uniqueness therefore spans
+two tables, `person.username` and `registration_request.username`:
+
+- `unique` index on `registration_request.username`, plus trigger `username_cross_unique` on both tables:
+  takes `pg_advisory_xact_lock(hashtext(username))` and refuses (`23505`) a username present in the other table,
+  **except the same account** (`request.auth_user_id = person.auth_user_id`) so approval can move it across.
+  The existing `person` partial unique index stays.
+- `username_available(p_username text) returns boolean`, `security definer`, `service_role` only: false if the
+  username is in either table.
+- `login_email_for_username()` is redefined in this migration to look in `registration_request` too
+  (still one statement, a `union all ... limit 1`), so a pending account signs in with its username and lands on `/pending`.
+
+**Trade-off accepted by the user:** the login hides whether a username exists, the live check reveals it. Kept
+small: the check answers only with a valid invite token (server action, token re-resolved on every call), never
+as a public endpoint; login brute force stays behind Turnstile.
 
 ## Flow
 
@@ -62,7 +76,9 @@ Public route (not in `PROTECTED_PREFIXES`; signed-in users are redirected to `/d
 Server page resolves the token with `gym_for_invite()`; unknown, regenerated or suspended → `notFound()`.
 Shows the gym name. Fields:
 
-- full name*, email*, username* (pre-filled from the name with `NameUsernameFields`), password*, repeat password*,
+- full name*, email*, username* (pre-filled from the name with `NameUsernameFields`; availability shown live,
+  "available" / "already taken", after a 400 ms pause via server action `checkUsername(token, username)`; format
+  errors shown before asking), password*, repeat password*,
   birth date*, gym join date*
 - "Have you trained BJJ before?" yes/no*. Yes reveals: belt* (Belt graphic selector, ladder by age),
   stripe*, belt date, last stripe date (both "if you remember"). No: hint "white belt, 0 stripes"
@@ -81,7 +97,9 @@ Native date inputs; the reveal is a small Client Component, the rest server-rend
 4. `admin.auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { pending_gym_id } })`.
    No `gym_id`, so the auth trigger creates no person. Duplicate email or weak password → **generic** error
    (anti-enumeration), except password-policy errors, which reveal nothing and are shown.
-5. Insert `registration_request` with the service role. On failure, delete the account just created.
+5. Insert `registration_request` with the service role. On failure, delete the account just created. A `23505`
+   on the username (taken between the live check and submit) → "username already taken", form kept; any other
+   failure → generic error.
 6. Redirect to `/login?registered=1` with a "request sent, sign in to follow it" message. **No automatic
    sign-in**: login requires a Turnstile token checked by Supabase, and the form's token was already redeemed in step 1.
 
@@ -108,11 +126,12 @@ overwrite it.
 3. Service role: write `app_metadata = { gym_id, pending_gym_id: null }` → trigger creates (or links) the person.
 4. Service role, addressed by the account and the caller's gym, as in `addPerson`: full name, birth date,
    `joined_at`, belt, stripes, `rank_since`, `stripe_since` (rank data skipped when the trigger linked an existing
-   row). `claimUsername()`. Role `student` inserted on the user's client.
+   row). `person.username` = the request's username (allowed by the same-account exception; staff do not edit it,
+   as elsewhere). Role `student` inserted on the user's client.
 5. Delete the request with `.select("id")`; zero rows = someone else acted first → report it.
 6. On failure after step 3: restore `pending_gym_id`, remove `gym_id` so nothing is half-done; the person row the
    trigger created is deleted with the service role.
-7. Redirect with `?ok=` naming the person and the final username.
+7. Redirect with `?ok=` naming the person.
 
 **Reject** (`rejectRegistration`): confirmed; request read through the user's client, then
 `admin.auth.admin.deleteUser(auth_user_id)` (cascade removes the request). Refused if the account has a `gym_id`
@@ -137,8 +156,9 @@ All strings in en / it / pt-BR; URL paths English (`/join`, `/pending`, `/member
 ## Testing
 
 - Vitest: `utils/registration.ts`.
+- Isolation/replay: username cross-table uniqueness (request vs person, same-account move allowed), `username_available()` and `login_email_for_username()` not executable by anon/authenticated.
 - `bash supabase/tests/replay.sh --isolation` after the migration (replay twice).
-- Manual in the running app: copy link, register (with and without experience), sign in while pending, approve
+- Manual in the running app: copy link, register (with and without experience), live username check, sign in while pending with username and with email, approve
   with a correction, reject, regenerate token (old link 404), suspended gym (link 404), duplicate email (generic error).
 
 ## Out of scope
