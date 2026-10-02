@@ -347,7 +347,6 @@ export const ptBR: Dictionary = {
     approved: (name: string) => `${name} agora está no Registro.`,
     rejected: (name: string) => `Solicitação de ${name} recusada.`,
     alreadyHandled: "Esta solicitação não está mais pendente.",
-    emailTaken: "Não foi possível usar este e-mail: ele pode já pertencer a outra conta.",
     failed: "Operação não concluída. Tente novamente.",
   },
 

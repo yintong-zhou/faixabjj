@@ -344,7 +344,6 @@ export const en: Dictionary = {
     approved: (name: string) => `${name} is now in the Registry.`,
     rejected: (name: string) => `${name}'s request rejected.`,
     alreadyHandled: "This request is no longer pending.",
-    emailTaken: "This email could not be used: it may already belong to another account.",
     failed: "Operation failed. Try again.",
   },
 

@@ -13,15 +13,21 @@ import { requireGymSettings } from "@/utils/supabase/gym";
 import { activeRoles } from "@/utils/supabase/profile";
 import { requireUserManager } from "@/utils/supabase/require-admin";
 
-import { linkedPersonFor } from "./linked-person";
-
 const PATH = "/members/requests";
 
 function back(params: Record<string, string>): never {
   redirect(`${PATH}?${new URLSearchParams(params).toString()}`);
 }
 
-type RequestRow = { id: string; auth_user_id: string; gym_id: string; email: string; username: string; full_name: string };
+type RequestRow = {
+  id: string;
+  auth_user_id: string;
+  gym_id: string;
+  email: string;
+  username: string;
+  full_name: string;
+  created_at: string;
+};
 
 // Read through the user's client: RLS answers only for user managers, only
 // inside their gym — that is the proof every service-role call below rests on.
@@ -29,7 +35,7 @@ async function requestInMyGym(supabase: SupabaseClient, id: string): Promise<Req
   if (!id) return null;
   const { data, error } = await supabase
     .from("registration_request")
-    .select("id, auth_user_id, gym_id, email, username, full_name")
+    .select("id, auth_user_id, gym_id, email, username, full_name, created_at")
     .eq("id", id)
     .maybeSingle();
   if (error) logDbError("requests", "requestInMyGym", error);
@@ -70,16 +76,31 @@ export async function approveRegistration(formData: FormData) {
     back({ error: t.msg.adminClientMissing });
   }
 
-  // Before the gym is assigned: afterwards the row is no longer account-less.
-  const linked = await linkedPersonFor(supabase, r.email);
   const uid = request.auth_user_id;
+
+  // An account that already has a gym was approved meanwhile (double click,
+  // another manager, a retry): refuse before anything is written, so a repeat
+  // can never touch the profile the first approval produced.
+  const { data: existing, error: existingError } = await admin.auth.admin.getUserById(uid);
+  if (existingError || !existing?.user) {
+    logDbError("requests", "approve:getUserById", {
+      code: existingError?.code ?? "no-user",
+      message: existingError?.message ?? "no user returned",
+    });
+    back({ error: t.requests.failed });
+  }
+  if ((existing.user.app_metadata as { gym_id?: string | null }).gym_id) {
+    back({ error: t.requests.alreadyHandled });
+  }
 
   // First, so a taken address stops everything while nothing has changed yet.
   if (r.email !== request.email) {
     const { error } = await admin.auth.admin.updateUserById(uid, { email: r.email, email_confirm: true });
     if (error) {
+      // Generic on screen: a specific message would tell the gym's staff whether
+      // an address has an account anywhere on the platform.
       logDbError("requests", "approve:email", { code: error.code ?? null, message: error.message });
-      back({ error: t.requests.emailTaken });
+      back({ error: t.requests.failed });
     }
   }
 
@@ -91,21 +112,29 @@ export async function approveRegistration(formData: FormData) {
     back({ error: t.requests.failed });
   }
 
+  // Set once the trigger has acted: the row it linked (an older, account-less
+  // member) with the username it had, or null when it created the row itself.
+  let linked: { previousUsername: string | null } | null = null;
+
   // Puts the account back as pending: gym out of app_metadata first (the
   // trigger then does nothing), then the profile it created is removed, or the
-  // existing row it linked is unlinked again.
+  // existing row it linked is unlinked again. One update for the unlink: the
+  // username goes back with it, or the request that holds it would collide.
   async function undo(personId: string | null) {
     await admin.auth.admin.updateUserById(uid, { app_metadata: { gym_id: null, pending_gym_id: gym.id } });
     if (!personId) return;
     const { error } = linked
-      ? await admin.from("person").update({ auth_user_id: null }).eq("id", personId)
+      ? await admin
+          .from("person")
+          .update({ auth_user_id: null, username: linked.previousUsername })
+          .eq("id", personId)
       : await admin.from("person").delete().eq("id", personId);
     if (error) logDbError("requests", "approve:undo", error);
   }
 
   const { data: person, error: personError } = await admin
     .from("person")
-    .select("id")
+    .select("id, created_at, username")
     .eq("auth_user_id", uid)
     .eq("gym_id", gym.id)
     .maybeSingle();
@@ -114,7 +143,14 @@ export async function approveRegistration(formData: FormData) {
     await undo(null);
     back({ error: t.requests.failed });
   }
-  const personId = (person as { id: string }).id;
+  const found = person as { id: string; created_at: string; username: string | null };
+  const personId = found.id;
+  // The row existed before the request: the trigger linked it instead of
+  // creating one. Decided from the row itself, after the trigger, so a repeat
+  // can never mistake a member's profile for a fresh one.
+  if (new Date(found.created_at) < new Date(request.created_at)) {
+    linked = { previousUsername: found.username };
+  }
 
   // A linked existing row keeps its own grade and dates (the warning on the
   // page says so); it only gains the username the athlete chose.

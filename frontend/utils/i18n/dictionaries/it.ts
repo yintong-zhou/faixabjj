@@ -360,7 +360,6 @@ export const it = {
     approved: (name: string) => `${name} è ora nel Registro.`,
     rejected: (name: string) => `Richiesta di ${name} rifiutata.`,
     alreadyHandled: "Questa richiesta non è più in attesa.",
-    emailTaken: "Non è stato possibile usare questa email: potrebbe appartenere già a un altro account.",
     failed: "Operazione non riuscita. Riprova.",
   },
 

@@ -32,7 +32,3 @@ export function linkedPersonIn(
   const wanted = email.toLowerCase();
   return people.find((p) => p.email.toLowerCase() === wanted) ?? null;
 }
-
-export async function linkedPersonFor(supabase: SupabaseClient, email: string): Promise<LinkedPerson | null> {
-  return linkedPersonIn(await accountlessPeople(supabase), email);
-}
