@@ -273,6 +273,12 @@ export const it = {
     noGymBody: "Questo account non appartiene a nessuna palestra, quindi non c'è nulla da mostrare. Per informazioni rivolgiti a chi gestisce la tua palestra.",
   },
 
+  pending: {
+    title: "Richiesta in attesa",
+    body: "La tua richiesta di iscrizione è stata inviata. Lo staff della palestra deve approvarla: appena lo farà potrai usare l'app con questo account.",
+    checkAgain: "Verifica di nuovo",
+  },
+
   dashboard: {
     title: "Dashboard",
     staffLead:

@@ -261,6 +261,12 @@ export const ptBR: Dictionary = {
     noGymBody: "Esta conta não pertence a nenhuma academia, por isso não há nada para mostrar. Para informações, fale com quem administra a sua academia.",
   },
 
+  pending: {
+    title: "Solicitação pendente",
+    body: "Sua solicitação de inscrição foi enviada. A equipe da academia precisa aprová-la: assim que isso acontecer, você poderá usar o app com esta conta.",
+    checkAgain: "Verificar novamente",
+  },
+
   dashboard: {
     title: "Painel",
     staffLead:

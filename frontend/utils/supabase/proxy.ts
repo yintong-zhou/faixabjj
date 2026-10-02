@@ -17,6 +17,7 @@ const PROTECTED_PREFIXES = [
   "/gyms",
   "/check-in",
   "/gym",
+  "/pending",
 ];
 
 const PASSWORD_CHANGE_PATH = "/change-password";
@@ -56,7 +57,7 @@ export const updateSession = async (request: NextRequest) => {
   // and holding it hostage to a password change buys nothing — and so does the
   // page telling a suspended gym's members why they cannot get in.
   const appMetadata = claimsData?.claims?.app_metadata as
-    | { must_change_password?: boolean }
+    | { must_change_password?: boolean; pending_gym_id?: string | null; gym_id?: string | null }
     | undefined;
 
   if (
@@ -69,6 +70,23 @@ export const updateSession = async (request: NextRequest) => {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = PASSWORD_CHANGE_PATH;
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  // An account that signed up through a gym's invite link and is not approved
+  // yet has one page: the status of its request. Signing out and the privacy
+  // notice stay reachable for the same reasons as above.
+  if (
+    isLoggedIn &&
+    appMetadata?.pending_gym_id &&
+    !appMetadata?.gym_id &&
+    pathname !== "/pending" &&
+    pathname !== "/privacy" &&
+    !pathname.startsWith("/auth/")
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/pending";
     url.search = "";
     return NextResponse.redirect(url);
   }

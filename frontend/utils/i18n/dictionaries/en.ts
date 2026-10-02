@@ -259,6 +259,12 @@ export const en: Dictionary = {
     noGymBody: "This account does not belong to any gym, so there is nothing to show. For information, ask whoever runs your gym.",
   },
 
+  pending: {
+    title: "Request pending",
+    body: "Your registration request has been sent. The gym's staff has to approve it: as soon as they do, you can use the app with this account.",
+    checkAgain: "Check again",
+  },
+
   dashboard: {
     title: "Dashboard",
     staffLead:
