@@ -30,6 +30,7 @@ Several objects are defined in more than one migration; only the **last one run*
 - `person_hours`: `20260910000000`, `20260912000000`
 - `guard_person_auth_link()`: `20260911000000`, `20260911120000`, `20260911200000`, `20260911220000`, `20260927000000`, `20260930000000` (last)
 - `record_promotion()`: `20260918130000`, `20260919110000`, `20260927000000` (last — re-pasting an earlier one drops the marker, and every promotion then fails)
+- `login_email_for_username()`: `20260930010000`, `20261002000000` (last)
 - `gym_timezone()`: was a constant, redefined in `20260925010000` to read the caller's gym; keeps its zero-argument signature
 - policy `"members can check themselves in"`: created by `20260912010000`, dropped by `20260926010000`; re-pasting `20260912010000` alone silently restores the direct-insert bypass of `check_in()`
 
