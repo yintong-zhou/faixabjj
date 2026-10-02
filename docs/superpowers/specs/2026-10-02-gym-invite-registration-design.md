@@ -28,8 +28,10 @@ CLAUDE.md, `docs/claude/auth-and-access.md` and the memory `faixabjj-account-cre
 
 Migration `supabase/migrations/20261002000000_gym_invite_registration.sql`, replay-safe:
 
-- `gym.invite_token text unique` (`add column if not exists`), filled with a random value
-  (`encode(extensions.gen_random_bytes(24), 'base64url')`-style, URL-safe) for gyms that have none.
+- Table `gym_invite`: `gym_id uuid primary key references gym on delete cascade`, `token text not null unique`,
+  `created_at`. **Not a column on `gym`**: every member reads their own gym row, so a student would see the link.
+  RLS: `select` for `can_manage_users()` only, no write policy; `gym_scope` trigger + `"gym isolation"` policy.
+  No backfill: a gym has no link until a manager generates one.
 - Table `registration_request`:
   `id uuid pk`, `gym_id not null references gym on delete cascade`,
   `auth_user_id uuid not null unique references auth.users on delete cascade`,
@@ -40,8 +42,8 @@ Migration `supabase/migrations/20261002000000_gym_invite_registration.sql`, repl
 - RLS: `select` and `delete` for `can_manage_users()`; **no insert or update policy** (only the service role writes).
 - `gym_for_invite(p_token text) returns uuid`, `security definer`, `execute` granted to `service_role` only:
   the gym id if the token matches an **active** gym, else null.
-- `regenerate_invite_token()`, `security definer`: own gym only, `can_manage_users()` re-checked, `42501` otherwise
-  (the manager has no update on `gym`, same pattern as `set_gym_location()`). Returns the new token.
+- `regenerate_invite_token() returns text`, `security definer`: own gym only, `can_manage_users()` re-checked,
+  `42501` otherwise; upserts the gym's row with a fresh token (two `gen_random_uuid()` without dashes, 64 hex chars).
 - `supabase/tests/tenant-isolation.sql` gets a check for `registration_request` (another gym's requests are
   invisible and undeletable; a student sees none).
 
@@ -68,7 +70,8 @@ as a public endpoint; login brute force stays behind Turnstile.
 ### 1. The link: `/gym`
 
 Next to the check-in QR, for `requireUserManager()`: the link `SITE_URL/join/<token>` with click-to-copy
-(`components/copy-password.tsx` / `use-copy.ts` already do clipboard) and a confirmed "Regenerate" button.
+(`CopyCredentials` from `components/copy-password.tsx`) and a confirmed "Regenerate" button; with no link yet, a
+"Generate link" button (same action).
 
 ### 2. Public form: `/join/[token]`
 
@@ -105,9 +108,11 @@ Native date inputs; the reveal is a small Client Component, the rest server-rend
 
 ### 4. Pending: `/pending`
 
-`requireAdmin()`/`requireSession()` and `proxy.ts` send an account whose `app_metadata` has `pending_gym_id`
-and no `gym_id` to `/pending` (exempt: `/auth/*`, `/privacy`, `/pending`). The page says the request was sent to
-the gym (name shown) and offers sign-out. The JWT has no gym, so `current_gym_id()` is null and RLS returns
+`requireAdmin()` and `proxy.ts` send an account whose `app_metadata` has `pending_gym_id` and no `gym_id` to
+`/pending` (exempt: `/auth/*`, `/privacy`, `/pending`). The page says the request is waiting for the gym's staff
+(no gym name: the account cannot read its gym yet) and offers "Check again" and sign-out. "Check again" is a server
+action that calls `refreshSession()` (the JWT still carries `pending_gym_id` after approval until it is refreshed)
+and redirects to `/dashboard`, which sends a still-pending account straight back. The JWT has no gym, so `current_gym_id()` is null and RLS returns
 nothing; this is fail-closed even without the redirect.
 
 ### 5. Approval: `/members/requests`
@@ -120,7 +125,7 @@ with every field. If an **account-less person with the same email** exists in th
 will link the account to that record (the `link_invited_person` trigger does it) and the form's rank data will not
 overwrite it.
 
-**Approve** (`approveRegistration`, `app/members/actions.ts`):
+**Approve** (`approveRegistration`, `app/members/requests/actions.ts`, kept out of the 900-line `app/members/actions.ts`):
 1. `requireUserManager()`; read the request through the user's client (RLS = proof it is in the caller's gym).
 2. Validate the edited values with `parseRegistration()` (approval mode: no password fields).
 3. Service role: write `app_metadata = { gym_id, pending_gym_id: null }` → trigger creates (or links) the person.
@@ -128,7 +133,8 @@ overwrite it.
    `joined_at`, belt, stripes, `rank_since`, `stripe_since` (rank data skipped when the trigger linked an existing
    row). `person.username` = the request's username (allowed by the same-account exception; staff do not edit it,
    as elsewhere). Role `student` inserted on the user's client.
-5. Delete the request with `.select("id")`; zero rows = someone else acted first → report it.
+5. Delete the request (service role, the row was proven ours in step 1). Every step is idempotent, so two
+   managers approving at once converge on the same state instead of one of them failing.
 6. On failure after step 3: restore `pending_gym_id`, remove `gym_id` so nothing is half-done; the person row the
    trigger created is deleted with the service role.
 7. Redirect with `?ok=` naming the person.
@@ -139,13 +145,16 @@ or is a platform admin.
 
 Both revalidate `/members` and `/members/requests`.
 
+**Deleting a gym** (`deleteGym`) also reads the accounts of its pending requests before the delete (they have no
+person row, and the cascade erases the requests) and deletes them with the rest.
+
 ## Validation (`parseRegistration`)
 
 - Required fields present; email shape; username via `isValidUsername()`; passwords equal (signup mode).
 - No date in the future; `stripe_since >= rank_since`; `rank_since` may precede `joined_at` (belt from another academy).
 - No experience → `white`, `0`, `rank_since = stripe_since = joined_at`.
-- Missing belt/stripe dates → `joined_at`.
-- Belt must be on the ladder for the age at `today` (`ADULT_BELTS` / `KID_BELTS`); stripes `0..4`, kid belts `0..3`.
+- Missing belt date → `joined_at`; missing last stripe date, or 0 stripes → the belt date (so `stripe_since >= rank_since` always holds).
+- Belt must fit the age at `today`: under 16 `KID_BELTS` only, 18+ `ADULT_BELTS` only, 16–17 either; stripes `0..4`, kid belts `0..3`.
 
 ## UI rules that apply
 
