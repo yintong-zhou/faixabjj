@@ -310,7 +310,6 @@ export const en: Dictionary = {
       usernameTaken: "This username is already taken: pick another one.",
       passwordTooShort: "The password must be at least 8 characters.",
       passwordMismatch: "The two passwords do not match.",
-      passwordWeak: "The password does not meet the security requirements: choose a longer or more varied one.",
       birthDateInvalid: "Enter a valid date of birth, in the past.",
       joinedAtInvalid: "Enter the date you joined the gym.",
       dateInvalid: "One of the dates is not valid.",
@@ -340,7 +339,7 @@ export const en: Dictionary = {
     rejectConfirm: (name: string) =>
       `Reject ${name}'s request? The account created with the request will be deleted.`,
     linkWarning: (name: string) =>
-      `This email matches ${name}, already in the Registry without an account: approving links the account to that record, which keeps its current belt and dates.`,
+      `This email matches ${name}, already in the Registry without an account: approving links the account to that record, which keeps its current belt and dates. The address was not verified: before approving, confirm in person that it is the same person.`,
     approved: (name: string) => `${name} is now in the Registry.`,
     rejected: (name: string) => `${name}'s request rejected.`,
     alreadyHandled: "This request is no longer pending.",

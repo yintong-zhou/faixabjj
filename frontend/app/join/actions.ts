@@ -88,9 +88,10 @@ export async function register(token: string, prev: JoinState, formData: FormDat
       code: authError?.code ?? "no-user",
       message: authError?.message ?? "no user returned",
     });
-    // A taken email gets the generic message: saying so would tell anyone with
-    // the link who has an account. A weak password reveals nothing.
-    return fail(authError?.code === "weak_password" ? t.join.errors.passwordWeak : t.join.errors.failed);
+    // Always the generic message, also for a weak password: if the duplicate
+    // email is checked before the password's strength, a distinct reply would
+    // tell anyone with the link which addresses have an account.
+    return fail(t.join.errors.failed);
   }
 
   const { error: insertError } = await admin.from("registration_request").insert({

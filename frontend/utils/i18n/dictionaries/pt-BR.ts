@@ -312,7 +312,6 @@ export const ptBR: Dictionary = {
       usernameTaken: "Este nome de usuário já está em uso: escolha outro.",
       passwordTooShort: "A senha deve ter pelo menos 8 caracteres.",
       passwordMismatch: "As duas senhas não coincidem.",
-      passwordWeak: "A senha não atende aos requisitos de segurança: escolha uma mais longa ou variada.",
       birthDateInvalid: "Informe uma data de nascimento válida, no passado.",
       joinedAtInvalid: "Informe a data de inscrição na academia.",
       dateInvalid: "Uma das datas não é válida.",
@@ -343,7 +342,7 @@ export const ptBR: Dictionary = {
     rejectConfirm: (name: string) =>
       `Recusar a solicitação de ${name}? A conta criada com a solicitação será excluída.`,
     linkWarning: (name: string) =>
-      `Este e-mail corresponde a ${name}, já no Registro sem conta: ao aprovar, a conta será vinculada a esse cadastro, que mantém a faixa e as datas atuais.`,
+      `Este e-mail corresponde a ${name}, já no Registro sem conta: ao aprovar, a conta será vinculada a esse cadastro, que mantém a faixa e as datas atuais. O endereço não foi verificado: antes de aprovar, confirme pessoalmente que se trata da mesma pessoa.`,
     approved: (name: string) => `${name} agora está no Registro.`,
     rejected: (name: string) => `Solicitação de ${name} recusada.`,
     alreadyHandled: "Esta solicitação não está mais pendente.",

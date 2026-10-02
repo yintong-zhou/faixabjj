@@ -325,7 +325,6 @@ export const it = {
       usernameTaken: "Questo username è già in uso: scegline un altro.",
       passwordTooShort: "La password deve avere almeno 8 caratteri.",
       passwordMismatch: "Le due password non coincidono.",
-      passwordWeak: "La password non rispetta i requisiti di sicurezza: scegline una più lunga o più varia.",
       birthDateInvalid: "Inserisci una data di nascita valida, nel passato.",
       joinedAtInvalid: "Inserisci la data di iscrizione in palestra.",
       dateInvalid: "Una delle date non è valida.",
@@ -356,7 +355,7 @@ export const it = {
     rejectConfirm: (name: string) =>
       `Rifiutare la richiesta di ${name}? L'account creato con la richiesta verrà eliminato.`,
     linkWarning: (name: string) =>
-      `Questa email corrisponde a ${name}, già nel Registro senza account: approvando, l'account verrà collegato a quella scheda, che conserva cintura e date attuali.`,
+      `Questa email corrisponde a ${name}, già nel Registro senza account: approvando, l'account verrà collegato a quella scheda, che conserva cintura e date attuali. L'indirizzo non è stato verificato: prima di approvare, conferma di persona che si tratta della stessa persona.`,
     approved: (name: string) => `${name} è ora nel Registro.`,
     rejected: (name: string) => `Richiesta di ${name} rifiutata.`,
     alreadyHandled: "Questa richiesta non è più in attesa.",

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Turnstile } from "@/components/turnstile";
 import { getDictionary } from "@/utils/i18n/server";
+import { logDbError } from "@/utils/log";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { gymForInvite } from "@/utils/supabase/invite";
 import { beltLabels } from "@/utils/supabase/profile";
@@ -31,7 +32,8 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
   }
   const gymId = await gymForInvite(admin, token);
   if (!gymId) notFound();
-  const { data: gym } = await admin.from("gym").select("name").eq("id", gymId).single();
+  const { data: gym, error: gymError } = await admin.from("gym").select("name").eq("id", gymId).single();
+  if (gymError) logDbError("join", "page:gym", gymError);
   if (!gym) notFound();
 
   return (

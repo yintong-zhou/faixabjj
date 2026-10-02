@@ -24,6 +24,7 @@ export async function verifyTurnstile(token: string | undefined): Promise<boolea
     const response = await fetch(SITEVERIFY, {
       method: "POST",
       body: new URLSearchParams({ secret, response: token }),
+      signal: AbortSignal.timeout(5000),
     });
     const body = (await response.json()) as { success?: boolean; "error-codes"?: string[] };
     if (body.success !== true) {
