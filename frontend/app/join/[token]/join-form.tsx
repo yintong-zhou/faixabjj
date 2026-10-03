@@ -234,7 +234,7 @@ function Fields({
       ) : null}
 
       <label className="flex items-start gap-2 text-sm sm:col-span-2">
-        <input type="checkbox" name="privacy" required className="mt-0.5" />
+        <input type="checkbox" name="privacy" required defaultChecked={values.privacy === "on"} className="mt-0.5" />
         <span>
           {labels.privacyConsent} —{" "}
           <Link href="/privacy" target="_blank" className="font-medium text-accent hover:opacity-80">

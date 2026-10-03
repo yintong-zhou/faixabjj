@@ -19,7 +19,7 @@ export type UsernameStatus = "available" | "taken" | "invalid" | "error";
 // action runs). Never the passwords.
 const KEPT = [
   "full_name", "email", "username", "birth_date", "joined_at", "experienced",
-  "current_belt", "current_stripes", "rank_since", "stripe_since",
+  "current_belt", "current_stripes", "rank_since", "stripe_since", "privacy",
 ] as const;
 
 // Self-registration through a gym's invite link. Creates the account at once —
