@@ -8,7 +8,7 @@ import {
   TrendingUpIcon,
 } from "@/components/icons";
 import { daysSince, formatDate, formatDays } from "@/utils/dates";
-import { hoursFor } from "@/utils/hours";
+import { estimateCutoff, hoursFor } from "@/utils/hours";
 import type { Profile } from "@/utils/supabase/profile";
 import type { GymSettings } from "@/utils/supabase/gym";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
@@ -97,7 +97,11 @@ export async function MemberDashboard({
   ).length;
   const lastAttended = attended[0] ?? null;
 
-  const hours = hoursFor(profile.joined_at, hoursRow?.total_hours, { ...gym, today });
+  const hours = hoursFor(profile.joined_at, hoursRow?.total_hours, {
+    ...gym,
+    today,
+    trackingStartedOn: estimateCutoff(gym.trackingStartedOn, profile.created_at, gym.timezone),
+  });
   const perWeek = recentCount / (RECENT_DAYS / 7);
 
   return (

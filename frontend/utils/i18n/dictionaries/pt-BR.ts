@@ -580,7 +580,7 @@ export const ptBR: Dictionary = {
     next: "Próxima",
 
     noAccount: "sem conta",
-    trainingFor: (days: string) => `${days} de BJJ`,
+    trainingFor: (days: string) => `${days} na academia`,
     atCurrentBelt: (days: string) => `${days} na faixa atual`,
     noActiveRole: "Nenhuma função ativa",
     memberSince: " · desde ",
@@ -623,7 +623,7 @@ export const ptBR: Dictionary = {
     totalHours: "Horas totais",
     recordedHours: "Horas registradas",
     openingHours: "Horas iniciais (estimativa)",
-    trainingTime: "Treina há",
+    trainingTime: "Na academia há",
     beltTime: "Nesta faixa há",
     stripeTime: "Desde o último grau",
     openingBalanceExplained: (date: string, perWeek: number) =>

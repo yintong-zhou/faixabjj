@@ -19,6 +19,7 @@ import {
   type SeriesSession,
 } from "@/utils/attendance-series";
 import { formatDate } from "@/utils/dates";
+import { estimateCutoff } from "@/utils/hours";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLES } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
@@ -93,6 +94,7 @@ export async function StaffDashboard({
     { data: todayRows, error: todayError },
     { data: rankRows, error: rankError },
     { data: criteriaRows, error: criteriaError },
+    { data: createdRows, error: createdError },
   ] = await Promise.all([
       supabase
         .from("member_overview")
@@ -119,6 +121,8 @@ export async function StaffDashboard({
       supabase
         .from("promotion_criteria")
         .select("belt, stripe, min_hours, min_time_at_rank_days, min_age_years"),
+      // The end of each person's estimate, as on the Registro.
+      supabase.from("person").select("id, created_at"),
     ]);
 
   // A failed query and an empty gym render identically here — every card just
@@ -131,6 +135,7 @@ export async function StaffDashboard({
     ["session_overview:today", todayError],
     ["person_rank_hours", rankError],
     ["promotion_criteria", criteriaError],
+    ["person:created_at", createdError],
   ] as const) {
     if (error) logDbError("dashboard", where, error);
   }
@@ -152,6 +157,9 @@ export async function StaffDashboard({
   const rankById = new Map(
     ((rankRows ?? []) as RankHours[]).map((row) => [row.person_id, row]),
   );
+  const createdById = new Map(
+    ((createdRows ?? []) as { id: string; created_at: string }[]).map((row) => [row.id, row.created_at]),
+  );
   const eligibleCount = active.filter((m) => {
     const counted = rankById.get(m.id);
     const status = promotionStatus(
@@ -166,7 +174,11 @@ export async function StaffDashboard({
         lessons_since_stripe: Number(counted?.lessons_since_stripe ?? 0),
       },
       criteria,
-      { ...gym, today },
+      {
+        ...gym,
+        today,
+        trackingStartedOn: estimateCutoff(gym.trackingStartedOn, createdById.get(m.id), gym.timezone),
+      },
     );
     return status.eligible;
   }).length;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { clockHours, estimatedHours, hoursFor } from "./hours";
+import { clockHours, estimateCutoff, estimatedHours, hoursFor } from "./hours";
 
 // ASD Little Gym's figures, and a fixed "today", so the tests do not drift.
 const ASD_LITTLE_GYM = { trackingStartedOn: "2026-09-13", lessonsPerWeek: 3, sessionLengthHours: 1 };
@@ -117,5 +117,27 @@ describe("per-gym settings", () => {
 
   it("converts lessons with the gym's lesson length", () => {
     expect(clockHours(10, { sessionLengthHours: 1.5 })).toBe(15);
+  });
+});
+
+describe("estimateCutoff", () => {
+  it("is the go-live for a record created before it", () => {
+    expect(estimateCutoff("2026-09-13", "2026-09-01T10:00:00Z", "Europe/Rome")).toBe("2026-09-13");
+  });
+
+  it("is the day the record was created when that came later", () => {
+    // Approved on 20/10: joined in May, the estimate runs to the approval.
+    const cutoff = estimateCutoff("2026-09-13", "2026-10-20T08:00:00Z", "Europe/Rome");
+    expect(cutoff).toBe("2026-10-20");
+    expect(estimatedHours("2026-05-01", { ...opts, trackingStartedOn: cutoff })).toBe(73.7);
+  });
+
+  it("reads the creation day in the gym's timezone", () => {
+    // 23:30 UTC is already the next day in Rome.
+    expect(estimateCutoff("2026-09-13", "2026-10-20T23:30:00Z", "Europe/Rome")).toBe("2026-10-21");
+  });
+
+  it("falls back to the go-live without a creation date", () => {
+    expect(estimateCutoff("2026-09-13", null, "Europe/Rome")).toBe("2026-09-13");
   });
 });

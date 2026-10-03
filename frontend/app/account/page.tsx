@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Belt } from "@/components/belt";
 import { formatDate, todayIn } from "@/utils/dates";
 import { getDictionary } from "@/utils/i18n/server";
-import { formatHours, hoursFor } from "@/utils/hours";
+import { estimateCutoff, formatHours, hoursFor } from "@/utils/hours";
 import { isPortalOnly } from "@/utils/members";
 import { PasswordInput } from "@/components/password-input";
 import { requireAdmin } from "@/utils/supabase/require-admin";
@@ -124,6 +124,7 @@ export default async function AccountPage({
   const training = hoursFor(profile.joined_at, hours?.total_hours, {
     ...gym,
     today: todayIn(gym.timezone),
+    trackingStartedOn: estimateCutoff(gym.trackingStartedOn, profile.created_at, gym.timezone),
   });
 
   const { data: roles } = await supabase

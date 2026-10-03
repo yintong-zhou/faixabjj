@@ -7,7 +7,7 @@ import { getDictionary } from "@/utils/i18n/server";
 import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { requireGymSettings } from "@/utils/supabase/gym";
 import { daysSince, formatDate, formatDays, todayIn } from "@/utils/dates";
-import { formatHours, hoursFor } from "@/utils/hours";
+import { estimateCutoff, formatHours, hoursFor } from "@/utils/hours";
 import { isPortalOnly, PORTAL_ONLY_ROLE } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
@@ -40,6 +40,7 @@ type Member = {
   rank_since: string;
   stripe_since: string | null;
   notes: string | null;
+  created_at: string;
 };
 
 type RoleRow = {
@@ -113,7 +114,7 @@ export default async function MemberDetailPage({
   const { data } = await supabase
     .from("person")
     .select(
-      "id, auth_user_id, full_name, username, email, phone, birth_date, joined_at, current_belt, current_stripes, rank_since, stripe_since, notes",
+      "id, auth_user_id, full_name, username, email, phone, birth_date, joined_at, current_belt, current_stripes, rank_since, stripe_since, notes, created_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -133,7 +134,14 @@ export default async function MemberDetailPage({
   // The detail page breaks the total open: on a record that decides a
   // promotion, "18 ore" is not enough — you need to know how much of it the
   // gym actually saw.
-  const training = hoursFor(member.joined_at, hours?.total_hours, { ...gym, today });
+  // The estimate runs to the go-live, or to the day this record was created if
+  // later (an invite approved after go-live): estimateCutoff() in utils/hours.
+  const hoursOptions = {
+    ...gym,
+    today,
+    trackingStartedOn: estimateCutoff(gym.trackingStartedOn, member.created_at, gym.timezone),
+  };
+  const training = hoursFor(member.joined_at, hours?.total_hours, hoursOptions);
 
   // The full history, closed assignments included — the registry is meant to
   // show that a person's role changed over time, not just what it is today.
@@ -201,7 +209,7 @@ export default async function MemberDetailPage({
       lessons_since_stripe: Number(rankHours?.lessons_since_stripe ?? 0),
     },
     criteria,
-    { ...gym, today },
+    hoursOptions,
   );
 
   const promotions = (promotionRows ?? []) as PromotionRow[];
@@ -361,7 +369,7 @@ export default async function MemberDetailPage({
           {training.isPartlyEstimated ? (
             <p className="text-xs leading-relaxed text-foreground/55">
               {t.registro.openingBalanceExplained(
-                formatDate(gym.trackingStartedOn),
+                formatDate(hoursOptions.trackingStartedOn),
                 gym.lessonsPerWeek,
               )}
             </p>

@@ -595,7 +595,7 @@ export const it = {
     next: "Successiva",
 
     noAccount: "senza account",
-    trainingFor: (days: string) => `${days} di BJJ`,
+    trainingFor: (days: string) => `${days} in palestra`,
     atCurrentBelt: (days: string) => `${days} con la cintura attuale`,
     noActiveRole: "Nessun ruolo attivo",
     memberSince: " · dal ",
@@ -638,7 +638,7 @@ export const it = {
     totalHours: "Ore totali",
     recordedHours: "Ore registrate",
     openingHours: "Ore iniziali (stima)",
-    trainingTime: "Da quanto fa BJJ",
+    trainingTime: "In palestra da",
     beltTime: "Da quanto ha questa cintura",
     stripeTime: "Dall'ultima tacca",
     openingBalanceExplained: (date: string, perWeek: number) =>

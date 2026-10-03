@@ -23,7 +23,7 @@ import {
   UserPlusIcon,
 } from "@/components/icons";
 import { daysSince, formatDate, formatDays, todayIn } from "@/utils/dates";
-import { estimateNote, formatHours, hoursFor } from "@/utils/hours";
+import { estimateCutoff, estimateNote, formatHours, hoursFor } from "@/utils/hours";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
 import { readTemporaryPassword } from "@/utils/temporary-password-flash";
@@ -163,6 +163,7 @@ export default async function RegistroPage({
     { data: activeRows, error: activeError },
     { data: rankRows, error: rankError },
     { data: criteriaRows, error: criteriaError },
+    { data: createdRows, error: createdError },
   ] = await Promise.all([
       supabase
         .from("member_overview")
@@ -181,6 +182,9 @@ export default async function RegistroPage({
         // The note is editorial, and it is read where it is edited,
         // on /members/criteria.
         .select("belt, stripe, min_hours, min_time_at_rank_days, min_age_years"),
+      // When each record was created: the end of that person's estimate
+      // (estimateCutoff in utils/hours). Not in member_overview, so read here.
+      supabase.from("person").select("id, created_at"),
     ]);
 
   // Unlike the list query below, whose error reaches the screen, these three
@@ -191,9 +195,19 @@ export default async function RegistroPage({
     ["member_overview", activeError],
     ["person_rank_hours", rankError],
     ["promotion_criteria", criteriaError],
+    ["person:created_at", createdError],
   ] as const) {
     if (error) logDbError("members", where, error);
   }
+
+  const createdById = new Map(
+    ((createdRows ?? []) as { id: string; created_at: string }[]).map((row) => [row.id, row.created_at]),
+  );
+  const hoursOptionsFor = (personId: string) => ({
+    ...gym,
+    today,
+    trackingStartedOn: estimateCutoff(gym.trackingStartedOn, createdById.get(personId), gym.timezone),
+  });
 
   // numeric/bigint columns can come back from PostgREST as strings — coerced
   // wherever criteria rows enter a page, so that a string never wins a `<`
@@ -228,7 +242,7 @@ export default async function RegistroPage({
             lessons_since_stripe: Number(counted?.lessons_since_stripe ?? 0),
           },
           criteria,
-          { ...gym, today },
+          hoursOptionsFor(m.id),
         ).eligible;
       })
       .map((m) => m.id),
@@ -565,7 +579,7 @@ export default async function RegistroPage({
           const canRestore =
             !member.auth_user_id && member.email && isAdminClientConfigured();
           const canManageAccount = Boolean(member.auth_user_id);
-          const hours = hoursFor(member.joined_at, member.total_hours, { ...gym, today });
+          const hours = hoursFor(member.joined_at, member.total_hours, hoursOptionsFor(member.id));
 
           // items-center keeps the kebab vertically centred against the row,
           // whose height is set by the details block on the left.

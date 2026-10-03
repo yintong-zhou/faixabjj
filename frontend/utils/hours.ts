@@ -17,6 +17,7 @@
 // also counting real attendance would count every week from go-live onwards
 // twice.
 
+import { todayIn } from "./dates";
 import { en } from "./i18n/dictionaries/en";
 import type { Dictionary } from "./i18n/dictionaries/it";
 
@@ -95,6 +96,28 @@ export function estimatedHours(
   // Partial weeks count pro rata rather than being rounded up: rounding up
   // would hand a free lesson to somebody who joined yesterday.
   return Math.round((days / 7) * options.lessonsPerWeek * HOURS_PER_LESSON * 10) / 10;
+}
+
+/**
+ * The last day of one person's estimate: the gym's go-live, or the day their
+ * record was created if that came later. Somebody who joined the gym before
+ * entering the app (an invite registration approved months after go-live, a
+ * member added by hand late) trained with no way of being marked present, so
+ * the estimate covers them up to that day. No hour is counted twice: nobody can
+ * have an attendance row before their record exists.
+ *
+ * Pass the result as `trackingStartedOn` in the options of hoursFor() and
+ * promotionStatus(). `createdAt` is `person.created_at`, read as a day in the
+ * gym's timezone.
+ */
+export function estimateCutoff(
+  trackingStartedOn: string,
+  createdAt: string | null | undefined,
+  timeZone: string,
+): string {
+  if (!createdAt) return trackingStartedOn;
+  const entered = todayIn(timeZone, new Date(createdAt));
+  return entered > trackingStartedOn ? entered : trackingStartedOn;
 }
 
 export function hoursFor(

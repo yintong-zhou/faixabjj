@@ -15,6 +15,7 @@
 ## Hours
 
 - **Opening balance + recorded.** `frontend/utils/hours.ts` is the single definition: before `TRACKING_STARTED_ON`, `LESSONS_PER_WEEK` (3) per week since `joined_at` (pro rata for partial weeks); from that date on, counted. The estimate is **frozen** from go-live (unit-tested).
+- **Per-person end of the estimate** (`estimateCutoff()`): the later of the gym's go-live and the day the person's record was created (`person.created_at`, gym timezone) — for an invite registration, the approval. Whoever joined the gym before entering the app could not be marked present, so the estimate covers them up to that day; no double count, since nobody has attendance before their record exists. Every caller of `hoursFor()`/`promotionStatus()` passes it as `trackingStartedOn` (Registro and staff dashboard read `person.created_at` with one extra query; `member_overview` does not carry it).
 - **`TRACKING_STARTED_ON` must be the real go-live date** — without the cutoff every week double-counts. The code clamps at today, but that's a guard.
 - One constant for everybody: it's a declared estimate, not a measurement.
 - **Every estimated total must say so**: Registro "(stima)" + `title`; member detail splits *Ore totali / registrate / stimate* with the method; `/account` same caveat. The member dashboard carries only the short hint "saldo iniziale incluso" under the total — the long explanation (`memberEstimateNote`) was removed on request; don't re-add it.

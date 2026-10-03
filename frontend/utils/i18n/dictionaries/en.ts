@@ -577,7 +577,7 @@ export const en: Dictionary = {
     next: "Next",
 
     noAccount: "no account",
-    trainingFor: (days: string) => `${days} of BJJ`,
+    trainingFor: (days: string) => `${days} at the gym`,
     atCurrentBelt: (days: string) => `${days} at the current belt`,
     noActiveRole: "No active role",
     memberSince: " · since ",
@@ -620,7 +620,7 @@ export const en: Dictionary = {
     totalHours: "Total hours",
     recordedHours: "Recorded hours",
     openingHours: "Opening hours (estimate)",
-    trainingTime: "Training for",
+    trainingTime: "At the gym for",
     beltTime: "At this belt for",
     stripeTime: "Since the last stripe",
     openingBalanceExplained: (date: string, perWeek: number) =>
