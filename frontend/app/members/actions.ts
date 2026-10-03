@@ -17,7 +17,7 @@ import { todayIn } from "@/utils/dates";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE } from "@/utils/members";
 import { requireGymSettings } from "@/utils/supabase/gym";
-import { BELT_ORDER } from "@/utils/supabase/profile";
+import { BELT_ORDER, roleLabel } from "@/utils/supabase/profile";
 
 const PATH = "/members";
 const CRITERIA_PATH = "/members/criteria";
@@ -824,6 +824,90 @@ export async function correctJoinedDate(formData: FormData) {
   // The Registro lists the join date, the time in training and the estimate.
   revalidatePath(PATH);
   detail({ ok: t.msg.joinedSaved });
+}
+
+// The roles a member can be moved between from their record. `admin` is not
+// one: it is a portal-manager grant made where the account is created, and a
+// member switched to it alone would turn portal-only and drop out of every list.
+const TEACHING_ROLES = ["student", "assistant", "instructor", "head_coach"] as const;
+
+// Moves a member to another teaching role: the open ones are closed today and
+// the new one opens today, so the history keeps both. An open `admin` is left
+// alone. Approval of an invite registration always makes a student; this is how
+// a maestro or instructor who signed up gets their real role.
+//
+// User managers only, on the user's own client: RLS lets only them write
+// assigned_role. Never on their own record — nobody grants or drops their own
+// privileges. That also guarantees the gym keeps a manager: the caller is one
+// and is not the person being changed.
+export async function changeRole(formData: FormData) {
+  const { t } = await getDictionary();
+  const { supabase, userId } = await requireUserManager(PATH);
+
+  const personId = text(formData, "person_id");
+  const role = formData.get("role") as string;
+  const detail = detailRedirect(personId, formData);
+
+  if (!personId || !TEACHING_ROLES.includes(role as (typeof TEACHING_ROLES)[number])) {
+    detail({ error: t.msg.roleFailed });
+    return;
+  }
+
+  const { data: person } = await supabase
+    .from("person")
+    .select("auth_user_id")
+    .eq("id", personId)
+    .maybeSingle();
+
+  if (!person || person.auth_user_id === userId) {
+    detail({ error: t.msg.roleFailed });
+    return;
+  }
+
+  // Already the only teaching role: nothing to close or open.
+  const { data: open } = await supabase
+    .from("assigned_role")
+    .select("role")
+    .eq("person_id", personId)
+    .is("end_date", null)
+    .neq("role", PORTAL_ONLY_ROLE);
+  const current = (open ?? []).map((r) => r.role as string);
+  if (current.length === 1 && current[0] === role) {
+    detail({ ok: t.msg.roleChanged(roleLabel(role, t)) });
+    return;
+  }
+
+  // The gym's today, as for every other date written from the Registro.
+  const today = todayIn((await requireGymSettings()).timezone);
+  const { error: closeError } = await supabase
+    .from("assigned_role")
+    .update({ end_date: today })
+    .eq("person_id", personId)
+    .is("end_date", null)
+    .neq("role", PORTAL_ONLY_ROLE);
+
+  if (closeError) {
+    logDbError("members", "changeRole:close", closeError);
+    detail({ error: t.msg.roleFailed });
+    return;
+  }
+
+  const { error: openError } = await supabase
+    .from("assigned_role")
+    .insert({ person_id: personId, role, start_date: today });
+
+  if (openError) {
+    // ponytail: two writes without a transaction; a failed insert leaves the
+    // member with no teaching role (= student) until the change is repeated.
+    logDbError("members", "changeRole:open", openError);
+    detail({ error: t.msg.roleFailed });
+    return;
+  }
+
+  revalidatePath(`/members/${personId}`);
+  // The Registro lists active roles and filters by them.
+  revalidatePath(PATH);
+  detail({ ok: t.msg.roleChanged(roleLabel(role, t)) });
 }
 
 // Tunes one row of promotion_criteria. The grade itself is never editable:

@@ -8,10 +8,10 @@ import { requireRegistryViewer } from "@/utils/supabase/require-admin";
 import { requireGymSettings } from "@/utils/supabase/gym";
 import { daysSince, formatDate, formatDays, todayIn } from "@/utils/dates";
 import { formatHours, hoursFor } from "@/utils/hours";
-import { isPortalOnly } from "@/utils/members";
+import { isPortalOnly, PORTAL_ONLY_ROLE } from "@/utils/members";
 import { promotionStatus, type Criterion } from "@/utils/promotion";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
-import { correctJoinedDate, correctRankDates, deletePerson } from "../actions";
+import { changeRole, correctJoinedDate, correctRankDates, deletePerson } from "../actions";
 import { PromotePanel } from "./promote-panel";
 import {
   AlertCircleIcon,
@@ -519,9 +519,10 @@ export default async function MemberDetailPage({
           <p className="text-sm text-foreground/60">{t.registro.noRoles}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-border">
-            {roles.map((role) => (
+            {/* Index key: a role changed twice in one day repeats role and dates. */}
+            {roles.map((role, i) => (
               <li
-                key={`${role.role}-${role.start_date}`}
+                key={i}
                 className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
               >
                 <span className="text-sm font-medium">{roleLabel(role.role, t)}</span>
@@ -537,6 +538,53 @@ export default async function MemberDetailPage({
             ))}
           </ul>
         )}
+
+        {/* User managers only, never on their own record (changeRole refuses
+            both). Not for a portal-only admin: that grant is made at creation. */}
+        {access.canManageUsers && member.auth_user_id !== userId && !portalOnly ? (
+          <details className="group rounded-xl border border-border">
+            <summary className="flex min-h-11 cursor-pointer select-none list-none items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden">
+              <PencilIcon className="h-4 w-4 shrink-0 text-accent" />
+              <span>{t.registro.changeRole}</span>
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-foreground/40 transition-transform group-open:rotate-90" />
+            </summary>
+
+            <form
+              action={changeRole}
+              className="flex flex-col gap-3 border-t border-border px-3 pb-4 pt-3 sm:flex-row sm:flex-wrap sm:items-end"
+            >
+              <input type="hidden" name="person_id" value={member.id} />
+              <input type="hidden" name="_from" value={from ?? ""} />
+
+              <select
+                name="role"
+                required
+                defaultValue={
+                  roles.find((r) => !r.end_date && r.role !== PORTAL_ONLY_ROLE)?.role ?? "student"
+                }
+                aria-label={t.registro.role}
+                className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm sm:w-44"
+              >
+                {(["student", "assistant", "instructor", "head_coach"] as const).map((value) => (
+                  <option key={value} value={value}>
+                    {roleLabel(value, t)}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="submit"
+                className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto"
+              >
+                {t.common.saveChanges}
+              </button>
+
+              <p className="text-xs leading-relaxed text-foreground/55 sm:w-full">
+                {t.registro.changeRoleNote}
+              </p>
+            </form>
+          </details>
+        ) : null}
       </section>
 
       {/* Last on the page and only once the account is gone: deleting is the

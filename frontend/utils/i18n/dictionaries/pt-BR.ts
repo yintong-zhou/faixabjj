@@ -123,6 +123,7 @@ export const ptBR: Dictionary = {
 
     showPassword: "Mostrar a senha",
     hidePassword: "Ocultar a senha",
+    registeredNotice: "Solicitação enviada. Entre com seu e-mail ou nome de usuário para acompanhar o status.",
   },
 
   reset: {
@@ -259,6 +260,93 @@ export const ptBR: Dictionary = {
     body: "O acesso a esta academia foi suspenso pela administração do portal. Os dados são mantidos e voltarão a ficar disponíveis se a academia for reativada. Para informações, fale com quem administra a sua academia.",
     noGymTitle: "Conta sem academia",
     noGymBody: "Esta conta não pertence a nenhuma academia, por isso não há nada para mostrar. Para informações, fale com quem administra a sua academia.",
+  },
+
+  pending: {
+    title: "Solicitação pendente",
+    body: "Sua solicitação de inscrição foi enviada. A equipe da academia precisa aprová-la: assim que isso acontecer, você poderá usar o app com esta conta.",
+    checkAgain: "Verificar novamente",
+  },
+
+  join: {
+    title: (gym: string) => `Inscreva-se em ${gym}`,
+    lead: "Preencha seus dados e envie a solicitação: a equipe da academia a revisa e aprova. Enquanto isso você já pode entrar, mas verá apenas o status da solicitação.",
+    form: {
+      fullName: "Nome completo",
+      email: "E-mail",
+      username: "Nome de usuário",
+      usernameHelp:
+        "De 3 a 30 caracteres: letras minúsculas, números, ponto, hífen e sublinhado. Você poderá usá-lo para entrar no lugar do e-mail.",
+      usernameChecking: "Verificando disponibilidade…",
+      usernameAvailable: "Disponível",
+      usernameTaken: "Já em uso: escolha outro",
+      usernameInvalid: "Formato inválido",
+      usernameUnknown: "Não foi possível verificar agora: verificaremos no envio",
+      password: "Senha",
+      passwordRepeat: "Repita a senha",
+      passwordHint: "Pelo menos 8 caracteres.",
+      showPassword: "Mostrar a senha",
+      hidePassword: "Ocultar a senha",
+      birthDate: "Data de nascimento",
+      joinedAt: "Na academia desde",
+      experienced: "Você já treinou BJJ?",
+      experiencedYes: "Sim",
+      experiencedNo: "Não, é a primeira vez",
+      beginnerNote: "Você começará na faixa branca, 0 graus.",
+      belt: "Faixa atual",
+      select: "Selecione…",
+      stripes: "Graus",
+      rankSince: "Data da faixa atual (se lembrar)",
+      stripeSince: "Data do último grau (se lembrar)",
+      datesHint: "Se não lembrar uma data, deixe em branco: a equipe poderá corrigi-la.",
+      privacyConsent: "Li o aviso de privacidade",
+      privacyLink: "Ler o aviso",
+      submit: "Enviar solicitação",
+      sending: "Enviando…",
+    },
+    errors: {
+      nameRequired: "Informe o nome completo.",
+      emailInvalid: "Informe um endereço de e-mail válido.",
+      usernameInvalid:
+        "O nome de usuário deve ter de 3 a 30 caracteres: letras minúsculas, números, ponto, hífen, sublinhado.",
+      usernameTaken: "Este nome de usuário já está em uso: escolha outro.",
+      passwordTooShort: "A senha deve ter pelo menos 8 caracteres.",
+      passwordMismatch: "As duas senhas não coincidem.",
+      birthDateInvalid: "Informe uma data de nascimento válida, no passado.",
+      joinedAtInvalid: "Informe a data de inscrição na academia.",
+      dateInvalid: "Uma das datas não é válida.",
+      dateInFuture: "As datas não podem estar no futuro.",
+      experienceRequired: "Informe se você já treinou BJJ.",
+      beltInvalid: "Escolha a faixa.",
+      beltForAge:
+        "Esta faixa não corresponde à idade: abaixo de 16 anos usam-se as faixas infantis, a partir dos 18 as adultas.",
+      stripesInvalid: "Número de graus inválido para esta faixa.",
+      stripeBeforeBelt: "O último grau não pode ser anterior à faixa atual.",
+      consentRequired: "Para enviar a solicitação, confirme que leu o aviso de privacidade.",
+      captchaFailed: "Verificação de segurança falhou. Tente novamente.",
+      linkExpired: "Este link de convite não é mais válido. Peça um novo à sua academia.",
+      failed:
+        "Não foi possível enviar a solicitação. Se você já tem uma conta, entre; caso contrário, tente mais tarde.",
+    },
+  },
+
+  requests: {
+    title: "Solicitações de inscrição",
+    lead: "Pessoas que se inscreveram com o link da academia. Confira e corrija os dados, depois aprove: entrarão no Registro como alunos.",
+    chip: (n: number) => `Solicitações de inscrição (${n})`,
+    empty: "Nenhuma solicitação pendente.",
+    sentOn: (date: string) => `Enviada em ${date}`,
+    review: "Conferir e aprovar",
+    approve: "Aprovar",
+    reject: "Recusar",
+    rejectConfirm: (name: string) =>
+      `Recusar a solicitação de ${name}? A conta criada com a solicitação será excluída.`,
+    linkWarning: (name: string) =>
+      `Este e-mail corresponde a ${name}, já no Registro sem conta: ao aprovar, a conta será vinculada a esse cadastro, que mantém a faixa e as datas atuais. O endereço não foi verificado: antes de aprovar, confirme pessoalmente que se trata da mesma pessoa.`,
+    approved: (name: string) => `${name} agora está no Registro.`,
+    rejected: (name: string) => `Solicitação de ${name} recusada.`,
+    alreadyHandled: "Esta solicitação não está mais pendente.",
+    failed: "Operação não concluída. Tente novamente.",
   },
 
   dashboard: {
@@ -407,6 +495,19 @@ export const ptBR: Dictionary = {
     saved: "Localização salva.",
     cleared: "Localização removida.",
     failed: "Não foi possível concluir. Tente de novo.",
+    inviteSection: "Link de inscrição",
+    inviteHelp:
+      "Quem abrir este link pode pedir para se inscrever na academia. Cada solicitação precisa ser aprovada no Registro, em “Solicitações de inscrição”.",
+    inviteNone: "Nenhum link ativo.",
+    inviteGenerate: "Gerar link",
+    inviteRegenerate: "Gerar novo link",
+    inviteRegenerateConfirm:
+      "O link atual deixará de funcionar. As solicitações já enviadas são mantidas. Continuar?",
+    inviteCopy: "Copiar link",
+    inviteCopied: "Link copiado",
+    inviteCopyFailed: "Falha ao copiar: selecione e copie manualmente",
+    inviteGenerated: "Novo link de inscrição pronto.",
+    inviteFailed: "Não foi possível gerar o link. Tente novamente.",
   },
 
   rollCall: {
@@ -515,6 +616,8 @@ export const ptBR: Dictionary = {
     notesSection: "Observações",
     rolesSection: "Funções",
     noRoles: "Nenhuma função atribuída.",
+    changeRole: "Alterar função",
+    changeRoleNote: "A função atual é encerrada com a data de hoje e permanece no histórico. Uma função de gestor do portal não é alterada.",
     roleRange: (from: string, to: string) => `de ${from} a ${to}`,
     roleOpen: (from: string) => `desde ${from} · ativa`,
     totalHours: "Horas totais",
@@ -633,6 +736,8 @@ export const ptBR: Dictionary = {
     datesFailed: "Não foi possível atualizar as datas",
     joinedSaved: "Data de matrícula atualizada",
     joinedFailed: "Não foi possível atualizar a data de matrícula",
+    roleChanged: (role: string) => `Função alterada para ${role}`,
+    roleFailed: "Não foi possível alterar a função",
     dateInFuture: "Uma data não pode estar no futuro",
     stripeBeforeBelt: "O último grau não pode ser anterior à troca de faixa",
     criterionSaved: "Critério atualizado",
@@ -786,6 +891,7 @@ export const ptBR: Dictionary = {
         heading: "2. Quais dados tratamos",
         paragraphs: [
           "Dados de contato e identificação: nome, e-mail, telefone, data de nascimento. Nome e e-mail são obrigatórios para criar uma conta; telefone e data de nascimento são opcionais.",
+          "Solicitação de inscrição pelo link da academia: nome completo, e-mail, nome de usuário, data de nascimento, data de inscrição e, se informados, faixa, graus e respectivas datas. Neste caso a data de nascimento é obrigatória, porque define qual sistema de faixas se aplica. Enquanto a solicitação estiver pendente, esses dados ficam visíveis apenas para o gestor e os mestres da academia: se a aprovarem, tornam-se os dados do seu perfil; se a recusarem, são excluídos junto com a conta.",
           "Dados de progressão técnica: faixa, número de graus, data da última troca de faixa, data do último grau, data de matrícula, função na academia e seu histórico.",
           "Dados de frequência: presença ou ausência em cada aula, registrando se a presença foi lançada pelo próprio aluno (check-in) ou pelo instrutor (chamada).",
           "Localização do dispositivo: se a academia definiu a própria localização, no momento do check-in o navegador pede a do celular. Ela serve apenas para verificar que você está a até 50 m da academia: é comparada e descartada, sem ser salva nem registrada em logs. O navegador pede permissão conforme as suas configurações; recusar impede apenas o check-in por conta própria, pois o instrutor sempre pode registrar a presença pela chamada.",

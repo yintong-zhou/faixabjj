@@ -133,6 +133,7 @@ export const it = {
 
     showPassword: "Mostra la password",
     hidePassword: "Nascondi la password",
+    registeredNotice: "Richiesta inviata. Accedi con la tua email o il tuo username per seguirne lo stato.",
   },
 
   reset: {
@@ -271,6 +272,94 @@ export const it = {
     body: "L'accesso a questa palestra è stato sospeso dall'amministrazione del portale. I dati sono conservati e torneranno disponibili se la palestra viene riattivata. Per informazioni rivolgiti a chi gestisce la tua palestra.",
     noGymTitle: "Account senza palestra",
     noGymBody: "Questo account non appartiene a nessuna palestra, quindi non c'è nulla da mostrare. Per informazioni rivolgiti a chi gestisce la tua palestra.",
+  },
+
+  pending: {
+    title: "Richiesta in attesa",
+    body: "La tua richiesta di iscrizione è stata inviata. Lo staff della palestra deve approvarla: appena lo farà potrai usare l'app con questo account.",
+    checkAgain: "Verifica di nuovo",
+  },
+
+  join: {
+    title: (gym: string) => `Iscriviti a ${gym}`,
+    lead: "Compila i tuoi dati e invia la richiesta: lo staff della palestra la controlla e la approva. Nel frattempo puoi già accedere, ma vedrai solo lo stato della richiesta.",
+    // Solo stringhe: viene passato così com'è a un Client Component.
+    form: {
+      fullName: "Nome e cognome",
+      email: "Email",
+      username: "Username",
+      usernameHelp:
+        "Da 3 a 30 caratteri: lettere minuscole, numeri, punto, trattino e trattino basso. Potrai usarlo per accedere al posto dell'email.",
+      usernameChecking: "Controllo disponibilità…",
+      usernameAvailable: "Disponibile",
+      usernameTaken: "Già in uso: scegline un altro",
+      usernameInvalid: "Formato non valido",
+      usernameUnknown: "Impossibile verificare adesso: lo controlliamo all'invio",
+      password: "Password",
+      passwordRepeat: "Ripeti la password",
+      passwordHint: "Almeno 8 caratteri.",
+      showPassword: "Mostra la password",
+      hidePassword: "Nascondi la password",
+      birthDate: "Data di nascita",
+      joinedAt: "Iscritto in palestra dal",
+      experienced: "Hai già praticato BJJ?",
+      experiencedYes: "Sì",
+      experiencedNo: "No, è la prima volta",
+      beginnerNote: "Partirai da cintura bianca, 0 tacche.",
+      belt: "Cintura attuale",
+      select: "Seleziona…",
+      stripes: "Tacche",
+      rankSince: "Data della cintura attuale (se la ricordi)",
+      stripeSince: "Data dell'ultima tacca (se la ricordi)",
+      datesHint: "Se non ricordi una data lasciala vuota: lo staff potrà correggerla.",
+      privacyConsent: "Ho letto l'informativa sulla privacy",
+      privacyLink: "Leggi l'informativa",
+      submit: "Invia la richiesta",
+      sending: "Invio…",
+    },
+    errors: {
+      nameRequired: "Inserisci nome e cognome.",
+      emailInvalid: "Inserisci un indirizzo email valido.",
+      usernameInvalid:
+        "Lo username deve avere da 3 a 30 caratteri: lettere minuscole, numeri, punto, trattino, trattino basso.",
+      usernameTaken: "Questo username è già in uso: scegline un altro.",
+      passwordTooShort: "La password deve avere almeno 8 caratteri.",
+      passwordMismatch: "Le due password non coincidono.",
+      birthDateInvalid: "Inserisci una data di nascita valida, nel passato.",
+      joinedAtInvalid: "Inserisci la data di iscrizione in palestra.",
+      dateInvalid: "Una delle date non è valida.",
+      dateInFuture: "Le date non possono essere nel futuro.",
+      experienceRequired: "Indica se hai già praticato BJJ.",
+      beltInvalid: "Scegli la cintura.",
+      beltForAge:
+        "Questa cintura non corrisponde all'età: sotto i 16 anni si usano le cinture bambini, dai 18 quelle adulti.",
+      stripesInvalid: "Numero di tacche non valido per questa cintura.",
+      stripeBeforeBelt: "L'ultima tacca non può essere precedente alla cintura attuale.",
+      consentRequired: "Per inviare la richiesta devi confermare di aver letto l'informativa sulla privacy.",
+      captchaFailed: "Verifica di sicurezza non riuscita. Riprova.",
+      linkExpired: "Questo link di invito non è più valido. Chiedine uno nuovo alla tua palestra.",
+      failed:
+        "Non è stato possibile inviare la richiesta. Se hai già un account, accedi; altrimenti riprova più tardi.",
+    },
+  },
+
+  requests: {
+    title: "Richieste di iscrizione",
+    lead: "Persone che si sono iscritte con il link della palestra. Controlla e correggi i dati, poi approva: entreranno nel Registro come allievi.",
+    chip: (n: number) => `Richieste di iscrizione (${n})`,
+    empty: "Nessuna richiesta in attesa.",
+    sentOn: (date: string) => `Inviata il ${date}`,
+    review: "Controlla e approva",
+    approve: "Approva",
+    reject: "Rifiuta",
+    rejectConfirm: (name: string) =>
+      `Rifiutare la richiesta di ${name}? L'account creato con la richiesta verrà eliminato.`,
+    linkWarning: (name: string) =>
+      `Questa email corrisponde a ${name}, già nel Registro senza account: approvando, l'account verrà collegato a quella scheda, che conserva cintura e date attuali. L'indirizzo non è stato verificato: prima di approvare, conferma di persona che si tratta della stessa persona.`,
+    approved: (name: string) => `${name} è ora nel Registro.`,
+    rejected: (name: string) => `Richiesta di ${name} rifiutata.`,
+    alreadyHandled: "Questa richiesta non è più in attesa.",
+    failed: "Operazione non riuscita. Riprova.",
   },
 
   dashboard: {
@@ -421,6 +510,19 @@ export const it = {
     saved: "Posizione salvata.",
     cleared: "Posizione rimossa.",
     failed: "Operazione non riuscita. Riprova.",
+    inviteSection: "Link di iscrizione",
+    inviteHelp:
+      "Chi apre questo link può chiedere di iscriversi alla palestra. Ogni richiesta va approvata nel Registro, alla voce «Richieste di iscrizione».",
+    inviteNone: "Nessun link attivo.",
+    inviteGenerate: "Genera link",
+    inviteRegenerate: "Rigenera link",
+    inviteRegenerateConfirm:
+      "Il link attuale smetterà di funzionare. Le richieste già inviate restano. Continuare?",
+    inviteCopy: "Copia il link",
+    inviteCopied: "Link copiato",
+    inviteCopyFailed: "Copia non riuscita: selezionalo e copialo a mano",
+    inviteGenerated: "Nuovo link di iscrizione pronto.",
+    inviteFailed: "Non è stato possibile generare il link. Riprova.",
   },
 
   rollCall: {
@@ -529,6 +631,8 @@ export const it = {
     notesSection: "Note",
     rolesSection: "Ruoli",
     noRoles: "Nessun ruolo assegnato.",
+    changeRole: "Cambia ruolo",
+    changeRoleNote: "Il ruolo attuale viene chiuso con la data di oggi e resta nello storico. Un ruolo di gestore del portale non viene toccato.",
     roleRange: (from: string, to: string) => `dal ${from} al ${to}`,
     roleOpen: (from: string) => `dal ${from} · attivo`,
     totalHours: "Ore totali",
@@ -651,6 +755,8 @@ export const it = {
     datesFailed: "Non è stato possibile aggiornare le date",
     joinedSaved: "Data di iscrizione aggiornata",
     joinedFailed: "Non è stato possibile aggiornare la data di iscrizione",
+    roleChanged: (role: string) => `Ruolo cambiato in ${role}`,
+    roleFailed: "Non è stato possibile cambiare il ruolo",
     dateInFuture: "Una data non può essere nel futuro",
     stripeBeforeBelt:
       "L'ultima tacca non può essere precedente al cambio di cintura",
@@ -809,6 +915,7 @@ export const it = {
         heading: "2. Quali dati trattiamo",
         paragraphs: [
           "Dati di contatto e anagrafici: nome e cognome, email, numero di telefono, data di nascita. Email e nome sono obbligatori per creare un account; telefono e data di nascita sono facoltativi.",
+          "Richiesta di iscrizione tramite il link della palestra: nome e cognome, email, username, data di nascita, data di iscrizione e, se dichiarati, cintura, tacche e relative date. In questo caso la data di nascita è obbligatoria, perché stabilisce quale sistema di cinture si applica. Finché la richiesta è in attesa, questi dati sono visibili solo al gestore e ai maestri della palestra: se la approvano diventano i dati del tuo profilo, se la rifiutano vengono cancellati insieme all'account.",
           "Dati di progressione tecnica: cintura, numero di gradi, data dell'ultimo cambio cintura, data dell'ultimo grado, data di iscrizione, ruolo ricoperto in palestra e relativo storico.",
           "Dati di frequenza: presenza o assenza a ciascuna lezione, con l'indicazione se la presenza è stata registrata dall'interessato (check-in) o dall'istruttore (appello).",
           "Posizione del dispositivo: se la palestra ha impostato la propria posizione, al momento del check-in il browser chiede quella del telefono. Serve solo a verificare di trovarsi entro 50 m dalla palestra: viene confrontata e scartata, senza essere salvata né registrata nei log. Il browser chiede il permesso secondo le sue impostazioni; rifiutarlo impedisce solo il check-in da sé, perché l'istruttore può sempre registrare la presenza con l'appello.",

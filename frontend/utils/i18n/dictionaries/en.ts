@@ -121,6 +121,7 @@ export const en: Dictionary = {
 
     showPassword: "Show the password",
     hidePassword: "Hide the password",
+    registeredNotice: "Request sent. Sign in with your email or username to follow its status.",
   },
 
   reset: {
@@ -257,6 +258,92 @@ export const en: Dictionary = {
     body: "Access to this gym has been suspended by the portal's administration. Its data is kept and will be available again if the gym is reactivated. For information, ask whoever runs your gym.",
     noGymTitle: "Account without a gym",
     noGymBody: "This account does not belong to any gym, so there is nothing to show. For information, ask whoever runs your gym.",
+  },
+
+  pending: {
+    title: "Request pending",
+    body: "Your registration request has been sent. The gym's staff has to approve it: as soon as they do, you can use the app with this account.",
+    checkAgain: "Check again",
+  },
+
+  join: {
+    title: (gym: string) => `Join ${gym}`,
+    lead: "Fill in your details and send the request: the gym's staff reviews and approves it. Meanwhile you can already sign in, but you will only see the status of your request.",
+    form: {
+      fullName: "Full name",
+      email: "Email",
+      username: "Username",
+      usernameHelp:
+        "3 to 30 characters: lower-case letters, digits, dot, hyphen and underscore. You can use it to sign in instead of your email.",
+      usernameChecking: "Checking availability…",
+      usernameAvailable: "Available",
+      usernameTaken: "Already taken: pick another one",
+      usernameInvalid: "Invalid format",
+      usernameUnknown: "Can't check right now: we'll check it when you send",
+      password: "Password",
+      passwordRepeat: "Repeat password",
+      passwordHint: "At least 8 characters.",
+      showPassword: "Show password",
+      hidePassword: "Hide password",
+      birthDate: "Date of birth",
+      joinedAt: "At the gym since",
+      experienced: "Have you trained BJJ before?",
+      experiencedYes: "Yes",
+      experiencedNo: "No, it's my first time",
+      beginnerNote: "You will start as a white belt, 0 stripes.",
+      belt: "Current belt",
+      select: "Select…",
+      stripes: "Stripes",
+      rankSince: "Date of current belt (if you remember)",
+      stripeSince: "Date of last stripe (if you remember)",
+      datesHint: "If you don't remember a date, leave it empty: the staff can correct it.",
+      privacyConsent: "I have read the privacy notice",
+      privacyLink: "Read the notice",
+      submit: "Send request",
+      sending: "Sending…",
+    },
+    errors: {
+      nameRequired: "Enter your full name.",
+      emailInvalid: "Enter a valid email address.",
+      usernameInvalid:
+        "The username must be 3 to 30 characters: lower-case letters, digits, dot, hyphen, underscore.",
+      usernameTaken: "This username is already taken: pick another one.",
+      passwordTooShort: "The password must be at least 8 characters.",
+      passwordMismatch: "The two passwords do not match.",
+      birthDateInvalid: "Enter a valid date of birth, in the past.",
+      joinedAtInvalid: "Enter the date you joined the gym.",
+      dateInvalid: "One of the dates is not valid.",
+      dateInFuture: "Dates cannot be in the future.",
+      experienceRequired: "Tell us whether you have trained BJJ before.",
+      beltInvalid: "Choose the belt.",
+      beltForAge:
+        "This belt does not match the age: children's belts are used under 16, adult belts from 18.",
+      stripesInvalid: "Number of stripes not valid for this belt.",
+      stripeBeforeBelt: "The last stripe cannot predate the current belt.",
+      consentRequired: "To send the request, confirm that you have read the privacy notice.",
+      captchaFailed: "Security check failed. Try again.",
+      linkExpired: "This invite link is no longer valid. Ask your gym for a new one.",
+      failed: "The request could not be sent. If you already have an account, sign in; otherwise try again later.",
+    },
+  },
+
+  requests: {
+    title: "Registration requests",
+    lead: "People who signed up with the gym's link. Check and correct their details, then approve: they join the Registry as students.",
+    chip: (n: number) => `Registration requests (${n})`,
+    empty: "No pending requests.",
+    sentOn: (date: string) => `Sent on ${date}`,
+    review: "Review and approve",
+    approve: "Approve",
+    reject: "Reject",
+    rejectConfirm: (name: string) =>
+      `Reject ${name}'s request? The account created with the request will be deleted.`,
+    linkWarning: (name: string) =>
+      `This email matches ${name}, already in the Registry without an account: approving links the account to that record, which keeps its current belt and dates. The address was not verified: before approving, confirm in person that it is the same person.`,
+    approved: (name: string) => `${name} is now in the Registry.`,
+    rejected: (name: string) => `${name}'s request rejected.`,
+    alreadyHandled: "This request is no longer pending.",
+    failed: "Operation failed. Try again.",
   },
 
   dashboard: {
@@ -405,6 +492,19 @@ export const en: Dictionary = {
     saved: "Location saved.",
     cleared: "Location removed.",
     failed: "Something went wrong. Try again.",
+    inviteSection: "Registration link",
+    inviteHelp:
+      "Whoever opens this link can ask to join the gym. Every request must be approved in the Registry, under “Registration requests”.",
+    inviteNone: "No active link.",
+    inviteGenerate: "Generate link",
+    inviteRegenerate: "Regenerate link",
+    inviteRegenerateConfirm:
+      "The current link will stop working. Requests already sent are kept. Continue?",
+    inviteCopy: "Copy link",
+    inviteCopied: "Link copied",
+    inviteCopyFailed: "Copy failed: select it and copy it by hand",
+    inviteGenerated: "New registration link ready.",
+    inviteFailed: "The link could not be generated. Try again.",
   },
 
   rollCall: {
@@ -513,6 +613,8 @@ export const en: Dictionary = {
     notesSection: "Notes",
     rolesSection: "Roles",
     noRoles: "No role assigned.",
+    changeRole: "Change role",
+    changeRoleNote: "The current role is closed with today's date and stays in the history. A portal manager role is left untouched.",
     roleRange: (from: string, to: string) => `from ${from} to ${to}`,
     roleOpen: (from: string) => `from ${from} · active`,
     totalHours: "Total hours",
@@ -631,6 +733,8 @@ export const en: Dictionary = {
     datesFailed: "The dates could not be updated",
     joinedSaved: "Join date updated",
     joinedFailed: "The join date could not be updated",
+    roleChanged: (role: string) => `Role changed to ${role}`,
+    roleFailed: "The role could not be changed",
     dateInFuture: "A date cannot be in the future",
     stripeBeforeBelt: "The last stripe cannot predate the belt change",
     criterionSaved: "Criterion updated",
@@ -784,6 +888,7 @@ export const en: Dictionary = {
         heading: "2. What data we process",
         paragraphs: [
           "Contact and identity data: name, email, phone number, date of birth. Name and email are required to create an account; phone and date of birth are optional.",
+          "Registration request through the gym's link: full name, email, username, date of birth, join date and, if stated, belt, stripes and their dates. Here the date of birth is required, because it decides which belt system applies. While the request is pending, only the gym's manager and head coaches can see this data: if they approve it, it becomes your profile; if they reject it, it is deleted together with the account.",
           "Technical progression data: belt, number of stripes, date of the last belt promotion, date of the last stripe, join date, role held at the gym and its history.",
           "Attendance data: present or absent for each lesson, recording whether the presence was entered by the member (check-in) or by the instructor (roll call).",
           "Device location: if the gym has set its location, at check-in the browser asks for your phone's. It is used only to check that you are within 50 m of the gym: it is compared and discarded, never stored or written to logs. The browser asks for permission according to its settings; refusing only prevents checking yourself in, since the instructor can always record your attendance in the roll call.",

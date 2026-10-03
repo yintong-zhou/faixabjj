@@ -11,6 +11,8 @@ export type AdminSession = {
   userId: string;
   email: string | null;
   mustChangePassword: boolean;
+  /** Signed up through an invite link and not yet approved: no gym, no profile. */
+  pendingApproval: boolean;
 };
 
 // Mirrors the SQL predicates of the same names. Roles map onto them like this:
@@ -59,7 +61,7 @@ export async function requireSession(path: string): Promise<AdminSession> {
   // service role — unlike `user_metadata`, which the user can edit themselves
   // and could therefore use to clear their own obligation.
   const appMetadata = claims.app_metadata as
-    | { must_change_password?: boolean }
+    | { must_change_password?: boolean; pending_gym_id?: string | null; gym_id?: string | null }
     | undefined;
 
   return {
@@ -67,10 +69,14 @@ export async function requireSession(path: string): Promise<AdminSession> {
     userId: claims.sub as string,
     email: (claims.email as string | undefined) ?? null,
     mustChangePassword: appMetadata?.must_change_password === true,
+    // Written only by the service role (app/join/actions.ts sets it, approval
+    // clears it), like must_change_password.
+    pendingApproval: Boolean(appMetadata?.pending_gym_id) && !appMetadata?.gym_id,
   };
 }
 
 export const SUSPENDED_PATH = "/suspended";
+export const PENDING_PATH = "/pending";
 
 // Where the platform superadmin may go. Everything else is a gym page: they
 // hold no gym flags and RLS shows them no rows, so it answers 404 — except the
@@ -88,6 +94,12 @@ export async function requireAdmin(path: string): Promise<AdminSessionWithAccess
 
   if (session.mustChangePassword) {
     redirect(PASSWORD_CHANGE_PATH);
+  }
+
+  // Signed up through an invite link and waiting for the staff: there is no gym
+  // to show yet (RLS shows nothing anyway), only the status of the request.
+  if (session.pendingApproval) {
+    redirect(PENDING_PATH);
   }
 
   const access = await getAccess(session.supabase);

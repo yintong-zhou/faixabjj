@@ -186,6 +186,18 @@ export async function deleteGym(formData: FormData) {
     to(detail, { error: t.gyms.msg.failed });
   }
 
+  // Accounts that signed up through the gym's link and were never approved have
+  // no person row, only a request — which the cascade erases with the gym. Read
+  // them now, for the same reason as above.
+  const { data: pendingAccounts, error: pendingError } = await admin
+    .from("registration_request")
+    .select("auth_user_id")
+    .eq("gym_id", id);
+  if (pendingError) {
+    logDbError("gyms", "deleteGym:pendingAccounts", pendingError);
+    to(detail, { error: t.gyms.msg.failed });
+  }
+
   // No person row may be linked to a platform superadmin (the database refuses
   // it: guard_person_auth_user), but this loop deletes auth accounts with the
   // service role, so it does not rest on that alone: a superadmin account is
@@ -217,7 +229,7 @@ export async function deleteGym(formData: FormData) {
   }
 
   let failed = 0;
-  for (const row of (accounts ?? []) as { auth_user_id: string }[]) {
+  for (const row of [...(accounts ?? []), ...(pendingAccounts ?? [])] as { auth_user_id: string }[]) {
     if (protectedIds.has(row.auth_user_id)) {
       console.error("[gyms] deleteGym skipped a platform admin account linked to the gym");
       continue;

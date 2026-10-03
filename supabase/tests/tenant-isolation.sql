@@ -568,6 +568,185 @@ do $$ begin
 end $$;
 rollback;
 
+-- T22: invite links and registration requests (20261002000000).
+-- d4 and d5 are pending accounts of gym A and gym B; d6 is a spare account.
+insert into auth.users (id, email, raw_app_meta_data) values
+  ('00000000-0000-0000-0000-0000000000d4', 'e1@pending', jsonb_build_object('pending_gym_id', current_setting('test.gym_a'))),
+  ('00000000-0000-0000-0000-0000000000d5', 'e2@pending', jsonb_build_object('pending_gym_id', current_setting('test.gym_b'))),
+  ('00000000-0000-0000-0000-0000000000d6', 'e3@pending', '{}'::jsonb);
+insert into public.registration_request
+  (auth_user_id, gym_id, full_name, email, username, birth_date, joined_at, rank_since, stripe_since)
+values
+  ('00000000-0000-0000-0000-0000000000d4', current_setting('test.gym_a')::uuid, 'Pending A', 'e1@pending', 'pending.a',
+   '2000-01-01', current_date, current_date, current_date),
+  ('00000000-0000-0000-0000-0000000000d5', current_setting('test.gym_b')::uuid, 'Pending B', 'e2@pending', 'pending.b',
+   '2000-01-01', current_date, current_date, current_date);
+
+do $$ begin
+  if exists (select 1 from public.person where email like '%@pending') then
+    raise exception 'FAIL T22: a pending account got a profile';
+  end if;
+end $$;
+
+-- a1, manager of gym A: reads A's request only, never inserts one, deletes only A's.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+do $$ begin
+  if (select count(*) from public.registration_request) <> 1
+     or not exists (select 1 from public.registration_request where username = 'pending.a') then
+    raise exception 'FAIL T22: a1 reads registration requests of another gym';
+  end if;
+  delete from public.registration_request where username = 'pending.b';
+  if found then
+    raise exception 'FAIL T22: a1 deleted a request of gym B';
+  end if;
+  begin
+    insert into public.registration_request
+      (auth_user_id, gym_id, full_name, email, username, birth_date, joined_at, rank_since, stripe_since)
+    values ('00000000-0000-0000-0000-0000000000d6', current_setting('test.gym_a')::uuid, 'Forged', 'e3@pending',
+            'forged.req', '2000-01-01', current_date, current_date, current_date);
+    raise exception 'FAIL T22: a1 inserted a registration request directly';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
+-- a2, student of gym A: no requests, no link, cannot generate one.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', true);
+do $$ begin
+  if exists (select 1 from public.registration_request) then
+    raise exception 'FAIL T22: a student reads registration requests';
+  end if;
+  begin
+    perform public.regenerate_invite_token();
+    raise exception 'FAIL T22: a student generated an invite link';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
+-- a1 generates gym A's link (committed for the checks below) and reads it back.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+do $$ declare v_token text; begin
+  v_token := public.regenerate_invite_token();
+  if v_token !~ '^[0-9a-f]{64}$' then
+    raise exception 'FAIL T22: the invite token is not 64 hex characters: %', v_token;
+  end if;
+  if (select count(*) from public.gym_invite) <> 1 or (select token from public.gym_invite) <> v_token then
+    raise exception 'FAIL T22: a1 cannot read the invite link just generated';
+  end if;
+  if public.regenerate_invite_token() = v_token then
+    raise exception 'FAIL T22: regenerating kept the old token';
+  end if;
+end $$;
+commit;
+
+-- b1, manager of gym B, does not see gym A's link; a2 cannot call the service-role functions.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', true);
+do $$ begin
+  if exists (select 1 from public.gym_invite) then
+    raise exception 'FAIL T22: b1 reads the invite link of gym A';
+  end if;
+end $$;
+rollback;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', true);
+do $$ begin
+  if exists (select 1 from public.gym_invite) then
+    raise exception 'FAIL T22: a student reads the invite link';
+  end if;
+  begin
+    perform public.gym_for_invite('x');
+    raise exception 'FAIL T22: gym_for_invite is callable by an end user';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.username_available('x');
+    raise exception 'FAIL T22: username_available is callable by an end user';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.login_email_for_username('x');
+    raise exception 'FAIL T22: login_email_for_username is callable by an end user';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
+-- The service role resolves the link and the usernames, pending ones included.
+begin;
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+do $$
+declare
+  v_token text := (select token from public.gym_invite where gym_id = current_setting('test.gym_a')::uuid);
+begin
+  if public.gym_for_invite(v_token) is distinct from current_setting('test.gym_a')::uuid then
+    raise exception 'FAIL T22: gym_for_invite did not resolve gym A';
+  end if;
+  if public.gym_for_invite('not-a-token') is not null then
+    raise exception 'FAIL T22: gym_for_invite resolved an unknown token';
+  end if;
+  if public.username_available('pending.a') or not public.username_available('free.name') then
+    raise exception 'FAIL T22: username_available ignores pending requests';
+  end if;
+  if public.login_email_for_username('pending.a') is distinct from 'e1@pending' then
+    raise exception 'FAIL T22: a pending account cannot sign in with its username';
+  end if;
+end $$;
+rollback;
+
+-- A suspended gym's link resolves to nothing.
+begin;
+update public.gym set status = 'suspended' where id = current_setting('test.gym_a')::uuid;
+do $$ begin
+  if public.gym_for_invite((select token from public.gym_invite where gym_id = current_setting('test.gym_a')::uuid)) is not null then
+    raise exception 'FAIL T22: the link of a suspended gym still resolves';
+  end if;
+end $$;
+rollback;
+
+-- One username, one account, across both tables; approval may move it across.
+begin;
+do $$ begin
+  begin
+    update public.person set username = 'pending.a' where email = 'a2@test';
+    raise exception 'FAIL T22: a member took the username of a pending request';
+  exception when unique_violation then null;
+  end;
+
+  update public.person set username = 'member.a2' where email = 'a2@test';
+  begin
+    insert into public.registration_request
+      (auth_user_id, gym_id, full_name, email, username, birth_date, joined_at, rank_since, stripe_since)
+    values ('00000000-0000-0000-0000-0000000000d6', current_setting('test.gym_a')::uuid, 'Copycat', 'e3@pending',
+            'member.a2', '2000-01-01', current_date, current_date, current_date);
+    raise exception 'FAIL T22: a request took the username of a member';
+  exception when unique_violation then null;
+  end;
+
+  -- Approval: the gym arrives in app_metadata, the auth trigger creates the
+  -- profile, the username moves from the request to it.
+  update auth.users
+     set raw_app_meta_data = jsonb_build_object('gym_id', current_setting('test.gym_a'))
+   where id = '00000000-0000-0000-0000-0000000000d4';
+  update public.person set username = 'pending.a'
+   where auth_user_id = '00000000-0000-0000-0000-0000000000d4';
+  if not found then
+    raise exception 'FAIL T22: approval could not move the username to the new profile';
+  end if;
+end $$;
+rollback;
+
 -- T11: deleting gym B, as the superadmin, removes all of it and nothing of A.
 begin;
 set local role authenticated;

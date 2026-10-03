@@ -5,7 +5,7 @@ Guidance for Claude Code working in this repository. Details live in `docs/claud
 | Working on…                                                                 | Read                                     |
 | --------------------------------------------------------------------------- | ---------------------------------------- |
 | Migrations, RLS, views, Supabase clients, env keys                          | `docs/claude/database.md`                |
-| Login, password recovery, Turnstile, roles/permissions, `/account`, forced password change | `docs/claude/auth-and-access.md` |
+| Login, password recovery, invite registration, Turnstile, roles/permissions, `/account`, forced password change | `docs/claude/auth-and-access.md` |
 | `/members` (Registro), account actions, promotions, criteria, belt ladders  | `docs/claude/members-and-promotions.md`  |
 | `/courses`, `/attendance`, roll call, check-in, hours, `/dashboard`         | `docs/claude/attendance-and-dashboard.md`|
 | i18n, privacy/cookies, theme, nav, belts, icons, SEO                        | `docs/claude/frontend-ui.md`             |
@@ -55,7 +55,7 @@ Vitest covers pure functions in `frontend/utils/` only — no jsdom, no componen
 - **Migrations are applied by hand** to project `poksgledkecwviypspmi`, never via whatever project the MCP shows. Every migration must be **safe to run twice**; objects redefined across files (`current_access()`, `member_overview`, `person_hours`) are changed only in a **new** migration. Verify history changes by replaying in Docker. → `database.md`
 - **`security_invoker = on` on every view.**
 - **Permissions come from SQL predicates** (`current_access()` → `getAccess()` + `require*` guards); never re-implement them. `getAccess()` fails closed. Guards answer **404, not 403**. Hiding a nav link is never access control. Every protected page calls `requireAdmin()` (or `requireSession()` on `/change-password` only). `PROTECTED_PREFIXES` in `utils/supabase/proxy.ts` is the single list of gated routes.
-- **No signup page, ever, without asking.** Login/reset errors stay generic (anti-enumeration).
+- **No open signup.** Self-registration exists only through a gym's invite link (`/join/<token>`, generated on `/gym`) and admits nobody until a user manager approves it on `/members/requests`; don't widen it without asking. Login/reset/signup errors that could reveal an email stay generic (anti-enumeration); the live username check behind a valid link is the one accepted exception.
 - **One list of people.** Anything enumerating members lives in `/members`; no `/promotions` route.
 - **Portal-only admin** (active roles exactly `{admin}`, `isPortalOnly()` in `utils/members.ts`) appears in no people list and shows no belt anywhere.
 - **Promotion is never self-service**, and **a member never sees remaining hours, next grade or a verdict**. Eligibility is decided only in `promotionStatus()` (`utils/promotion.ts`).
