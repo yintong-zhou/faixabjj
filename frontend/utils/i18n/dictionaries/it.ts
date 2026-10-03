@@ -631,6 +631,8 @@ export const it = {
     notesSection: "Note",
     rolesSection: "Ruoli",
     noRoles: "Nessun ruolo assegnato.",
+    changeRole: "Cambia ruolo",
+    changeRoleNote: "Il ruolo attuale viene chiuso con la data di oggi e resta nello storico. Un ruolo di gestore del portale non viene toccato.",
     roleRange: (from: string, to: string) => `dal ${from} al ${to}`,
     roleOpen: (from: string) => `dal ${from} · attivo`,
     totalHours: "Ore totali",
@@ -753,6 +755,8 @@ export const it = {
     datesFailed: "Non è stato possibile aggiornare le date",
     joinedSaved: "Data di iscrizione aggiornata",
     joinedFailed: "Non è stato possibile aggiornare la data di iscrizione",
+    roleChanged: (role: string) => `Ruolo cambiato in ${role}`,
+    roleFailed: "Non è stato possibile cambiare il ruolo",
     dateInFuture: "Una data non può essere nel futuro",
     stripeBeforeBelt:
       "L'ultima tacca non può essere precedente al cambio di cintura",

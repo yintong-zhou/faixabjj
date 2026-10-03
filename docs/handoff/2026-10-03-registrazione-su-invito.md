@@ -91,6 +91,7 @@ Spec: `docs/superpowers/specs/2026-10-02-gym-invite-registration-design.md`. Pia
    - **approvazione:** con correzione (cintura, data, email); "Verifica di nuovo" → dashboard; seconda approvazione → "non più in attesa";
    - **scheda collegata:** revoca un membro, iscriviti con la sua email → avviso; dopo l'approvazione la scheda conserva cintura e storico;
    - **rifiuto:** account cancellato; "Verifica di nuovo" → logout; la stessa email può reiscriversi;
+   - **cambio ruolo** (`/members/[id]` → Ruoli → "Cambia ruolo"): maestro iscritto con il link, approvato come allievo → head_coach; storico mostra il vecchio ruolo chiuso oggi; sulla propria scheda e su un admin solo-portale il comando non c'è; da istruttore non c'è;
    - **accessi:** istruttore → nessun chip, `/members/requests` 404;
    - **palestra eliminata** (sospesa prima) con richieste pending → account cancellati;
    - **grafica:** tema chiaro/scuro e 3 lingue.
