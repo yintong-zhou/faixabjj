@@ -10,6 +10,7 @@ import { requireGymSettings } from "@/utils/supabase/gym";
 import { todayIn } from "@/utils/dates";
 import { getDictionary } from "@/utils/i18n/server";
 import { MemberDashboard } from "./member-dashboard";
+import { PlatformDashboard } from "./platform-dashboard";
 import { StaffDashboard } from "./staff-dashboard";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,8 +36,23 @@ export default async function DashboardPage({
 }) {
   const { v, periodo, da } = await searchParams;
   const { supabase, userId, email, access } = await requireAdmin("/dashboard");
-  const gym = await requireGymSettings();
   const { locale, t } = await getDictionary();
+
+  // The superadmin has no gym, so none of the views below applies: theirs is
+  // the platform's, in counts only.
+  if (access.isPlatformAdmin) {
+    return (
+      <div className="flex w-full flex-col gap-6 sm:gap-10">
+        <header className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t.dashboard.title}</h1>
+          <p className="text-sm leading-relaxed text-foreground/65">{t.platformDashboard.lead}</p>
+        </header>
+        <PlatformDashboard supabase={supabase} t={t} />
+      </div>
+    );
+  }
+
+  const gym = await requireGymSettings();
 
   // The same predicate that opens Corsi and the roll call: instructors,
   // maestri and admin. Everybody else sees their own figures and nothing

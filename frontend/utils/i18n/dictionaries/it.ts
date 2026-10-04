@@ -1036,6 +1036,36 @@ export const it = {
     cookieRemoval:
       "Puoi cancellare cookie e archiviazione locale dalle impostazioni del browser. Cancellando il cookie di sessione verrai disconnesso; cancellando gli altri l'applicazione continua a funzionare e torna alle impostazioni predefinite.",
   },
+  platformDashboard: {
+    lead: "Il quadro di tutte le palestre del portale. Solo totali: nessun nome, nessuna presenza o promozione della singola persona.",
+    loadFailed: "Non è stato possibile caricare i dati. Riprova più tardi.",
+    gymsActive: "Palestre attive",
+    suspendedCount: (n: number) => `${n} ${n === 1 ? "sospesa" : "sospese"}`,
+    activePeople: "Persone attive",
+    inActiveGyms: "nelle palestre attive",
+    presences: "Presenze, 30 giorni",
+    checkinShare: (pct: number) => `${pct}% con check-in`,
+    lessons: "Lezioni svolte, 30 giorni",
+    lessonsHint: "con almeno un presente",
+
+    weeklyTitle: "Presenze per settimana",
+    weeklySummary: (weeks: number) =>
+      `Presenze per settimana in tutte le palestre, ultime ${weeks} settimane`,
+    weeklyHint: "Passa sopra una barra o toccala per vedere la settimana.",
+
+    byGymTitle: "Per palestra",
+    byGymLead: "Ultimi 30 giorni. Una palestra attiva senza lezioni nel periodo è segnalata.",
+    colPeople: "Persone",
+    colPresences: "Presenze",
+    colLessons: "Lezioni",
+    colCheckins: "Check-in",
+    colLastLesson: "Ultima lezione",
+    colPending: "Iscrizioni in attesa",
+    never: "mai",
+    idle: "nessuna lezione in 30 giorni",
+    empty: "Nessuna palestra.",
+  },
+
   gyms: {
     title: "Palestre",
     subtitle: "Le palestre ospitate dal portale. Qui vedi i dati della palestra e i suoi gestori, mai allievi, presenze o promozioni.",

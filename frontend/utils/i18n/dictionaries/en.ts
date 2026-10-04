@@ -1008,6 +1008,36 @@ export const en: Dictionary = {
     cookieRemoval:
       "You can delete cookies and local storage from your browser settings. Deleting the session cookie signs you out; deleting the others leaves the application working and back on its defaults.",
   },
+  platformDashboard: {
+    lead: "Every gym on the portal at a glance. Totals only: no names, and no single person's attendance or promotions.",
+    loadFailed: "The figures could not be loaded. Try again later.",
+    gymsActive: "Active gyms",
+    suspendedCount: (n: number) => `${n} suspended`,
+    activePeople: "Active people",
+    inActiveGyms: "in active gyms",
+    presences: "Attendance, 30 days",
+    checkinShare: (pct: number) => `${pct}% by check-in`,
+    lessons: "Lessons held, 30 days",
+    lessonsHint: "with at least one present",
+
+    weeklyTitle: "Attendance per week",
+    weeklySummary: (weeks: number) =>
+      `Attendance per week across all gyms, last ${weeks} weeks`,
+    weeklyHint: "Hover over a bar or tap it to see the week.",
+
+    byGymTitle: "By gym",
+    byGymLead: "Last 30 days. An active gym with no lessons in the period is flagged.",
+    colPeople: "People",
+    colPresences: "Attendance",
+    colLessons: "Lessons",
+    colCheckins: "Check-in",
+    colLastLesson: "Last lesson",
+    colPending: "Pending sign-ups",
+    never: "never",
+    idle: "no lessons in 30 days",
+    empty: "No gyms.",
+  },
+
   gyms: {
     title: "Gyms",
     subtitle: "The gyms hosted by the portal. Here you see each gym's details and its managers, never students, attendance or promotions.",

@@ -79,9 +79,10 @@ export const SUSPENDED_PATH = "/suspended";
 export const PENDING_PATH = "/pending";
 
 // Where the platform superadmin may go. Everything else is a gym page: they
-// hold no gym flags and RLS shows them no rows, so it answers 404 — except the
-// dashboard, where login lands, which sends them to their own home.
-const PLATFORM_PATHS = ["/gyms", "/account"];
+// hold no gym flags and RLS shows them no rows, so it answers 404. The
+// dashboard is theirs too — where login lands — and draws the platform's
+// aggregates instead of a gym's.
+const PLATFORM_PATHS = ["/dashboard", "/gyms", "/account"];
 
 // Defense in depth: the proxy (frontend/proxy.ts) already redirects
 // logged-out visitors away from protected routes, but page-level checks
@@ -119,7 +120,6 @@ export async function requireAdmin(path: string): Promise<AdminSessionWithAccess
   }
 
   if (access.isPlatformAdmin && !PLATFORM_PATHS.some((p) => underPath(path, p))) {
-    if (path === "/dashboard") redirect("/gyms");
     notFound();
   }
 

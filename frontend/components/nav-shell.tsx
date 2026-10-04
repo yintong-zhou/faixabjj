@@ -79,10 +79,10 @@ function navItemsFor(
     return [HOME_ITEM];
   }
 
-  // The platform superadmin belongs to no gym: their whole portal is the list
-  // of gyms and their own account.
+  // The platform superadmin belongs to no gym: their whole portal is the
+  // platform's figures, the list of gyms and their own account.
   if (isPlatformAdmin) {
-    return [GYMS_ITEM, ACCOUNT_ITEM];
+    return [DASHBOARD_ITEM, GYMS_ITEM, ACCOUNT_ITEM];
   }
 
   // Home is deliberately absent for *every* signed-in user, staff included —
@@ -144,7 +144,7 @@ export function NavShell({
               which would only bounce through the proxy's redirect — except for
               the platform superadmin, whose dashboard is the list of gyms. */}
           <Link
-            href={!isLoggedIn ? "/" : isPlatformAdmin ? "/gyms" : "/dashboard"}
+            href={isLoggedIn ? "/dashboard" : "/"}
             className="flex items-center gap-2"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary p-1.5">

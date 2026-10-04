@@ -1011,6 +1011,36 @@ export const ptBR: Dictionary = {
     cookieRemoval:
       "Você pode apagar cookies e armazenamento local nas configurações do navegador. Apagar o cookie de sessão desconecta você; apagar os demais mantém o aplicativo funcionando e de volta às configurações padrão.",
   },
+  platformDashboard: {
+    lead: "O panorama de todas as academias do portal. Só totais: nenhum nome, nenhuma presença ou graduação de uma pessoa.",
+    loadFailed: "Não foi possível carregar os dados. Tente novamente mais tarde.",
+    gymsActive: "Academias ativas",
+    suspendedCount: (n: number) => `${n} ${n === 1 ? "suspensa" : "suspensas"}`,
+    activePeople: "Pessoas ativas",
+    inActiveGyms: "nas academias ativas",
+    presences: "Presenças, 30 dias",
+    checkinShare: (pct: number) => `${pct}% por check-in`,
+    lessons: "Aulas dadas, 30 dias",
+    lessonsHint: "com pelo menos um presente",
+
+    weeklyTitle: "Presenças por semana",
+    weeklySummary: (weeks: number) =>
+      `Presenças por semana em todas as academias, últimas ${weeks} semanas`,
+    weeklyHint: "Passe o mouse sobre uma barra ou toque nela para ver a semana.",
+
+    byGymTitle: "Por academia",
+    byGymLead: "Últimos 30 dias. Uma academia ativa sem aulas no período é sinalizada.",
+    colPeople: "Pessoas",
+    colPresences: "Presenças",
+    colLessons: "Aulas",
+    colCheckins: "Check-in",
+    colLastLesson: "Última aula",
+    colPending: "Cadastros pendentes",
+    never: "nunca",
+    idle: "nenhuma aula em 30 dias",
+    empty: "Nenhuma academia.",
+  },
+
   gyms: {
     title: "Academias",
     subtitle: "As academias hospedadas pelo portal. Aqui você vê os dados de cada academia e os seus gestores, nunca alunos, presenças ou graduações.",

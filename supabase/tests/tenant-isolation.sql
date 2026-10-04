@@ -980,4 +980,70 @@ do $$ begin
 end $$;
 rollback;
 
+-- T24: the platform dashboard (20261004010000) answers the superadmin with
+-- counts that match the tables, and nobody else with anything.
+insert into public.attendance (person_id, session_id, present, checked_in_by, gym_id)
+select p.id, '00000000-0000-0000-0000-0000000005aa', true, 'self', current_setting('test.gym_a')::uuid
+from public.person p
+where p.email = 'a1@test'
+  and not exists (select 1 from public.attendance a
+                  where a.person_id = p.id and a.session_id = '00000000-0000-0000-0000-0000000005aa');
+
+-- The expected figures, read directly by the test's own superuser.
+select set_config('test.t24_presences', count(*)::text, false),
+       set_config('test.t24_self', (count(*) filter (where a.checked_in_by = 'self'))::text, false)
+  from public.attendance a
+  join public.class_session s on s.id = a.session_id
+ where a.present and a.gym_id = current_setting('test.gym_a')::uuid
+   and s.status <> 'cancelled'
+   and s.session_date between current_date - 29 and current_date;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000f0', true);
+do $$
+declare
+  v_expected bigint := current_setting('test.t24_presences')::bigint;
+  v_self bigint := current_setting('test.t24_self')::bigint;
+begin
+  if v_expected = 0 then
+    raise exception 'FAIL T24: the fixture has no presence to count';
+  end if;
+  if (select presences from public.platform_gym_activity(30)
+      where gym_id = current_setting('test.gym_a')::uuid) is distinct from v_expected
+     or (select self_checkins from public.platform_gym_activity(30)
+      where gym_id = current_setting('test.gym_a')::uuid) is distinct from v_self then
+    raise exception 'FAIL T24: per-gym presences do not match the attendance table';
+  end if;
+  if (select count(*) from public.platform_weekly_presences(12)) <> 12 then
+    raise exception 'FAIL T24: the weekly series does not have one row per week';
+  end if;
+  if (select presences from public.platform_weekly_presences(1)) < v_expected then
+    raise exception 'FAIL T24: this week''s platform total misses gym A''s presences';
+  end if;
+end $$;
+rollback;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+do $$ begin
+  if exists (select 1 from public.platform_gym_activity(30))
+     or exists (select 1 from public.platform_weekly_presences(12)) then
+    raise exception 'FAIL T24: a gym admin read the platform dashboard';
+  end if;
+end $$;
+rollback;
+
+begin;
+set local role anon;
+do $$ begin
+  begin
+    perform public.platform_gym_activity(30);
+    raise exception 'FAIL T24: anon can call the platform dashboard';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
 select 'tenant isolation: all checks passed' as result;
