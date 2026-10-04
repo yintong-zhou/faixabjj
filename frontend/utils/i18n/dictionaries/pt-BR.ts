@@ -23,6 +23,7 @@ export const ptBR: Dictionary = {
 
   nav: {
     home: "Início",
+    demo: "Pedir uma demonstração",
     dashboard: "Painel",
     presenze: "Presenças",
     corsi: "Aulas",
@@ -240,9 +241,57 @@ export const ptBR: Dictionary = {
       "Acompanhamento técnico por categoria posicional",
     ],
 
+    demoTitle: "Tem uma academia?",
+    demoLead: "Mostramos o Faixa BJJ numa demonstração, depois você decide se quer usar.",
+    demoCta: "Pedir uma demonstração",
+
     alreadyMember: "Já é membro?",
     alreadyMemberLead:
       "Entre com seu e-mail ou nome de usuário. Se não lembrar a senha, pode redefini-la na página de acesso.",
+  },
+
+  demo: {
+    metaTitle: "Pedir uma demonstração",
+    metaDescription:
+      "Escreva para ver o Faixa BJJ funcionando com a sua academia: chamada, check-in com QR, contagem de horas e critérios de graduação para graus e faixas.",
+    title: "Experimente o Faixa BJJ com a sua academia",
+    lead: "Escreva algumas linhas sobre a sua academia e marcamos uma demonstração: mostramos a chamada, o check-in com QR, a contagem de horas e os critérios de graduação.",
+    writeEmail: "Escrever o e-mail",
+    orWriteTo: "Ou escreva direto para",
+    noCommitment: "Pedir uma demonstração não te compromete com nada.",
+    draftCaption:
+      "O botão abre este e-mail no seu app de e-mail. Complete as partes entre colchetes, ou escreva com as suas palavras.",
+    draftTo: "Para",
+    draftSubject: "Assunto",
+    subject: "Pedido de demonstração Faixa BJJ",
+    body: [
+      { text: "Olá," },
+      { text: "gostaria de ver o Faixa BJJ funcionando na minha academia." },
+      { text: "" },
+      { text: "Academia e cidade:", blank: "nome e cidade" },
+      { text: "Alunos, mais ou menos:", blank: "número" },
+      { text: "Aulas:", blank: "adultos, infantil…" },
+      { text: "Idioma dos professores:", blank: "português, italiano, inglês" },
+      { text: "Telefone, se preferir uma ligação:", blank: "opcional" },
+      { text: "" },
+      { text: "Obrigado" },
+    ],
+    nextTitle: "O que acontece depois",
+    steps: [
+      {
+        title: "Você escreve",
+        description: "Com o e-mail acima ou com as suas palavras: poucas linhas sobre a academia bastam.",
+      },
+      {
+        title: "Nós respondemos",
+        description: "Para combinar juntos o dia e a hora da demonstração.",
+      },
+      {
+        title: "Você vê o app funcionando",
+        description:
+          "Chamada, check-in, horas e critérios de graduação, com todas as perguntas que quiser. Depois você decide.",
+      },
+    ],
   },
 
   account: {

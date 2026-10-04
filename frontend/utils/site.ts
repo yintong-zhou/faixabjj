@@ -17,8 +17,12 @@ export const SITE_NAME = "Faixa BJJ";
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
 
-// The only two pages a crawler can reach: everything else sits behind a login,
-// and a search result pointing at a login form helps nobody. The privacy
-// notice belongs here because it has to be readable before signing up — a
-// legal notice behind a login is not a notice.
-export const PUBLIC_PATHS = ["/", "/privacy"];
+// The pages a crawler can reach: everything else sits behind a login, and a
+// search result pointing at a login form helps nobody. The privacy notice
+// belongs here because it has to be readable before signing up — a legal
+// notice behind a login is not a notice — and /demo because it is where a gym
+// that found the landing page asks to see the app.
+export const PUBLIC_PATHS = ["/", "/demo", "/privacy"];
+
+// Where demo requests go (/demo). Public on purpose: it is printed on the page.
+export const DEMO_EMAIL = "contactdm.yt@gmail.com";

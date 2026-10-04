@@ -22,6 +22,7 @@ export const en: Dictionary = {
 
   nav: {
     home: "Home",
+    demo: "Request a demo",
     dashboard: "Dashboard",
     presenze: "Attendance",
     corsi: "Classes",
@@ -238,9 +239,57 @@ export const en: Dictionary = {
       "Technical tracking by positional category",
     ],
 
+    demoTitle: "Running a gym?",
+    demoLead: "We show you Faixa BJJ in a demo, then you decide whether to use it.",
+    demoCta: "Request a demo",
+
     alreadyMember: "Already a member?",
     alreadyMemberLead:
       "Sign in with your email or username. If you do not remember your password you can reset it from the sign-in page.",
+  },
+
+  demo: {
+    metaTitle: "Request a demo",
+    metaDescription:
+      "Write to us to see Faixa BJJ at work with your gym: roll call, QR check-in, the hour count and promotion criteria for stripes and belts.",
+    title: "Try Faixa BJJ with your gym",
+    lead: "Write us a few lines about your gym and we will set up a demo: we show you the roll call, QR check-in, the hour count and the promotion criteria.",
+    writeEmail: "Write the email",
+    orWriteTo: "Or write directly to",
+    noCommitment: "Asking for a demo does not commit you to anything.",
+    draftCaption:
+      "The button opens this email in your mail app. Fill in the parts in brackets, or write in your own words.",
+    draftTo: "To",
+    draftSubject: "Subject",
+    subject: "Faixa BJJ demo request",
+    body: [
+      { text: "Hello," },
+      { text: "I would like to see Faixa BJJ at work for my gym." },
+      { text: "" },
+      { text: "Gym and city:", blank: "name and city" },
+      { text: "Students, roughly:", blank: "number" },
+      { text: "Classes:", blank: "adults, kids…" },
+      { text: "Instructors' language:", blank: "Italian, Portuguese, English" },
+      { text: "Phone, if you prefer a call:", blank: "optional" },
+      { text: "" },
+      { text: "Thanks" },
+    ],
+    nextTitle: "What happens next",
+    steps: [
+      {
+        title: "You write to us",
+        description: "With the email above or in your own words: a few lines about the gym are enough.",
+      },
+      {
+        title: "We reply",
+        description: "To agree on a day and time for the demo.",
+      },
+      {
+        title: "You see the app at work",
+        description:
+          "Roll call, check-in, hours and promotion criteria, with all the questions you like. Then you decide.",
+      },
+    ],
   },
 
   account: {

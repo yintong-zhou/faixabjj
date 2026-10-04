@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Belt } from "@/components/belt";
+import { StepBelt } from "@/components/step-belt";
 import {
   CheckCircleIcon,
   MinusCircleIcon,
@@ -46,24 +47,6 @@ const DEMO_ROWS = [
 
 const ADULT_LADDER = ["white", "blue", "purple", "brown", "black"];
 const KID_LADDER = ["gray", "yellow", "orange", "green"];
-
-/**
- * A step marker drawn as a small belt: the accent body, the rank bar, and as
- * many stripes on it as the step's number. The <ol> already gives assistive
- * technology the number, so the drawing is hidden from it.
- */
-function StepBelt({ stripes }: { stripes: number }) {
-  return (
-    <span aria-hidden className="flex h-3 w-16 overflow-hidden rounded-[2px]">
-      <span className="flex-1 bg-accent" />
-      <span className="flex w-7 items-stretch justify-end gap-[3px] bg-foreground px-1">
-        {Array.from({ length: stripes }, (_, i) => (
-          <span key={i} className="w-[3px] bg-background" />
-        ))}
-      </span>
-    </span>
-  );
-}
 
 export default async function Home() {
   const { locale, t } = await getDictionary();
@@ -295,19 +278,37 @@ export default async function Home() {
         </ul>
       </section>
 
-      <section className="flex flex-col items-start gap-3 rounded-xl border border-border bg-surface p-5 sm:p-8">
-        <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
-          {t.home.alreadyMember}
-        </h2>
-        <p className="max-w-prose text-sm leading-relaxed text-foreground/65 sm:text-base">
-          {t.home.alreadyMemberLead}
-        </p>
-        <Link
-          href="/login"
-          className="mt-1 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-        >
-          {t.nav.signIn}
-        </Link>
+      {/* The page ends by splitting its two readers: a gym that might use the
+          app goes to /demo, a member who already does goes to sign in. */}
+      <section className="grid overflow-hidden rounded-xl border border-border bg-surface sm:grid-cols-2">
+        <div className="flex flex-col items-start gap-3 p-5 sm:p-8">
+          <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+            {t.home.demoTitle}
+          </h2>
+          <p className="max-w-prose text-sm leading-relaxed text-foreground/65 sm:text-base">
+            {t.home.demoLead}
+          </p>
+          <Link
+            href="/demo"
+            className="mt-auto rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            {t.home.demoCta}
+          </Link>
+        </div>
+        <div className="flex flex-col items-start gap-3 border-t border-border p-5 sm:border-l sm:border-t-0 sm:p-8">
+          <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+            {t.home.alreadyMember}
+          </h2>
+          <p className="max-w-prose text-sm leading-relaxed text-foreground/65 sm:text-base">
+            {t.home.alreadyMemberLead}
+          </p>
+          <Link
+            href="/login"
+            className="mt-auto rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            {t.nav.signIn}
+          </Link>
+        </div>
       </section>
     </div>
   );

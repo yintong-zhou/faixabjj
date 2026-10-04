@@ -27,6 +27,7 @@ export const it = {
 
   nav: {
     home: "Home",
+    demo: "Richiedi una demo",
     dashboard: "Dashboard",
     presenze: "Presenze",
     corsi: "Corsi",
@@ -253,9 +254,57 @@ export const it = {
       "Tracciamento tecnico per categoria posizionale",
     ],
 
+    demoTitle: "Gestisci una palestra?",
+    demoLead: "Ti mostriamo Faixa BJJ in una demo, poi decidi tu se usarlo.",
+    demoCta: "Richiedi una demo",
+
     alreadyMember: "Sei già un membro?",
     alreadyMemberLead:
       "Entra con email o username. Se non ricordi la password puoi reimpostarla dalla pagina di accesso.",
+  },
+
+  demo: {
+    metaTitle: "Richiedi una demo",
+    metaDescription:
+      "Scrivici per vedere Faixa BJJ in funzione con la tua palestra: appello, check-in con QR, conteggio delle ore e criteri di promozione per gradi e cinture.",
+    title: "Prova Faixa BJJ con la tua palestra",
+    lead: "Scrivici due righe sulla tua palestra e organizziamo una demo: ti mostriamo l'appello, il check-in con il QR, il conteggio delle ore e i criteri di promozione.",
+    writeEmail: "Scrivi l'email",
+    orWriteTo: "Oppure scrivi direttamente a",
+    noCommitment: "Chiedere una demo non ti impegna a nulla.",
+    draftCaption:
+      "Il pulsante apre questa email nella tua app di posta. Completa le parti tra parentesi, oppure scrivi con parole tue.",
+    draftTo: "A",
+    draftSubject: "Oggetto",
+    subject: "Richiesta demo Faixa BJJ",
+    body: [
+      { text: "Ciao," },
+      { text: "vorrei vedere Faixa BJJ in funzione per la mia palestra." },
+      { text: "" },
+      { text: "Palestra e città:", blank: "nome e città" },
+      { text: "Allievi, più o meno:", blank: "numero" },
+      { text: "Corsi:", blank: "adulti, bambini…" },
+      { text: "Lingua dei maestri:", blank: "italiano, portoghese, inglese" },
+      { text: "Telefono, se preferisci una chiamata:", blank: "facoltativo" },
+      { text: "" },
+      { text: "Grazie" },
+    ],
+    nextTitle: "Cosa succede dopo",
+    steps: [
+      {
+        title: "Ci scrivi",
+        description: "Con l'email qui sopra o con parole tue: bastano poche righe sulla palestra.",
+      },
+      {
+        title: "Ti rispondiamo",
+        description: "Per fissare insieme giorno e ora della demo.",
+      },
+      {
+        title: "Vedi l'app all'opera",
+        description:
+          "Appello, check-in, ore e criteri di promozione, con tutte le domande che vuoi. Poi decidi tu.",
+      },
+    ],
   },
 
   account: {

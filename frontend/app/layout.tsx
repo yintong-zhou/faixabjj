@@ -148,6 +148,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           locale={locale}
           labels={{
             home: t.nav.home,
+            demo: t.nav.demo,
             dashboard: t.nav.dashboard,
             presenze: t.nav.presenze,
             corsi: t.nav.corsi,

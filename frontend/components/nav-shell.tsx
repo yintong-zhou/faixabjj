@@ -10,6 +10,7 @@ import {
   CalendarPlusIcon,
   DashboardIcon,
   HomeIcon,
+  MailIcon,
   UserIcon,
   UsersIcon,
 } from "@/components/icons";
@@ -23,6 +24,7 @@ import { SITE_NAME } from "@/utils/site";
 // locale cookie, so the server passes the translated strings in.
 export type NavLabels = {
   home: string;
+  demo: string;
   dashboard: string;
   presenze: string;
   corsi: string;
@@ -38,6 +40,7 @@ export type NavLabels = {
 };
 
 const HOME_ITEM = { href: "/", key: "home", icon: HomeIcon } as const;
+const DEMO_ITEM = { href: "/demo", key: "demo", icon: MailIcon } as const;
 const PRESENZE_ITEM = {
   href: "/attendance",
   key: "presenze",
@@ -57,6 +60,7 @@ const GYMS_ITEM = { href: "/gyms", key: "gyms", icon: BuildingIcon } as const;
 // literal of two entries infers those two `href` strings and rejects the third.
 type NavItem =
   | typeof HOME_ITEM
+  | typeof DEMO_ITEM
   | typeof DASHBOARD_ITEM
   | typeof PRESENZE_ITEM
   | typeof CORSI_ITEM
@@ -74,9 +78,12 @@ function navItemsFor(
   isPlatformAdmin: boolean,
 ) {
   if (!isLoggedIn) {
-    // Home is the whole menu for a visitor: every other section requires a
-    // session, so offering them only produces a bounce through /login.
-    return [HOME_ITEM];
+    // A visitor's menu is the two public pages worth a tab: the landing and
+    // the demo request, which is how a gym that is not on the portal yet gets
+    // in touch. Every other section requires a session, so offering it only
+    // produces a bounce through /login. Signed in, the demo tab is gone: the
+    // reader is already a member of a gym.
+    return [HOME_ITEM, DEMO_ITEM];
   }
 
   // The platform superadmin belongs to no gym: their whole portal is the
@@ -141,8 +148,8 @@ export function NavShell({
       <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5 sm:px-8 sm:py-4">
           {/* Signed in, the logo goes to the dashboard rather than to "/",
-              which would only bounce through the proxy's redirect — except for
-              the platform superadmin, whose dashboard is the list of gyms. */}
+              which would only bounce through the proxy's redirect. That holds
+              for the platform superadmin too, who has a dashboard of their own. */}
           <Link
             href={isLoggedIn ? "/dashboard" : "/"}
             className="flex items-center gap-2"
@@ -177,7 +184,11 @@ export function NavShell({
                   className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
                     isActive(pathname, href)
                       ? "bg-foreground text-background"
-                      : "text-foreground/70 hover:bg-muted"
+                      : key === "demo"
+                        ? // The one tab a visitor should notice: in the accent,
+                          // the only colour the header otherwise does not use.
+                          "text-accent hover:bg-accent/10"
+                        : "text-foreground/70 hover:bg-muted"
                   }`}
                 >
                   {labels[key]}

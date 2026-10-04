@@ -38,8 +38,9 @@
 ## Shell and navigation
 
 - `components/nav-shell.tsx`: sticky header nav at `sm:`+, fixed bottom tab bar below. Wraps `{children}` in the root layout — don't duplicate nav in pages. **Lessons get one tab:** *Corsi* for `canManageClasses` (with a "Presenze" button on `/courses`; the tab stays active on `/attendance`), *Presenze* for students, who can't open `/courses`.
-- Role-aware `navItemsFor()`: Home for visitors only; Dashboard + Account for allievi; full set for staff. `canViewRegistry` computed server-side in `app/layout.tsx`. Hiding links is not access control.
+- Role-aware `navItemsFor()`: Home and *Richiedi una demo* (`/demo`, in the accent while not active) for visitors only; Dashboard + Account for allievi; full set for staff. `canViewRegistry` computed server-side in `app/layout.tsx`. Hiding links is not access control.
 - **The landing page links to `/login`, never into the app.**
+- **`/demo`** (public, in `PUBLIC_PATHS` → sitemap; not in `PROTECTED_PREFIXES`/`VISITOR_ONLY`): how a gym asks for a demo. By email, no form (a form would need a delivery service): a `mailto:` button built by `mailtoHref()` (`utils/mailto.ts`, unit-tested: subject/body percent-encoded, CRLF lines) to `DEMO_EMAIL` (`utils/site.ts`, the one place to change the address), plus the address as selectable text for machines without a mail app. The page previews the exact message the button opens, from the same `t.demo.body` lines; blanks in brackets carry the accent. Linked from the landing's closing section (split: demo | sign in). `StepBelt` (`components/step-belt.tsx`) is the shared step marker of both pages.
 - Landing motion: the roll-call demo in the hero (`.roll-demo__*` in `globals.css`) is the page's **only** animation, played once. Its resting styles are the finished state and the keyframes run *from* the unset look, so reduced motion shows the roll call complete. Don't add scroll reveals or per-section entrances.
 
 ## Components and assets
