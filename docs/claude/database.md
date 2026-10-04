@@ -15,6 +15,7 @@ Plain SQL migrations in `supabase/migrations/` (Supabase CLI layout). Supabase (
 - `20260930000000_person_username.sql` — `person.username` (check `person_username_format`, global unique index `person_username_unique`), backfilled for rows with an account by the same rule as `suggestUsername()`; `username` added to the guard's self-editable allowlist. **Apply BEFORE deploying the app**: `/account`, `/members/[id]` and the login select or write `username`, an unknown column without it.
 - `20260930010000_login_username_lookup.sql` — `login_email_for_username(text)`, security definer, executable by `service_role` only (revoked from anon/authenticated): the login's username → account email lookup in one round trip. **Apply BEFORE deploying the app**: without it every username sign-in fails with PGRST202 and shows "wrong credentials".
 - `20261002000000_gym_invite_registration.sql` — `gym_invite` (one link per gym, readable by user managers only), `registration_request` (pending self-registrations, written only by the service role), trigger `username_cross_unique` (a username is unique across `person` and `registration_request`; the same account may hold it on both sides, which is how approval moves it), `regenerate_invite_token()` (authenticated, own gym, `can_manage_users()`), `gym_for_invite()` and `username_available()` (service role only), and `login_email_for_username()` redefined to resolve pending accounts. **Apply BEFORE deploying the app**: `/gym`, `/join`, `/members` and the username login all call these.
+- `20261004000000_platform_admin_username.sql` — `platform_admin.username` (format check, unique index), `set_platform_admin_username()` (authenticated, own row only, 42501 for anyone else), and `username_cross_unique()`, `username_available()`, `login_email_for_username()` redefined to include `platform_admin`. **Apply BEFORE deploying the app**: the superadmin `/account` selects `platform_admin.username` and calls the setter.
 - `20260926010000_drop_direct_checkin.sql` — drops the RLS insert policy allowing direct member check-in; **applies only after the app calling `check_in()` is deployed**. Prevents bypass via direct insert. Apply AFTER the deploy; rolling the app back after this migration breaks member self check-in until the old policy is restored.
 
 ## Applying migrations
@@ -30,7 +31,8 @@ Several objects are defined in more than one migration; only the **last one run*
 - `person_hours`: `20260910000000`, `20260912000000`
 - `guard_person_auth_link()`: `20260911000000`, `20260911120000`, `20260911200000`, `20260911220000`, `20260927000000`, `20260930000000` (last)
 - `record_promotion()`: `20260918130000`, `20260919110000`, `20260927000000` (last — re-pasting an earlier one drops the marker, and every promotion then fails)
-- `login_email_for_username()`: `20260930010000`, `20261002000000` (last)
+- `login_email_for_username()`: `20260930010000`, `20261002000000`, `20261004000000` (last)
+- `username_cross_unique()`, `username_available()`: `20261002000000`, `20261004000000` (last — re-pasting the earlier one lets a member take the superadmin's username)
 - `gym_timezone()`: was a constant, redefined in `20260925010000` to read the caller's gym; keeps its zero-argument signature
 - policy `"members can check themselves in"`: created by `20260912010000`, dropped by `20260926010000`; re-pasting `20260912010000` alone silently restores the direct-insert bypass of `check_in()`
 

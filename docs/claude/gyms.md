@@ -21,7 +21,7 @@ Faixa BJJ is the **product**; it hosts isolated gyms that share nothing. The fir
 - Sees `gym` and two definer functions only: `gym_overview()` (aggregates) and `gym_managers(gym_id)` (a gym's admins). Never students, attendance or promotions — least privilege, and the platform is the gyms' data processor.
 - `current_access()` (final definition in `20260925030000`) adds `isPlatformAdmin` and `gymStatus`; the four gym flags are false outside an active gym.
 - `requireAdmin()` redirects a suspended gym's users — and any non-superadmin account in no gym (an orphan) — to `/suspended`, which tells the two apart, sends the superadmin from `/dashboard` to `/gyms`, and answers 404 on every other gym page for them. `requirePlatformAdmin()` guards `/gyms/*` (404).
-- Nav for the superadmin: *Palestre*, *Account*. `/account` shows email and password only.
+- Nav for the superadmin: *Palestre*, *Account*. `/account` shows username, email and password only (`updatePlatformAccount`); the username is on its `platform_admin` row, written only by `set_platform_admin_username()`.
 
 ## Gym managers
 

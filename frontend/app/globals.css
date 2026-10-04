@@ -451,3 +451,47 @@ button[data-pending]::after {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Roll-call demo on the landing page (app/page.tsx)
+   ---------------------------------------------------------------------------
+   The page's one moment of motion: each row's "present" mark is set, one row
+   after another, as an instructor would tap through a roll call, and the hour
+   it earns appears beside it. Played once on load.
+
+   The resting styles are the finished state and the animation only runs *from*
+   the unset look, so turning motion off (or a browser without animations)
+   shows the roll call complete, never half-done. Each row sets its own
+   `--roll-delay`. */
+.roll-demo__present {
+  animation: roll-demo-mark 360ms ease-out var(--roll-delay, 0ms) backwards;
+}
+
+.roll-demo__hour {
+  animation: roll-demo-hour 280ms ease-out calc(var(--roll-delay, 0ms) + 160ms) backwards;
+}
+
+@keyframes roll-demo-mark {
+  from {
+    color: color-mix(in srgb, var(--foreground) 35%, transparent);
+    border-color: var(--border);
+    background-color: transparent;
+  }
+  55% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes roll-demo-hour {
+  from {
+    opacity: 0;
+    transform: translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roll-demo__present,
+  .roll-demo__hour {
+    animation: none;
+  }
+}

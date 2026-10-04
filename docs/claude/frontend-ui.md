@@ -40,6 +40,7 @@
 - `components/nav-shell.tsx`: sticky header nav at `sm:`+, fixed bottom tab bar below. Wraps `{children}` in the root layout — don't duplicate nav in pages. **Lessons get one tab:** *Corsi* for `canManageClasses` (with a "Presenze" button on `/courses`; the tab stays active on `/attendance`), *Presenze* for students, who can't open `/courses`.
 - Role-aware `navItemsFor()`: Home for visitors only; Dashboard + Account for allievi; full set for staff. `canViewRegistry` computed server-side in `app/layout.tsx`. Hiding links is not access control.
 - **The landing page links to `/login`, never into the app.**
+- Landing motion: the roll-call demo in the hero (`.roll-demo__*` in `globals.css`) is the page's **only** animation, played once. Its resting styles are the finished state and the keyframes run *from* the unset look, so reduced motion shows the roll call complete. Don't add scroll reveals or per-section entrances.
 
 ## Components and assets
 

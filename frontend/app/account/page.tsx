@@ -19,7 +19,8 @@ import {
   UserIcon,
 } from "@/components/icons";
 import { suggestUsername } from "@/utils/username";
-import { updatePassword, updateProfile } from "./actions";
+import { logDbError } from "@/utils/log";
+import { updatePassword, updatePlatformAccount, updateProfile } from "./actions";
 
 const fieldClass =
   "rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-accent";
@@ -83,16 +84,100 @@ export default async function AccountPage({
     </section>
   );
 
+  // The result of the last save, for every branch: the superadmin's page used
+  // to drop it, so a changed password left no sign that it had worked.
+  const feedback = (
+    <>
+      {ok ? (
+        <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
+          <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {ok}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {error}
+        </p>
+      ) : null}
+    </>
+  );
+
   const { supabase, userId, email, access } = await requireAdmin("/account");
 
   // The platform superadmin has no person row: no gym, no belt, no hours. Their
-  // account is an email and a password, and nothing else is drawn.
+  // account is a username, an email and a password, and nothing else is drawn.
+  // The username lives on their platform_admin row (20261004000000).
   if (access.isPlatformAdmin) {
+    const { data: adminRow, error: adminError } = await supabase
+      .from("platform_admin")
+      .select("username")
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+    if (adminError) logDbError("account", "platformAdmin:read", adminError);
+    const username = (adminRow?.username as string | null | undefined) ?? null;
+
     return (
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 py-5 sm:gap-5 sm:py-7">
-        <h1 className="font-heading text-xl font-semibold sm:text-2xl">{t.nav.account}</h1>
-        <p className="text-sm text-foreground/70">{email}</p>
-        <p className="text-xs text-foreground/55">{t.account.platformAdmin}</p>
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-5 sm:gap-8">
+        <header className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t.account.title}</h1>
+          <p className="text-sm leading-relaxed text-foreground/65">{t.account.platformAdmin}</p>
+        </header>
+
+        {feedback}
+
+        <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
+          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+            <UserIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
+            {t.account.signInDetails}
+          </h2>
+
+          <form action={updatePlatformAccount} className="flex flex-col gap-3 sm:gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="username" className="text-sm font-medium">
+                {t.account.username}
+              </label>
+              <input
+                id="username"
+                name="username"
+                // Optional until there is one to keep, as on a member's page:
+                // saving a new email must not force a username first.
+                required={Boolean(username)}
+                defaultValue={username ?? ""}
+                maxLength={30}
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                className={fieldClass}
+              />
+              <p className="text-xs text-foreground/55">{t.account.usernameHelp}</p>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="email" className="text-sm font-medium">
+                {t.auth.email}
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                defaultValue={email ?? ""}
+                autoComplete="email"
+                className={fieldClass}
+              />
+              <p className="text-xs text-foreground/55">{t.account.emailChangeNote}</p>
+            </div>
+
+            <button
+              type="submit"
+              className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            >
+              {t.common.saveChanges}
+            </button>
+          </form>
+        </section>
+
         {passwordSection}
       </div>
     );
@@ -152,18 +237,7 @@ export default async function AccountPage({
         </p>
       </header>
 
-      {ok ? (
-        <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
-          <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-          {ok}
-        </p>
-      ) : null}
-      {error ? (
-        <p className="flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
-          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-          {error}
-        </p>
-      ) : null}
+      {feedback}
 
       <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">

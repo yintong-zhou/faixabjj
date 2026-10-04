@@ -924,4 +924,60 @@ do $$ begin
   end if;
 end $$;
 
+-- T23: the superadmin's username (20261004000000) — set only through its own
+-- setter, unique against every other table, and good for signing in.
+update public.person set username = 'member.name' where email = 'a1@test';
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000f0', true);
+do $$ begin
+  perform public.set_platform_admin_username('platform.boss');
+  begin
+    perform public.set_platform_admin_username('member.name');
+    raise exception 'FAIL T23: the superadmin took a member''s username';
+  exception when unique_violation then null;
+  end;
+  begin
+    perform public.set_platform_admin_username('Boss@X');
+    raise exception 'FAIL T23: the format check let an invalid username through';
+  exception when check_violation then null;
+  end;
+  -- The row is the grant itself: no direct update, the setter is the only way.
+  update public.platform_admin set username = 'direct.write' where auth_user_id = auth.uid();
+  if found then
+    raise exception 'FAIL T23: the superadmin updated platform_admin directly';
+  end if;
+end $$;
+commit;
+
+do $$ begin
+  if (select username from public.platform_admin
+      where auth_user_id = '00000000-0000-0000-0000-0000000000f0') is distinct from 'platform.boss' then
+    raise exception 'FAIL T23: the superadmin could not set its username';
+  end if;
+  if public.login_email_for_username('platform.boss') is distinct from 's0@test' then
+    raise exception 'FAIL T23: the login does not resolve the superadmin''s username';
+  end if;
+  if public.username_available('platform.boss') then
+    raise exception 'FAIL T23: the superadmin''s username reads as available';
+  end if;
+end $$;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+do $$ begin
+  begin
+    perform public.set_platform_admin_username('not.an.admin');
+    raise exception 'FAIL T23: a gym admin used the superadmin''s setter';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.person set username = 'platform.boss' where auth_user_id = auth.uid();
+    raise exception 'FAIL T23: a member took the superadmin''s username';
+  exception when unique_violation then null;
+  end;
+end $$;
+rollback;
+
 select 'tenant isolation: all checks passed' as result;

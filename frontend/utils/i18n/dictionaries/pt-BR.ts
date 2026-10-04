@@ -145,14 +145,13 @@ export const ptBR: Dictionary = {
     metaDescription:
       "Software para academias de Jiu-Jitsu brasileiro: um único cadastro de alunos e instrutores, presenças com contagem automática de horas e critérios de graduação para graus e faixas. A decisão continua sendo do professor.",
     ogDescription:
-      "Cadastro único, presenças com contagem automática de horas e critérios de graduação configuráveis, para academias de Jiu-Jitsu brasileiro.",
-    badge: "MVP em desenvolvimento",
-    title: "A evolução técnica, registrada.",
-    lead: "O Faixa BJJ acompanha o sistema de gestão que a academia já usa e cobre aquilo que as ferramentas genéricas fazem mal: seguir o caminho de cada aluno rumo a graus e faixas, com o mínimo de trabalho extra para os professores.",
+      "Cadastro único, chamada ou check-in com QR, contagem automática de horas e critérios de graduação para cada faixa, para academias de Jiu-Jitsu brasileiro.",
+    title: "Horas de tatame, graus e faixas, num só cadastro.",
+    lead: "O Faixa BJJ conta as horas de alunos e professores e mostra à equipe quem está perto do próximo grau. Fica ao lado do sistema de gestão que a academia já usa, sem substituí-lo. Quem decide a graduação é sempre o professor.",
     ctaPrimary: "Entrar no portal",
     ctaSecondary: "Como funciona",
     noSignup:
-      "O acesso é reservado aos membros da academia: as contas são criadas pela secretaria, não há cadastro aberto.",
+      "É para quem treina na academia: a equipe cria a sua conta, ou você se cadastra pelo link da sua academia e a equipe aprova o pedido.",
 
     keywords: [
       "Jiu-Jitsu brasileiro",
@@ -164,22 +163,43 @@ export const ptBR: Dictionary = {
       "graduação de faixa BJJ",
     ],
     audience: "Escolas e academias de Jiu-Jitsu brasileiro",
+
+    demo: {
+      lesson: "Fundamentos, segunda-feira 19:00",
+      plusOneHour: "+1 hora",
+      caption: "A chamada no celular do professor: cada presença vale uma hora.",
+    },
+
     whatItDoes: "O que faz",
     features: [
       {
         title: "Cadastro único",
         description:
-          "Um só perfil para alunos e instrutores: no BJJ a mesma pessoa costuma ser as duas coisas ao mesmo tempo, e o papel muda com o tempo sem perder o histórico.",
+          "Um só perfil para alunos e professores, porque no BJJ a mesma pessoa muitas vezes é as duas coisas. Os papéis mudam com o tempo e o histórico fica.",
       },
       {
-        title: "Presenças e horas",
+        title: "Chamada ou check-in com QR",
         description:
-          "Chamada do professor ou check-in do aluno, dentro de uma janela em torno da aula. Cada presença vale uma hora e o total se atualiza sozinho.",
+          "O professor marca os presentes em poucos toques, ou o aluno escaneia o QR code da academia. O check-in abre só em torno da aula e, se a academia definiu a sua localização, vale só no local.",
       },
       {
-        title: "Critérios de graduação",
+        title: "Horas que se contam sozinhas",
         description:
-          "Limites de horas e de tempo na graduação, configuráveis por faixa. O sistema aponta quem está pronto: graduar continua sendo decisão do professor.",
+          "Cada presença vale uma hora e ninguém precisa digitá-las. As horas de antes do app são estimadas pela data de matrícula e continuam indicadas como estimativa.",
+      },
+      {
+        title: "Critérios para cada faixa",
+        description:
+          "Limites de horas e de tempo na graduação que a academia pode editar. O sistema aponta quem os atingiu: graduar continua sendo decisão do professor.",
+      },
+      {
+        title: "Feito para a beira do tatame",
+        description:
+          "Pensado para o celular, em português, inglês e italiano, com tema claro e escuro.",
+      },
+      {
+        title: "Dados separados por academia",
+        description: "Cada academia vê só os próprios alunos, as próprias aulas e as próprias presenças.",
       },
     ],
 
@@ -188,19 +208,27 @@ export const ptBR: Dictionary = {
       {
         title: "Defina as aulas",
         description:
-          "Dias, horário e período de cada aula recorrente. Daí nasce o calendário das aulas, sem precisar reinserir nada toda semana.",
+          "Dias, horário e professor de cada aula recorrente. O calendário das aulas nasce daí, sem precisar reinserir nada toda semana.",
       },
       {
         title: "Registre as presenças",
         description:
-          "O professor faz a chamada em poucos toques pelo celular, ou o próprio aluno faz check-in ao chegar na academia.",
+          "Chamada pelo celular ou check-in com o QR code da academia. Cada presença soma uma hora ao total da pessoa.",
       },
       {
         title: "Veja quem está pronto",
         description:
-          "Horas acumuladas e tempo na graduação atual, de cada pessoa, sempre ao lado do nome.",
+          "A equipe vê as horas e o tempo na graduação de cada um, e quem atingiu os critérios. Depois decide.",
       },
     ],
+
+    beltsTitle: "As faixas como são",
+    beltsLead:
+      "Cada graduação aparece como uma faixa, com seus graus: a escala adulta, da branca à preta, e a infantil, da cinza à verde.",
+    membersNote:
+      "Quem treina vê a própria faixa, há quanto tempo a tem e quantas horas treinou. Sem contagem regressiva nem veredito: o momento da graduação é o professor quem escolhe.",
+    adultsLabel: "Adultos",
+    kidsLabel: "Infantil",
 
     notDoingTitle: "O que deliberadamente não faz",
     notDoingLead:
@@ -214,7 +242,7 @@ export const ptBR: Dictionary = {
 
     alreadyMember: "Já é membro?",
     alreadyMemberLead:
-      "Entre com o e-mail que você informou na academia. Se não lembrar a senha, pode redefini-la na página de acesso.",
+      "Entre com seu e-mail ou nome de usuário. Se não lembrar a senha, pode redefini-la na página de acesso.",
   },
 
   account: {
@@ -225,6 +253,7 @@ export const ptBR: Dictionary = {
     platformAdmin:
       "Conta de administração do portal: não pertence a nenhuma academia e não tem faixa.",
 
+    signInDetails: "Dados de acesso",
     personalData: "Dados pessoais",
     fullName: "Nome completo",
     username: "Nome de usuário",

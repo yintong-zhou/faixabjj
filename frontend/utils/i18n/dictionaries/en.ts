@@ -143,14 +143,13 @@ export const en: Dictionary = {
     metaDescription:
       "Software for Brazilian Jiu-Jitsu schools: one registry for students and instructors, attendance with an automatic hour count, and promotion criteria for stripes and belts. The decision stays with the instructor.",
     ogDescription:
-      "One registry, attendance with an automatic hour count and configurable promotion criteria, for Brazilian Jiu-Jitsu schools.",
-    badge: "MVP in development",
-    title: "Technical progress, tracked.",
-    lead: "Faixa BJJ sits alongside the management software your gym already uses and covers the one thing generic tools do badly: following each student's path towards stripes and belts, while adding as little work as possible for instructors.",
+      "One registry, roll call or QR check-in, an automatic hour count and promotion criteria for every belt, for Brazilian Jiu-Jitsu schools.",
+    title: "Mat hours, stripes and belts, in one registry.",
+    lead: "Faixa BJJ counts the hours of students and instructors and shows staff who is getting close to their next grade. It sits alongside the management software your gym already uses, without replacing it. The instructor always decides the promotion.",
     ctaPrimary: "Sign in to the portal",
     ctaSecondary: "How it works",
     noSignup:
-      "Access is reserved for members of the gym: accounts are created by the office, there is no open sign-up.",
+      "It is for people who train at the gym: staff create your account, or you register through your gym's link and staff approve the request.",
 
     keywords: [
       "Brazilian Jiu-Jitsu",
@@ -162,22 +161,43 @@ export const en: Dictionary = {
       "BJJ belt promotion",
     ],
     audience: "Brazilian Jiu-Jitsu schools and gyms",
+
+    demo: {
+      lesson: "Fundamentals, Monday 19:00",
+      plusOneHour: "+1 hour",
+      caption: "Roll call on the instructor's phone: each attendance counts as one hour.",
+    },
+
     whatItDoes: "What it does",
     features: [
       {
         title: "One registry",
         description:
-          "A single profile for students and instructors: in BJJ the same person is often both at once, and the role changes over time without losing the history.",
+          "A single profile for students and instructors, because in BJJ the same person is often both. Roles change over time and the history stays.",
       },
       {
-        title: "Attendance and hours",
+        title: "Roll call or QR check-in",
         description:
-          "The instructor's roll call, or the student's own check-in within a window around the class. One attendance is one hour, and the total keeps itself up to date.",
+          "The instructor marks who is present in a few taps, or the student scans the gym's QR code. Check-in opens only around the class and, if the gym has set its location, works only on site.",
       },
       {
-        title: "Promotion criteria",
+        title: "Hours that count themselves",
         description:
-          "Hour and time-at-rank thresholds, configurable per belt. The system flags who is ready: promoting stays the instructor's decision.",
+          "One attendance is one hour, and nobody types them in. Hours from before the app are estimated from the join date and stay labelled as an estimate.",
+      },
+      {
+        title: "Criteria for every belt",
+        description:
+          "Hour and time-at-rank thresholds the gym can edit. The system flags who has met them: promoting stays the instructor's decision.",
+      },
+      {
+        title: "Made for the edge of the mat",
+        description:
+          "Built for the phone, in English, Italian and Brazilian Portuguese, with a light and a dark theme.",
+      },
+      {
+        title: "Each gym's data kept apart",
+        description: "A gym sees only its own members, its own classes and its own attendance.",
       },
     ],
 
@@ -186,19 +206,27 @@ export const en: Dictionary = {
       {
         title: "Define the classes",
         description:
-          "Days, times and period for each recurring class. The lesson calendar follows from that, with nothing to re-enter each week.",
+          "Days, times and instructor for each recurring class. The lesson calendar follows from that, with nothing to re-enter each week.",
       },
       {
         title: "Record attendance",
         description:
-          "The instructor takes the roll call in a few taps on a phone, or the student checks themselves in on arriving at the gym.",
+          "Roll call from a phone, or check-in with the gym's QR code. Each attendance adds one hour to that person's total.",
       },
       {
         title: "See who is ready",
         description:
-          "Hours accumulated and time spent at the current rank, for every person, always next to their name.",
+          "Staff see each person's hours and time at rank, and who has met the criteria. Then they decide.",
       },
     ],
+
+    beltsTitle: "Belts as they are",
+    beltsLead:
+      "Every grade shows as a belt with its stripes: the adult ladder from white to black, and the children's from grey to green.",
+    membersNote:
+      "People who train see their own belt, how long they have had it and how many hours they have trained. No countdown and no verdict: the instructor chooses when it is time.",
+    adultsLabel: "Adults",
+    kidsLabel: "Kids",
 
     notDoingTitle: "What it deliberately does not do",
     notDoingLead:
@@ -212,7 +240,7 @@ export const en: Dictionary = {
 
     alreadyMember: "Already a member?",
     alreadyMemberLead:
-      "Sign in with the email you gave the gym. If you do not remember your password you can reset it from the sign-in page.",
+      "Sign in with your email or username. If you do not remember your password you can reset it from the sign-in page.",
   },
 
   account: {
@@ -223,6 +251,7 @@ export const en: Dictionary = {
     platformAdmin:
       "Portal administration account: it belongs to no gym and holds no belt.",
 
+    signInDetails: "Sign-in details",
     personalData: "Personal details",
     fullName: "Full name",
     username: "Username",

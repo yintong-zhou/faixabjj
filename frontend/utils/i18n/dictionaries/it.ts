@@ -157,14 +157,13 @@ export const it = {
     metaDescription:
       "Software per scuole di Brazilian Jiu-Jitsu: registro unico di allievi e istruttori, presenze e conteggio ore automatico, criteri di promozione a gradi e cinture. La decisione resta all'istruttore.",
     ogDescription:
-      "Registro unico, presenze con conteggio ore automatico e criteri di promozione configurabili, per scuole di Brazilian Jiu-Jitsu.",
-    badge: "MVP in sviluppo",
-    title: "La progressione tecnica tracciata.",
-    lead: "Faixa BJJ affianca il gestionale che la palestra usa già e copre l'unica cosa che gli strumenti generici fanno male: seguire il percorso di ogni allievo verso gradi e cinture, aggiungendo il minimo indispensabile di lavoro agli istruttori.",
+      "Registro unico, appello o check-in con QR, conteggio ore automatico e criteri di promozione per ogni cintura, per scuole di Brazilian Jiu-Jitsu.",
+    title: "Ore sul tatami, gradi e cinture, in un registro solo.",
+    lead: "Faixa BJJ conta le ore di allievi e istruttori e mostra allo staff chi si avvicina al prossimo grado. Affianca il gestionale che la palestra usa già, senza sostituirlo. La promozione la decide sempre l'istruttore.",
     ctaPrimary: "Accedi al portale",
     ctaSecondary: "Come funziona",
     noSignup:
-      "L'accesso è riservato ai membri della palestra: gli account li crea la segreteria, non esiste registrazione libera.",
+      "È riservato a chi si allena in palestra: l'account lo crea lo staff, oppure ti registri dal link della tua palestra e lo staff approva la richiesta.",
 
     keywords: [
       "Brazilian Jiu-Jitsu",
@@ -176,22 +175,44 @@ export const it = {
       "promozione cintura BJJ",
     ],
     audience: "Scuole e palestre di Brazilian Jiu-Jitsu",
+
+    demo: {
+      lesson: "Fondamentali, lunedì 19:00",
+      plusOneHour: "+1 ora",
+      caption: "L'appello sul telefono dell'istruttore: ogni presenza vale un'ora.",
+    },
+
     whatItDoes: "Cosa fa",
     features: [
       {
         title: "Registro unico",
         description:
-          "Un solo profilo per allievi e istruttori: nel BJJ la stessa persona è spesso entrambe le cose insieme, e il ruolo cambia nel tempo senza perdere lo storico.",
+          "Un solo profilo per allievi e istruttori, perché nel BJJ la stessa persona è spesso entrambe le cose. I ruoli cambiano nel tempo e lo storico resta.",
       },
       {
-        title: "Presenze e ore",
+        title: "Appello o check-in con QR",
         description:
-          "Appello dell'istruttore o check-in dell'allievo, dentro una finestra attorno alla lezione. Ogni presenza vale un'ora e il totale si aggiorna da solo.",
+          "L'istruttore segna i presenti in pochi tocchi, oppure l'allievo inquadra il QR della palestra. Il check-in si apre solo attorno alla lezione e, se la palestra ha indicato la sua posizione, vale solo sul posto.",
       },
       {
-        title: "Criteri di promozione",
+        title: "Ore che si contano da sole",
         description:
-          "Soglie di ore e di tempo al grado, configurabili per cintura. Il sistema segnala chi è pronto: promuovere resta una decisione dell'istruttore.",
+          "Ogni presenza vale un'ora e nessuno le digita a mano. Le ore di prima dell'app sono stimate dalla data di iscrizione e restano indicate come stima.",
+      },
+      {
+        title: "Criteri per ogni cintura",
+        description:
+          "Soglie di ore e di tempo al grado che la palestra può modificare. Il sistema segnala chi le ha raggiunte: promuovere resta una decisione dell'istruttore.",
+      },
+      {
+        title: "Fatto per il bordo del tatami",
+        description:
+          "Pensato per il telefono, in italiano, inglese e portoghese brasiliano, con tema chiaro e scuro.",
+      },
+      {
+        title: "Dati separati per palestra",
+        description:
+          "Ogni palestra vede soltanto i propri iscritti, le proprie lezioni e le proprie presenze.",
       },
     ],
 
@@ -200,19 +221,27 @@ export const it = {
       {
         title: "Definisci i corsi",
         description:
-          "Giorni, orario e periodo di ogni corso ricorrente. Da lì nasce il calendario delle lezioni, senza reinserire niente ogni settimana.",
+          "Giorni, orario e istruttore di ogni corso ricorrente. Il calendario delle lezioni nasce da lì, senza reinserire niente ogni settimana.",
       },
       {
         title: "Registra le presenze",
         description:
-          "L'istruttore fa l'appello in pochi tocchi dal telefono, oppure è l'allievo a fare check-in quando arriva in palestra.",
+          "Appello dal telefono o check-in con il QR della palestra. Ogni presenza aggiunge un'ora al totale della persona.",
       },
       {
         title: "Guarda chi è pronto",
         description:
-          "Ore accumulate e tempo trascorso al grado attuale, per ogni persona, sempre visibili accanto al nome.",
+          "Lo staff vede le ore e il tempo al grado di ognuno, e chi ha raggiunto i criteri. Poi decide.",
       },
     ],
+
+    beltsTitle: "Le cinture come sono",
+    beltsLead:
+      "Ogni grado si vede come una cintura, con le sue tacche: la scala degli adulti, dalla bianca alla nera, e quella dei bambini, dal grigio al verde.",
+    membersNote:
+      "Chi si allena vede la propria cintura, da quanto tempo ce l'ha e quante ore ha fatto. Niente conti alla rovescia né verdetti: il momento della promozione lo sceglie l'istruttore.",
+    adultsLabel: "Adulti",
+    kidsLabel: "Bambini",
 
     notDoingTitle: "Cosa non fa, deliberatamente",
     notDoingLead:
@@ -226,7 +255,7 @@ export const it = {
 
     alreadyMember: "Sei già un membro?",
     alreadyMemberLead:
-      "Entra con l'email che hai dato in palestra. Se non ricordi la password puoi reimpostarla dalla pagina di accesso.",
+      "Entra con email o username. Se non ricordi la password puoi reimpostarla dalla pagina di accesso.",
   },
 
   account: {
@@ -237,6 +266,7 @@ export const it = {
     platformAdmin:
       "Account di amministrazione del portale: non appartiene a nessuna palestra e non ha una cintura.",
 
+    signInDetails: "Dati di accesso",
     personalData: "Dati personali",
     fullName: "Nome e cognome",
     username: "Username",
