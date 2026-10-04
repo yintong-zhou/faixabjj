@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { AlertCircleIcon, QrCodeIcon } from "@/components/icons";
+import {
+  AlertCircleIcon,
+  ChevronRightIcon,
+  QrCodeIcon,
+  UserPlusIcon,
+} from "@/components/icons";
+import { logDbError } from "@/utils/log";
 import { parsePeriod } from "@/utils/attendance-series";
 import { isPortalOnly } from "@/utils/members";
 import { activeRoles, getOrCreateProfile } from "@/utils/supabase/profile";
@@ -81,6 +87,19 @@ export default async function DashboardPage({
   const showingMine = !portalOnly && (!isStaff || v === MINE);
   const today = todayIn(gym.timezone);
 
+  // People who signed up with the gym's link and are waiting to be let in.
+  // Only those who can approve them are told — the same predicate as the
+  // approval page and as RLS, which would count nothing for anyone else — and
+  // in either view: it is a task waiting for them, not a figure about the gym.
+  let pendingRequests = 0;
+  if (access.canManageUsers) {
+    const { count, error: requestsError } = await supabase
+      .from("registration_request")
+      .select("id", { count: "exact", head: true });
+    if (requestsError) logDbError("dashboard", "registration_request:count", requestsError);
+    pendingRequests = count ?? 0;
+  }
+
   return (
     <div className="flex w-full flex-col gap-6 sm:gap-10">
       <header className="flex flex-col gap-2">
@@ -116,6 +135,35 @@ export default async function DashboardPage({
           {showingMine ? t.dashboard.memberLead : t.dashboard.staffLead}
         </p>
       </header>
+
+      {/* Above everything else, so it is the first thing seen; the whole
+          banner is the link, a large target on a phone. Absent at zero. */}
+      {pendingRequests > 0 ? (
+        <Link
+          href="/members/requests"
+          className="group flex items-center gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3 transition-colors hover:bg-accent/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          {/* The badge repeats the sentence's number for the eye; a screen
+              reader hears it once, from the sentence. */}
+          <span
+            aria-hidden
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-background"
+          >
+            <UserPlusIcon className="h-4.5 w-4.5" />
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-background bg-foreground px-1 text-[11px] font-semibold leading-none text-background tabular-nums">
+              {pendingRequests}
+            </span>
+          </span>
+          <span className="min-w-0 flex-1 text-sm font-medium">
+            {t.dashboard.pendingRequests(pendingRequests)}
+          </span>
+          <span className="hidden shrink-0 items-center gap-1 text-sm font-medium text-accent sm:flex">
+            {t.dashboard.pendingRequestsAction}
+            <ChevronRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </span>
+          <ChevronRightIcon className="h-5 w-5 shrink-0 text-accent sm:hidden" />
+        </Link>
+      ) : null}
 
       {!showingMine ? (
         <StaffDashboard

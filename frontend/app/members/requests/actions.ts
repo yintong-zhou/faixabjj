@@ -98,6 +98,7 @@ export async function approveRegistration(formData: FormData) {
       if (error) logDbError("requests", "approve:cleanup", error);
       revalidatePath("/members");
       revalidatePath(PATH);
+      revalidatePath("/dashboard");
     }
     back({ error: t.requests.alreadyHandled });
   }
@@ -215,6 +216,7 @@ export async function approveRegistration(formData: FormData) {
 
   revalidatePath("/members");
   revalidatePath(PATH);
+  revalidatePath("/dashboard");
   back({ ok: t.requests.approved(r.fullName) });
 }
 
@@ -268,5 +270,6 @@ export async function rejectRegistration(formData: FormData) {
 
   revalidatePath("/members");
   revalidatePath(PATH);
+  revalidatePath("/dashboard");
   back({ ok: t.requests.rejected(request.full_name) });
 }

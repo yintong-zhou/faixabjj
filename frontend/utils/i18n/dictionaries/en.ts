@@ -383,6 +383,11 @@ export const en: Dictionary = {
     viewGym: "Gym",
     viewMine: "My path",
     checkinQr: "Check-in QR",
+    pendingRequests: (n: number) =>
+      n === 1
+        ? "1 person is waiting for your approval to join the registry."
+        : `${n} people are waiting for your approval to join the registry.`,
+    pendingRequestsAction: "Review requests",
     profileUnavailable:
       "Your profile is not available. If the problem persists, let the gym office know.",
 
@@ -518,6 +523,7 @@ export const en: Dictionary = {
       "Print it and put it up at the gym. Scanning it opens the check-in page, with the same location check as the button.",
     qrCaption: "Scan to check in",
     print: "Print",
+    saveImage: "Save image",
     saved: "Location saved.",
     cleared: "Location removed.",
     failed: "Something went wrong. Try again.",

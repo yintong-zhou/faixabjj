@@ -333,13 +333,23 @@ export default async function RollCallPage({
             const isInstructor = member.id === session.instructor_id;
 
             return (
+              // No flex-wrap: the three marks stay on the right of every row, in
+              // the same place, and a long name gives way instead — it wraps,
+              // up to two lines, then ends in an ellipsis (full name on hover).
+              // A wrapping row used to push the marks onto a line of their own
+              // for one long name, so they were never where the thumb expected.
               <li
                 key={member.id}
-                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:p-4"
+                className="flex items-center justify-between gap-2 px-3 py-2.5 sm:p-4"
               >
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                    {member.full_name}
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium">
+                    <span
+                      title={member.full_name}
+                      className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]"
+                    >
+                      {member.full_name}
+                    </span>
                     {row?.checked_in_by === "self" ? (
                       <span className="rounded-full bg-secondary/40 px-2 py-0.5 text-xs font-normal">
                         {t.rollCall.selfCheckinTag}

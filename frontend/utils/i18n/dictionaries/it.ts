@@ -402,6 +402,11 @@ export const it = {
     viewGym: "Palestra",
     viewMine: "Il mio percorso",
     checkinQr: "QR check-in",
+    pendingRequests: (n: number) =>
+      n === 1
+        ? "1 persona aspetta la tua approvazione per entrare nel Registro."
+        : `${n} persone aspettano la tua approvazione per entrare nel Registro.`,
+    pendingRequestsAction: "Vai alle richieste",
     profileUnavailable:
       "Il tuo profilo non è disponibile. Se il problema persiste, avvisa la segreteria della palestra.",
 
@@ -537,6 +542,7 @@ export const it = {
       "Stampalo e appendilo in palestra. Inquadrandolo si apre la pagina del check-in, con lo stesso controllo della posizione del pulsante.",
     qrCaption: "Inquadra per il check-in",
     print: "Stampa",
+    saveImage: "Salva immagine",
     saved: "Posizione salvata.",
     cleared: "Posizione rimossa.",
     failed: "Operazione non riuscita. Riprova.",

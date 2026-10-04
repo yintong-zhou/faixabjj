@@ -585,9 +585,16 @@ export default async function RegistroPage({
           // whose height is set by the details block on the left.
           return (
             <li key={member.id} className="flex items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:p-4">
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                  {member.full_name}
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium">
+                  {/* Its own element, so a long name can break and wrap
+                      instead of widening the row past the screen. */}
+                  <span
+                    title={member.full_name}
+                    className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]"
+                  >
+                    {member.full_name}
+                  </span>
                   <Belt
                     belt={member.current_belt}
                     stripes={member.current_stripes}

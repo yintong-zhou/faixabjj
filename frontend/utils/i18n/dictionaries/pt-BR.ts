@@ -386,6 +386,11 @@ export const ptBR: Dictionary = {
     viewGym: "Academia",
     viewMine: "Meu caminho",
     checkinQr: "QR do check-in",
+    pendingRequests: (n: number) =>
+      n === 1
+        ? "1 pessoa aguarda a sua aprovação para entrar no cadastro."
+        : `${n} pessoas aguardam a sua aprovação para entrar no cadastro.`,
+    pendingRequestsAction: "Ver os pedidos",
     profileUnavailable:
       "Seu perfil não está disponível. Se o problema persistir, avise a secretaria da academia.",
 
@@ -521,6 +526,7 @@ export const ptBR: Dictionary = {
       "Imprima e afixe na academia. Ao escaneá-lo abre a página de check-in, com a mesma verificação de localização do botão.",
     qrCaption: "Escaneie para fazer check-in",
     print: "Imprimir",
+    saveImage: "Salvar imagem",
     saved: "Localização salva.",
     cleared: "Localização removida.",
     failed: "Não foi possível concluir. Tente de novo.",

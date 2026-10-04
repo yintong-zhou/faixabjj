@@ -12,6 +12,7 @@ import { requireGymSettings } from "@/utils/supabase/gym";
 import { requireUserManager } from "@/utils/supabase/require-admin";
 
 import { regenerateInvite, setGymLocation } from "./actions";
+import { foldForSearch } from "@/utils/search";
 import { PrintButton } from "./print-button";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -48,6 +49,18 @@ export default async function MyGymPage({
     margin: 1,
     errorCorrectionLevel: "M",
   });
+  // The same code as an image to save, for a poster made elsewhere or a group
+  // chat. A PNG, because every phone and every app opens one; large, so it
+  // stays sharp when printed big; with the standard four-module white border,
+  // which a scanner needs once the image sits on a coloured background.
+  const qrPng = await QRCode.toDataURL(`${SITE_URL}/check-in`, {
+    width: 1024,
+    margin: 4,
+    errorCorrectionLevel: "M",
+  });
+  const qrFileName = `qr-check-in-${
+    foldForSearch(gym.name).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "gym"
+  }.png`;
 
   return (
     <div className="flex w-full flex-col gap-4 sm:gap-6">
@@ -163,7 +176,17 @@ export default async function MyGymPage({
           />
           <p className="text-center text-sm">{t.myGym.qrCaption}</p>
         </figure>
-        <PrintButton label={t.myGym.print} />
+        <div className="flex flex-wrap items-center gap-2 print:hidden">
+          <PrintButton label={t.myGym.print} />
+          {/* A plain link: the browser saves the image itself, no script. */}
+          <a
+            href={qrPng}
+            download={qrFileName}
+            className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+          >
+            {t.myGym.saveImage}
+          </a>
+        </div>
       </section>
     </div>
   );
