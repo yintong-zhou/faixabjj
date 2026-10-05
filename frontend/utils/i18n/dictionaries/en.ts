@@ -412,6 +412,8 @@ export const en: Dictionary = {
     empty: "No pending requests.",
     sentOn: (date: string) => `Sent on ${date}`,
     review: "Review and approve",
+    gradeAsDeclared:
+      "Belt, stripes and their dates stay as the athlete declared them: the head coach confirms or corrects them.",
     approve: "Approve",
     reject: "Reject",
     rejectConfirm: (name: string) =>
@@ -685,7 +687,7 @@ export const en: Dictionary = {
 
     backToRegistry: "Members",
     detailReadOnly:
-      "Read only: with your instructor role this record cannot be edited.",
+      "Read only: with your instructor role you can correct only the belt and stripe dates.",
     personalSection: "Personal details",
     pathSection: "Progress",
     correctDates: "Correct the dates",

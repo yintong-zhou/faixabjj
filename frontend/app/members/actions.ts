@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient, MissingSecretKeyError } from "@/utils/supabase/admin";
 import {
+  requirePromoter,
+  requireRankDateCorrector,
   requireRegistryEditor,
   requireUserManager,
 } from "@/utils/supabase/require-admin";
@@ -644,11 +646,12 @@ export async function deletePerson(formData: FormData) {
 // Recording a promotion is one RPC, not two writes: updating the person row
 // and inserting the history row have to happen together, and record_promotion()
 // does both in one transaction. The function is security *invoker*, so RLS and
-// the guard trigger still apply — requireRegistryEditor here is the early, clear
-// refusal, not the security boundary.
+// the guard trigger still apply. Head coach only (20261005010000) — not the gym
+// manager, not an instructor; requirePromoter here is the early, clear refusal,
+// not the security boundary.
 export async function recordPromotion(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requireRegistryEditor(PATH);
+  const { supabase } = await requirePromoter(PATH);
 
   const personId = text(formData, "person_id");
   const toBelt = text(formData, "to_belt");
@@ -677,9 +680,7 @@ export async function recordPromotion(formData: FormData) {
     // real reason goes to the server log.
     const message =
       error.code === "23514" ? t.msg.promotionNotForward : t.msg.promotionFailed;
-    console.error(
-      `[members] recordPromotion failed: ${error.code ?? "no code"} ${error.message ?? ""}`.trim(),
-    );
+    logDbError("members", "recordPromotion", error);
     redirect(`/members/${personId}?error=${encodeURIComponent(message)}`);
   }
 
@@ -712,17 +713,16 @@ function detailRedirect(personId: string | null, formData: FormData) {
 // grade changes, so the promotion table keeps meaning "what was decided, and
 // when", and a correction never masquerades as a decision.
 //
-// Both dates are frozen by guard_person_auth_link against anybody who is not a
-// registry editor, which is what keeps promotion out of self-service: backdating
-// `rank_since` is the cleanest way to fake eligibility. The trigger already
-// allowed an editor through — what was missing was anywhere to do it from, so
-// after creation the two dates could only be moved by recording a promotion
-// that never happened. requireRegistryEditor here is the early, clear refusal;
-// the trigger and RLS are the boundary, since this runs on the user's own
-// client and not the service-role one.
+// Head coach and instructor only, never the gym manager (admin), who keeps
+// the join date (20261005000000). Backdating `rank_since` is the cleanest way
+// to fake eligibility, so guard_person_auth_link freezes both dates outside
+// correct_rank_dates() and record_promotion(). The function is security
+// definer — an instructor has no update right on person — and re-checks the
+// role, the gym, the caller's own row and the two date rules below;
+// requireRankDateCorrector here is the early, clear refusal.
 export async function correctRankDates(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requireRegistryEditor(PATH);
+  const { supabase } = await requireRankDateCorrector(PATH);
 
   const personId = text(formData, "person_id");
   const detail = detailRedirect(personId, formData);
@@ -753,15 +753,14 @@ export async function correctRankDates(formData: FormData) {
     return;
   }
 
-  const { error } = await supabase
-    .from("person")
-    .update({ rank_since: rankSince, stripe_since: stripeSince })
-    .eq("id", personId);
+  const { error } = await supabase.rpc("correct_rank_dates", {
+    p_person_id: personId,
+    p_rank_since: rankSince,
+    p_stripe_since: stripeSince,
+  });
 
   if (error) {
-    console.error(
-      `[members] correctRankDates failed: ${error.code ?? "no code"} ${error.message ?? ""}`.trim(),
-    );
+    logDbError("members", "correctRankDates", error);
     detail({ error: t.msg.datesFailed });
     return;
   }

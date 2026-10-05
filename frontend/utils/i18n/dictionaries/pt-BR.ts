@@ -415,6 +415,8 @@ export const ptBR: Dictionary = {
     empty: "Nenhuma solicitação pendente.",
     sentOn: (date: string) => `Enviada em ${date}`,
     review: "Conferir e aprovar",
+    gradeAsDeclared:
+      "Faixa, graus e respectivas datas ficam como o atleta declarou: o professor confirma ou corrige.",
     approve: "Aprovar",
     reject: "Recusar",
     rejectConfirm: (name: string) =>
@@ -688,7 +690,7 @@ export const ptBR: Dictionary = {
 
     backToRegistry: "Alunos",
     detailReadOnly:
-      "Somente leitura: com sua função de instrutor esta ficha não pode ser editada.",
+      "Somente leitura: com sua função de instrutor você pode corrigir apenas as datas de faixa e grau.",
     personalSection: "Dados pessoais",
     pathSection: "Trajetória",
     correctDates: "Corrigir as datas",

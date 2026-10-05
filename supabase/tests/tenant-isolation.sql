@@ -828,8 +828,14 @@ do $$ begin
 end $$;
 rollback;
 
--- T18: an editor goes through record_promotion() for grades and history, and
--- never changes their own rank.
+-- T18: grades change only through record_promotion(), which only a head
+-- coach may call (20261005010000); nobody changes their own rank. a4 is a head
+-- coach of gym A.
+insert into auth.users (id, email, raw_app_meta_data) values
+  ('00000000-0000-0000-0000-0000000000a4', 'a4@test', jsonb_build_object('gym_id', current_setting('test.gym_a')));
+insert into public.assigned_role (person_id, role, gym_id)
+select p.id, 'head_coach', p.gym_id from public.person p where p.email = 'a4@test';
+
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
@@ -859,11 +865,51 @@ begin
   exception when insufficient_privilege then null;
   end;
 
-  -- Correcting somebody else's dates stays a direct write.
-  update public.person set rank_since = current_date - 30, stripe_since = current_date - 30 where id = v_a2;
+  -- The gym manager corrects no rank date, directly or through the function
+  -- (20261005000000): that is the teaching staff's call.
+  begin
+    update public.person set rank_since = current_date - 30, stripe_since = current_date - 30 where id = v_a2;
+    raise exception 'FAIL T18: a1 (admin) corrected a2''s rank dates directly';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.correct_rank_dates(v_a2, current_date - 30, current_date - 30);
+    raise exception 'FAIL T18: a1 (admin) corrected a2''s rank dates through the function';
+  exception when insufficient_privilege then null;
+  end;
+  -- The join date stays the manager's.
+  update public.person set joined_at = current_date - 400 where id = v_a2;
   if not found then
-    raise exception 'FAIL T18: a1 could not correct a2''s rank dates';
+    raise exception 'FAIL T18: a1 could not correct a2''s join date';
   end if;
+
+  -- The gym manager awards no grade.
+  begin
+    perform public.record_promotion(v_a2, 'white', 1::smallint, current_date, null);
+    raise exception 'FAIL T18: a1 (admin) recorded a promotion';
+  exception when insufficient_privilege then null;
+  end;
+  if (public.current_access() ->> 'canPromote')::boolean is not false then
+    raise exception 'FAIL T18: the gym admin has canPromote';
+  end if;
+end $$;
+rollback;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a4', true);
+do $$
+declare
+  v_a2 uuid := (select id from public.person where email = 'a2@test');
+begin
+  if (public.current_access() ->> 'canPromote')::boolean is not true then
+    raise exception 'FAIL T18: the head coach lacks canPromote';
+  end if;
+  begin
+    perform public.record_promotion((select id from public.person where email = 'a4@test'), 'white', 1::smallint, current_date, null);
+    raise exception 'FAIL T18: a4 promoted themselves';
+  exception when insufficient_privilege then null;
+  end;
 
   perform public.record_promotion(v_a2, 'white', 1::smallint, current_date, null);
   if (select current_stripes from public.person where id = v_a2) <> 1
@@ -923,6 +969,83 @@ do $$ begin
     raise exception 'FAIL T19: a2 was deleted';
   end if;
 end $$;
+
+-- T25: belt and stripe dates (20261005000000) — corrected by an instructor or
+-- head coach through correct_rank_dates() only, never on their own row, never
+-- in another gym; the function moves those two dates and nothing else.
+insert into auth.users (id, email, raw_app_meta_data) values
+  ('00000000-0000-0000-0000-0000000000a3', 'a3@test', jsonb_build_object('gym_id', current_setting('test.gym_a')));
+insert into public.assigned_role (person_id, role, gym_id)
+select p.id, 'instructor', p.gym_id from public.person p where p.email = 'a3@test';
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a3', true);
+do $$
+declare
+  v_a2 uuid := (select id from public.person where email = 'a2@test');
+  v_a3 uuid := (select id from public.person where email = 'a3@test');
+  v_b2 uuid := (select id from public.person where email = 'b2@test');
+begin
+  if (public.current_access() ->> 'canCorrectRankDates')::boolean is not true then
+    raise exception 'FAIL T25: an instructor lacks canCorrectRankDates';
+  end if;
+
+  perform public.correct_rank_dates(v_a2, current_date - 30, current_date - 10);
+  if (select rank_since from public.person where id = v_a2) <> current_date - 30
+     or (select stripe_since from public.person where id = v_a2) <> current_date - 10 then
+    raise exception 'FAIL T25: the instructor''s correction was not saved';
+  end if;
+  if exists (select 1 from public.promotion where person_id = v_a2) then
+    raise exception 'FAIL T25: correcting dates wrote a promotion';
+  end if;
+
+  begin
+    perform public.correct_rank_dates(v_a3, current_date - 30, current_date - 10);
+    raise exception 'FAIL T25: the instructor corrected their own dates';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.correct_rank_dates(v_a2, current_date - 30, current_date + 1);
+    raise exception 'FAIL T25: a future date was accepted';
+  exception when invalid_datetime_format then null;
+  end;
+  begin
+    perform public.correct_rank_dates(v_a2, current_date - 10, current_date - 30);
+    raise exception 'FAIL T25: a stripe older than the belt was accepted';
+  exception when check_violation then null;
+  end;
+  begin
+    perform public.correct_rank_dates(v_b2, current_date - 30, current_date - 10);
+    raise exception 'FAIL T25: the instructor corrected a person of gym B';
+  exception when no_data_found then null;
+  end;
+  begin
+    update public.person set rank_since = current_date - 60 where id = v_a2;
+    if found then
+      raise exception 'FAIL T25: the instructor wrote rank_since directly';
+    end if;
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.person set joined_at = current_date - 60 where id = v_a2;
+    if found then
+      raise exception 'FAIL T25: the instructor changed a join date';
+    end if;
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+do $$ begin
+  if (public.current_access() ->> 'canCorrectRankDates')::boolean is not false then
+    raise exception 'FAIL T25: the gym admin has canCorrectRankDates';
+  end if;
+end $$;
+rollback;
 
 -- T23: the superadmin's username (20261004000000) — set only through its own
 -- setter, unique against every other table, and good for signing in.

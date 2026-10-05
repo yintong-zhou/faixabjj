@@ -27,7 +27,16 @@ type RequestRow = {
   username: string;
   full_name: string;
   created_at: string;
+  current_belt: string;
+  current_stripes: number;
+  rank_since: string;
+  stripe_since: string;
 };
+
+// The grade the approver may not change unless they can promote (head coach):
+// for anyone else these come from the request as the athlete declared them,
+// whatever the form posts.
+const GRADE_FIELDS = ["current_belt", "current_stripes", "rank_since", "stripe_since"] as const;
 
 // Read through the user's client: RLS answers only for user managers, only
 // inside their gym — that is the proof every service-role call below rests on.
@@ -35,7 +44,7 @@ async function requestInMyGym(supabase: SupabaseClient, id: string): Promise<Req
   if (!id) return null;
   const { data, error } = await supabase
     .from("registration_request")
-    .select("id, auth_user_id, gym_id, email, username, full_name, created_at")
+    .select("id, auth_user_id, gym_id, email, username, full_name, created_at, current_belt, current_stripes, rank_since, stripe_since")
     .eq("id", id)
     .maybeSingle();
   if (error) logDbError("requests", "requestInMyGym", error);
@@ -47,13 +56,15 @@ async function requestInMyGym(supabase: SupabaseClient, id: string): Promise<Req
 // row is filled with the — possibly corrected — data, as addPerson does: with
 // the service role, because the starting belt is not a promotion and the
 // database accepts a belt change only inside record_promotion() otherwise.
+// Only a head coach may change the declared grade here (20261005010000): the
+// gym manager approves the person, not their belt.
 //
 // A repeat is refused once the account has a gym (clearing a leftover
 // request); two approvals racing past that check write the same values. A step
 // that fails after the gym was assigned puts the account back as pending.
 export async function approveRegistration(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requireUserManager(PATH);
+  const { supabase, access } = await requireUserManager(PATH);
   const gym = await requireGymSettings();
 
   const request = await requestInMyGym(supabase, String(formData.get("request_id") ?? ""));
@@ -61,8 +72,14 @@ export async function approveRegistration(formData: FormData) {
 
   // The username is the athlete's and is not edited here (staff never edit
   // usernames); password and consent belong to the signup only.
+  const declared = (key: string): string | null =>
+    key === "username"
+      ? request.username
+      : !access.canPromote && (GRADE_FIELDS as readonly string[]).includes(key)
+        ? String(request[key as (typeof GRADE_FIELDS)[number]])
+        : (formData.get(key) as string | null);
   const parsed = parseRegistration(
-    (key) => (key === "username" ? request.username : (formData.get(key) as string | null)),
+    declared,
     todayIn(gym.timezone),
     "approval",
   );

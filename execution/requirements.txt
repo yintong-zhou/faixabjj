@@ -1,0 +1,2 @@
+# Gli script di execution/ usano solo la libreria standard di Python (3.12+).
+# Aggiungere qui le dipendenze quando uno script ne avrà bisogno.

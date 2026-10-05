@@ -217,6 +217,9 @@ export default async function MemberDetailPage({
   // Nobody changes their own join date, editors included — the database refuses
   // it, so the control is not offered rather than offered and then rejected.
   const canEditJoinedOn = access.canEditRegistry && member.auth_user_id !== userId;
+  // Belt and stripe dates: head coach and instructor, not the gym manager, and
+  // likewise never on one's own record (correct_rank_dates() refuses both).
+  const canCorrectRankDates = access.canCorrectRankDates && member.auth_user_id !== userId;
 
   // Carries the list's filters and page back, so closing the detail view
   // returns to exactly the list you opened it from.
@@ -375,17 +378,15 @@ export default async function MemberDetailPage({
             </p>
           ) : null}
 
-          {/* Correcting the two dates, for a maestro or an admin only.
-              `guard_person_auth_link` has always let a registry editor through —
-              it freezes these columns against everybody else, which is what keeps
-              promotion from becoming self-service — but there was nowhere in the
-              app to do it from, so a date typed wrong on the join form could only
-              be moved by recording a promotion that never happened.
+          {/* Correcting the two dates, for a head coach or an instructor only —
+              not the gym manager (20261005000000). Outside correct_rank_dates()
+              and record_promotion() the database freezes these columns, which is
+              what keeps promotion from becoming self-service.
 
               Collapsed, and inside the section whose figures it governs rather
               than as a panel of its own: it is a repair, reached deliberately,
               not something to meet while reading somebody's record. */}
-          {access.canEditRegistry ? (
+          {canCorrectRankDates ? (
             <details className="group rounded-xl border border-border">
               <summary className="flex min-h-11 cursor-pointer select-none list-none items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden">
                 <PencilIcon className="h-4 w-4 shrink-0 text-accent" />
@@ -447,7 +448,7 @@ export default async function MemberDetailPage({
           ) : null}
         </section>
 
-        {access.canEditRegistry ? (
+        {access.canPromote ? (
           <PromotePanel
             personId={member.id}
             personName={member.full_name}

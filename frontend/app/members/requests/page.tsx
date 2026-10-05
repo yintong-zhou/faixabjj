@@ -39,8 +39,9 @@ type RequestRow = {
 
 // Not a second list of members: these people are not members yet. A sub-route
 // of the Registro like /members/new, reached only from its chip strip.
-// requireUserManager (404): approving creates an account and sets a belt, which
-// is the head coach's and the admin's call, never an instructor's.
+// requireUserManager (404): approving creates an account, the head coach's and
+// the admin's call, never an instructor's. The declared grade is editable only
+// by whoever can promote (head coach); the action enforces it.
 export default async function RequestsPage({
   searchParams,
 }: {
@@ -48,7 +49,7 @@ export default async function RequestsPage({
 }) {
   const { ok, error } = await searchParams;
   const { t } = await getDictionary();
-  const { supabase } = await requireUserManager(PATH);
+  const { supabase, access } = await requireUserManager(PATH);
 
   const { data, error: listError } = await supabase
     .from("registration_request")
@@ -126,24 +127,36 @@ export default async function RequestsPage({
                   <TextField id={`email-${request.id}`} name="email" type="email" label={t.join.form.email} defaultValue={request.email} required />
                   <TextField id={`birth_date-${request.id}`} name="birth_date" type="date" label={t.join.form.birthDate} defaultValue={request.birth_date} required />
                   <TextField id={`joined_at-${request.id}`} name="joined_at" type="date" label={t.join.form.joinedAt} defaultValue={request.joined_at} required />
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor={`current_belt-${request.id}`} className="text-sm font-medium">{t.join.form.belt}</label>
-                    <select id={`current_belt-${request.id}`} name="current_belt" defaultValue={request.current_belt} className={fieldClass}>
-                      {belts.map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor={`current_stripes-${request.id}`} className="text-sm font-medium">{t.join.form.stripes}</label>
-                    <select id={`current_stripes-${request.id}`} name="current_stripes" defaultValue={String(request.current_stripes)} className={fieldClass}>
-                      {[0, 1, 2, 3, 4].map((n) => (
-                        <option key={n} value={n}>{n}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <TextField id={`rank_since-${request.id}`} name="rank_since" type="date" label={t.account.beltSince} defaultValue={request.rank_since} />
-                  <TextField id={`stripe_since-${request.id}`} name="stripe_since" type="date" label={t.account.stripeSince} defaultValue={request.stripe_since} />
+                  {access.canPromote ? (
+                    <>
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor={`current_belt-${request.id}`} className="text-sm font-medium">{t.join.form.belt}</label>
+                        <select id={`current_belt-${request.id}`} name="current_belt" defaultValue={request.current_belt} className={fieldClass}>
+                          {belts.map(([value, label]) => (
+                            <option key={value} value={value}>{label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor={`current_stripes-${request.id}`} className="text-sm font-medium">{t.join.form.stripes}</label>
+                        <select id={`current_stripes-${request.id}`} name="current_stripes" defaultValue={String(request.current_stripes)} className={fieldClass}>
+                          {[0, 1, 2, 3, 4].map((n) => (
+                            <option key={n} value={n}>{n}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <TextField id={`rank_since-${request.id}`} name="rank_since" type="date" label={t.account.beltSince} defaultValue={request.rank_since} />
+                      <TextField id={`stripe_since-${request.id}`} name="stripe_since" type="date" label={t.account.stripeSince} defaultValue={request.stripe_since} />
+                    </>
+                  ) : (
+                    <div className="flex flex-col gap-1 text-sm sm:col-span-2">
+                      <p className="text-foreground/65">
+                        {t.account.beltSince}: {formatDate(request.rank_since)} · {t.account.stripeSince}:{" "}
+                        {formatDate(request.stripe_since)}
+                      </p>
+                      <p className="text-xs leading-relaxed text-foreground/55">{t.requests.gradeAsDeclared}</p>
+                    </div>
+                  )}
                   <div className="sm:col-span-2">
                     <button
                       type="submit"

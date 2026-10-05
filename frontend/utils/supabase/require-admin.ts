@@ -20,6 +20,9 @@ export type AdminSession = {
 //   instructor         — canViewRegistry (read-only on the registry) and
 //                        canManageClasses (full write on courses and attendance)
 //   head_coach / admin — all four
+// plus canCorrectRankDates (belt and stripe dates): head_coach and instructor,
+// and canPromote: head_coach only. Neither for admin — the gym manager runs
+// the portal and keeps only the join date.
 //
 // canManageClasses is deliberately not canEditRegistry: an instructor runs the
 // classes but must never change anybody's belt.
@@ -28,6 +31,10 @@ export type Access = {
   canEditRegistry: boolean;
   canManageUsers: boolean;
   canManageClasses: boolean;
+  /** Correct rank_since / stripe_since through correct_rank_dates(). */
+  canCorrectRankDates: boolean;
+  /** Record a promotion through record_promotion(): head_coach only. */
+  canPromote: boolean;
   /** The platform superadmin, who sits outside every gym. */
   isPlatformAdmin: boolean;
   /** The caller's gym, including when suspended; null for the superadmin. */
@@ -39,6 +46,8 @@ const NO_ACCESS: Access = {
   canEditRegistry: false,
   canManageUsers: false,
   canManageClasses: false,
+  canCorrectRankDates: false,
+  canPromote: false,
   isPlatformAdmin: false,
   gymStatus: null,
 };
@@ -152,6 +161,8 @@ export async function getAccess(supabase: SupabaseClient): Promise<Access> {
     canEditRegistry: data.canEditRegistry === true,
     canManageUsers: data.canManageUsers === true,
     canManageClasses: data.canManageClasses === true,
+    canCorrectRankDates: data.canCorrectRankDates === true,
+    canPromote: data.canPromote === true,
     isPlatformAdmin: data.isPlatformAdmin === true,
     gymStatus:
       data.gymStatus === "active" || data.gymStatus === "suspended"
@@ -204,6 +215,30 @@ export async function requireClassManager(
   const { access } = session;
 
   if (!access.canManageClasses) {
+    notFound();
+  }
+
+  return session;
+}
+
+// Correcting belt and stripe dates: head_coach and instructor, not admin.
+export async function requireRankDateCorrector(
+  path: string,
+): Promise<AdminSessionWithAccess> {
+  const session = await requireAdmin(path);
+
+  if (!session.access.canCorrectRankDates) {
+    notFound();
+  }
+
+  return session;
+}
+
+// Recording a promotion: head_coach only.
+export async function requirePromoter(path: string): Promise<AdminSessionWithAccess> {
+  const session = await requireAdmin(path);
+
+  if (!session.access.canPromote) {
     notFound();
   }
 

@@ -429,6 +429,8 @@ export const it = {
     empty: "Nessuna richiesta in attesa.",
     sentOn: (date: string) => `Inviata il ${date}`,
     review: "Controlla e approva",
+    gradeAsDeclared:
+      "Cintura, tacche e relative date restano quelle dichiarate dall'atleta: le conferma o corregge il maestro.",
     approve: "Approva",
     reject: "Rifiuta",
     rejectConfirm: (name: string) =>
@@ -704,7 +706,7 @@ export const it = {
 
     backToRegistry: "Registro",
     detailReadOnly:
-      "Sola lettura: con il tuo ruolo di istruttore la scheda non è modificabile.",
+      "Sola lettura: con il tuo ruolo di istruttore puoi correggere solo le date di cintura e tacca.",
     personalSection: "Anagrafica",
     pathSection: "Percorso",
     correctDates: "Correggi le date",

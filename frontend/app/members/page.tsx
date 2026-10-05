@@ -657,7 +657,7 @@ export default async function RegistroPage({
                   {t.registro.details}
                 </Link>
 
-                {access.canEditRegistry ? (
+                {access.canPromote ? (
                   <Link
                     href={`/members/${member.id}?from=${encodeURIComponent(currentQuery)}#promote`}
                     className={menuItemClass}

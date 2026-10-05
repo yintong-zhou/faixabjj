@@ -40,7 +40,7 @@ Not flat. Role = an **active** `assigned_role` (`end_date is null`); no active r
 | `admin`      | full        | full                             | yes            | yes             |
 | platform superadmin | not visible | not visible                | no              | only gym managers, from `/gyms` |
 
-`assistant` with `student` was an explicit decision. `admin` = runs the portal without teaching. The platform superadmin sits outside every gym — see `docs/claude/gyms.md` for `isPlatformAdmin`, `gymStatus` and the `/suspended` redirect.
+Belt/stripe dates (`rank_since`, `stripe_since`) are corrected by `head_coach` and `instructor` only — not `admin` (flag `canCorrectRankDates`, `correct_rank_dates()`, `20261005000000`); `admin` keeps correcting `joined_at`. Promotions (`record_promotion()`) are `head_coach` only (`canPromote`, `20261005010000`), and on `/members/requests` only a head coach may change the declared belt, stripes and their dates — for anyone else `approveRegistration` takes them from the request whatever the form posts. `assistant` with `student` was an explicit decision. `admin` = runs the portal without teaching. The platform superadmin sits outside every gym — see `docs/claude/gyms.md` for `isPlatformAdmin`, `gymStatus` and the `/suspended` redirect.
 
 - SQL predicates: `can_view_registry()`, `can_edit_registry()`, `can_manage_users()`, `can_manage_classes()`; `current_access()` returns all four as JSON. Frontend uses `getAccess()`, `requireRegistryViewer()`, `requireRegistryEditor()`, `requireUserManager()`, `requireClassManager()` — never re-implement rules; one definition per privilege.
 - `getAccess()` **fails closed**: RPC error = no access.
