@@ -413,17 +413,23 @@ export async function StaffDashboard({
               >
                 <Belt belt={belt} stripes={0} className="shrink-0" />
 
-                <span className="w-16 shrink-0 text-sm font-medium sm:w-20">
-                  {beltLabel(belt, t)}
+                {/* Wide enough for the children's two-colour names, and
+                    allowed to break after the slash ("Arancione/" + "Bianca")
+                    rather than spill over the bar. */}
+                <span className="w-24 shrink-0 text-sm font-medium leading-tight sm:w-32">
+                  {beltLabel(belt, t).replace("/", "/​")}
                 </span>
 
                 {/* A bar rather than a chart library: one number per row, and a
-                    dependency would not earn its place here. */}
-                <span
-                  className="h-2 min-w-0.5 rounded-full bg-accent/70"
-                  style={{ width: `${(atBelt.length / mostBelts) * 100}%` }}
-                  aria-hidden="true"
-                />
+                    dependency would not earn its place here. Its width is a
+                    share of its own track, never of the whole row, so the
+                    longest bar ends before the count. */}
+                <span className="min-w-0 flex-1" aria-hidden="true">
+                  <span
+                    className="block h-2 min-w-0.5 rounded-full bg-accent/70"
+                    style={{ width: `${(atBelt.length / mostBelts) * 100}%` }}
+                  />
+                </span>
 
                 <span className="ml-auto shrink-0 text-sm tabular-nums text-foreground/70">
                   {atBelt.length}
