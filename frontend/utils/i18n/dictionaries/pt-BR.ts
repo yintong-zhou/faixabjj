@@ -1203,5 +1203,13 @@ export const ptBR: Dictionary = {
       subject: "Objeto",
     },
     level: { error: "Erro", event: "Evento" },
+    search: "Buscar ação, código ou mensagem",
+    allLevels: "Todos os níveis",
+    allGyms: "Todas as academias",
+    filter: "Filtrar",
+    reset: "Limpar",
+    noMatch: "Nenhuma linha corresponde aos filtros escolhidos.",
+    newest: "Mais recentes",
+    older: "Anteriores",
   },
 };

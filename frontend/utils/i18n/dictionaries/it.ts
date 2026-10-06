@@ -1228,6 +1228,14 @@ export const it = {
       subject: "Oggetto",
     },
     level: { error: "Errore", event: "Evento" },
+    search: "Cerca azione, codice o messaggio",
+    allLevels: "Tutti i livelli",
+    allGyms: "Tutte le palestre",
+    filter: "Filtra",
+    reset: "Azzera",
+    noMatch: "Nessuna riga corrisponde ai filtri scelti.",
+    newest: "Più recenti",
+    older: "Precedenti",
   },
 };
 

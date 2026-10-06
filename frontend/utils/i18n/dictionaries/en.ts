@@ -1200,5 +1200,13 @@ export const en: Dictionary = {
       subject: "Subject",
     },
     level: { error: "Error", event: "Event" },
+    search: "Search action, code or message",
+    allLevels: "All levels",
+    allGyms: "All gyms",
+    filter: "Filter",
+    reset: "Clear",
+    noMatch: "No row matches the chosen filters.",
+    newest: "Most recent",
+    older: "Older",
   },
 };
