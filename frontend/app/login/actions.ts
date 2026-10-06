@@ -43,10 +43,16 @@ export async function login(formData: FormData) {
     // password" and "Supabase refused the request for a reason that has
     // nothing to do with the password" are the same sentence to the reader,
     // and telling them apart used to mean guessing.
-    logDbError("login", "signInWithPassword", {
-      code: error.code ?? String(error.status ?? ""),
-      message: error.message,
-    });
+    const loginError = { code: error.code ?? String(error.status ?? ""), message: error.message };
+    // Wrong credentials (an unknown username included: it signs in against a
+    // random address) are the everyday case and say nothing about the system:
+    // console only. Anything else — the challenge, a rate limit, GoTrue itself
+    // — goes to app_log too, with no identifier.
+    if (error.code === "invalid_credentials") {
+      console.error(`[login] signInWithPassword failed: ${loginError.code} ${loginError.message}`);
+    } else {
+      logDbError("login", "signInWithPassword", loginError);
+    }
 
     // Generic message on purpose — a specific "user not found" vs "wrong
     // password" distinction would let someone enumerate registered emails.
