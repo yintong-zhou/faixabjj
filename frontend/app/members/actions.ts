@@ -16,7 +16,7 @@ import { claimUsername } from "@/utils/supabase/username";
 import { isValidUsername, normalizeUsername, suggestUsername } from "@/utils/username";
 import { flashTemporaryPassword } from "@/utils/temporary-password-flash";
 import { todayIn } from "@/utils/dates";
-import { logDbError } from "@/utils/log";
+import { logDbError, logEvent } from "@/utils/log";
 import { PORTAL_ONLY_ROLE } from "@/utils/members";
 import { requireGymSettings } from "@/utils/supabase/gym";
 import { BELT_ORDER, roleLabel } from "@/utils/supabase/profile";
@@ -174,7 +174,8 @@ async function accountInMyGym(
 // a person row behind with no account whenever the address is already taken.
 export async function addPerson(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requireRegistryEditor(PATH);
+  const session = await requireRegistryEditor(PATH);
+  const { supabase } = session;
 
   const query = (formData.get("_query") as string | null) ?? "";
 
@@ -341,6 +342,7 @@ export async function addPerson(formData: FormData) {
   }
 
   revalidatePath(PATH);
+  logEvent(session, "members", "addPerson", person.id);
   back(
     {
       ok: t.msg.personAdded(fullName),
@@ -371,7 +373,8 @@ export async function restoreAccess(formData: FormData) {
   const { t } = await getDictionary();
   // The admin client below uses the secret key, which bypasses Row Level
   // Security entirely, so the database will not enforce the privilege here.
-  const { supabase } = await requireUserManager(PATH);
+  const session = await requireUserManager(PATH);
+  const { supabase } = session;
 
   const query = (formData.get("_query") as string | null) ?? "";
   const personId = (formData.get("person_id") as string | null) ?? "";
@@ -466,6 +469,7 @@ export async function restoreAccess(formData: FormData) {
   }
 
   revalidatePath(PATH);
+  logEvent(session, "members", "restoreAccess", personId);
   back(
     {
       ok: t.msg.accessRestored(target.full_name?.trim() || email),
@@ -482,7 +486,8 @@ export async function restoreAccess(formData: FormData) {
 // like a freshly created account.
 export async function setTemporaryPassword(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requireUserManager(PATH);
+  const session = await requireUserManager(PATH);
+  const { supabase } = session;
 
   const query = (formData.get("_query") as string | null) ?? "";
   const targetId = formData.get("user_id") as string;
@@ -529,6 +534,7 @@ export async function setTemporaryPassword(formData: FormData) {
   // belongs in the credentials block, where it is a field to pass on.
   const email = data.user.email ?? t.msg.someUser;
   const who = person.full_name?.trim() || email;
+  logEvent(session, "members", "setTemporaryPassword", targetId);
   back(
     {
       ok: t.msg.passwordReset(who),
@@ -540,7 +546,8 @@ export async function setTemporaryPassword(formData: FormData) {
 
 export async function revokeAccess(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase, userId: currentUserId } = await requireUserManager(PATH);
+  const session = await requireUserManager(PATH);
+  const { supabase, userId: currentUserId } = session;
 
   const query = (formData.get("_query") as string | null) ?? "";
   const targetId = formData.get("user_id") as string;
@@ -589,6 +596,7 @@ export async function revokeAccess(formData: FormData) {
   }
 
   revalidatePath(PATH);
+  logEvent(session, "members", "revokeAccess", targetId);
   back({ ok: t.msg.accessRevoked }, query);
 }
 
@@ -605,7 +613,8 @@ export async function revokeAccess(formData: FormData) {
 // person was deleted from.
 export async function deletePerson(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requireUserManager(PATH);
+  const session = await requireUserManager(PATH);
+  const { supabase } = session;
 
   const query = (formData.get("_query") as string | null) ?? "";
   const personId = (formData.get("person_id") as string | null) ?? "";
@@ -640,6 +649,7 @@ export async function deletePerson(formData: FormData) {
   }
 
   revalidatePath(PATH);
+  logEvent(session, "members", "deletePerson", personId);
   back({ ok: t.msg.personDeleted(target.full_name ?? "") }, query);
 }
 
@@ -651,7 +661,8 @@ export async function deletePerson(formData: FormData) {
 // not the security boundary.
 export async function recordPromotion(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requirePromoter(PATH);
+  const session = await requirePromoter(PATH);
+  const { supabase } = session;
 
   const personId = text(formData, "person_id");
   const toBelt = text(formData, "to_belt");
@@ -688,6 +699,7 @@ export async function recordPromotion(formData: FormData) {
   // The Registro carries the eligibility count and the `idonei` filter, so a
   // promotion changes what that list shows.
   revalidatePath(PATH);
+  logEvent(session, "promotions", "recordPromotion", personId);
   redirect(`/members/${personId}?ok=${encodeURIComponent(t.msg.promotionRecorded)}`);
 }
 
@@ -722,7 +734,8 @@ function detailRedirect(personId: string | null, formData: FormData) {
 // requireRankDateCorrector here is the early, clear refusal.
 export async function correctRankDates(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requireRankDateCorrector(PATH);
+  const session = await requireRankDateCorrector(PATH);
+  const { supabase } = session;
 
   const personId = text(formData, "person_id");
   const detail = detailRedirect(personId, formData);
@@ -769,6 +782,7 @@ export async function correctRankDates(formData: FormData) {
   // Both dates feed promotionStatus(), so the Registro's eligibility count, its
   // `idonei` filter and the green dot all change with them.
   revalidatePath(PATH);
+  logEvent(session, "promotions", "correctRankDates", personId);
   detail({ ok: t.msg.datesSaved });
 }
 
@@ -786,7 +800,8 @@ export async function correctRankDates(formData: FormData) {
 // the boundary — this runs on the user's own client, not the service-role one.
 export async function correctJoinedDate(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requireRegistryEditor(PATH);
+  const session = await requireRegistryEditor(PATH);
+  const { supabase } = session;
 
   const personId = text(formData, "person_id");
   const joinedAt = text(formData, "joined_at");
@@ -822,6 +837,7 @@ export async function correctJoinedDate(formData: FormData) {
   revalidatePath(`/members/${personId}`);
   // The Registro lists the join date, the time in training and the estimate.
   revalidatePath(PATH);
+  logEvent(session, "promotions", "correctJoinedDate", personId);
   detail({ ok: t.msg.joinedSaved });
 }
 
@@ -841,7 +857,8 @@ const TEACHING_ROLES = ["student", "assistant", "instructor", "head_coach"] as c
 // and is not the person being changed.
 export async function changeRole(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase, userId } = await requireUserManager(PATH);
+  const session = await requireUserManager(PATH);
+  const { supabase, userId } = session;
 
   const personId = text(formData, "person_id");
   const role = formData.get("role") as string;
@@ -905,6 +922,7 @@ export async function changeRole(formData: FormData) {
 
   revalidatePath(`/members/${personId}`);
   // The Registro lists active roles and filters by them.
+  logEvent(session, "members", "changeRole", personId);
   revalidatePath(PATH);
   detail({ ok: t.msg.roleChanged(roleLabel(role, t)) });
 }
