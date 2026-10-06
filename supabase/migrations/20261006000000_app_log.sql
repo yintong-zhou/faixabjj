@@ -34,7 +34,10 @@ create table if not exists public.app_log (
 
 alter table public.app_log enable row level security;
 
-revoke all on public.app_log from anon, authenticated;
+-- service_role is revoked too: the default privileges grant it everything, so
+-- without the revoke the grant below would limit nothing. Append-only for it;
+-- pruning runs as the owner.
+revoke all on public.app_log from anon, authenticated, service_role;
 grant select on public.app_log to authenticated;
 grant select, insert on public.app_log to service_role;
 

@@ -922,8 +922,8 @@ export async function changeRole(formData: FormData) {
 
   revalidatePath(`/members/${personId}`);
   // The Registro lists active roles and filters by them.
-  logEvent(session, "members", "changeRole", personId);
   revalidatePath(PATH);
+  logEvent(session, "members", "changeRole", personId);
   detail({ ok: t.msg.roleChanged(roleLabel(role, t)) });
 }
 

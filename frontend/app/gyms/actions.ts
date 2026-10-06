@@ -70,7 +70,7 @@ export async function createGym(formData: FormData) {
   }
 
   revalidatePath(LIST);
-  logEvent(session, "gyms", "createGym", data.id);
+  logEvent({ userId: session.userId, gymId: data.id }, "gyms", "createGym", data.id);
   to(`/gyms/${data.id}`, { ok: t.gyms.msg.created(value.name) });
 }
 
@@ -107,7 +107,7 @@ export async function updateGym(formData: FormData) {
 
   revalidatePath(LIST);
   revalidatePath(detail);
-  logEvent(session, "gyms", "updateGym", id);
+  logEvent({ userId: session.userId, gymId: id }, "gyms", "updateGym", id);
   to(detail, { ok: t.gyms.msg.saved });
 }
 
@@ -138,7 +138,7 @@ export async function setGymStatus(formData: FormData) {
 
   revalidatePath(LIST);
   revalidatePath(`/gyms/${id}`);
-  logEvent(session, "gyms", `setGymStatus.${status}`, id);
+  logEvent({ userId: session.userId, gymId: id }, "gyms", `setGymStatus.${status}`, id);
   to(back, {
     ok: status === "suspended" ? t.gyms.msg.suspended(data.name) : t.gyms.msg.reactivated(data.name),
   });
@@ -249,7 +249,7 @@ export async function deleteGym(formData: FormData) {
   }
 
   revalidatePath(LIST);
-  logEvent(session, "gyms", "deleteGym", id);
+  logEvent({ userId: session.userId, gymId: id }, "gyms", "deleteGym", id);
   to(LIST, failed ? { error: t.gyms.msg.accountsNotDeleted(failed) } : { ok: t.gyms.msg.deleted(gym.name) });
 }
 
@@ -357,7 +357,7 @@ export async function addManager(formData: FormData) {
 
   revalidatePath(detail);
   revalidatePath(LIST);
-  logEvent(session, "gyms", "addManager", gymId);
+  logEvent({ userId: session.userId, gymId }, "gyms", "addManager", gymId);
   to(detail, {
     ok: t.gyms.msg.managerAdded(fullName),
     pw: await flashTemporaryPassword({ email, password, username: claimed }),

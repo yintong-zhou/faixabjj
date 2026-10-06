@@ -1169,7 +1169,7 @@ do $$ begin
 end $$;
 rollback;
 
--- T26: app_log (20261006000000) â€” pruned to 7 days and 2000 rows on every
+-- T26: app_log (20261006000000) — pruned to 7 days and 2000 rows on every
 -- insert, read by the platform superadmin only, written by nobody but the
 -- service role.
 insert into public.app_log (level, scope, action, created_at)
@@ -1222,6 +1222,32 @@ do $$ begin
   begin
     perform 1 from public.app_log;
     raise exception 'FAIL T26: anon reads app_log';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
+-- The service role (utils/log.ts) inserts, and the pruning trigger still runs
+-- for it; it cannot rewrite or delete history.
+begin;
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+insert into public.app_log (level, scope, action) values ('event', 'test', 'service');
+do $$ begin
+  if not exists (select 1 from public.app_log where action = 'service') then
+    raise exception 'FAIL T26: the service role cannot write app_log';
+  end if;
+  if (select count(*) from public.app_log) <> 2000 then
+    raise exception 'FAIL T26: an insert by the service role skipped the cap';
+  end if;
+  begin
+    update public.app_log set message = 'forged';
+    raise exception 'FAIL T26: the service role rewrote app_log';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    delete from public.app_log;
+    raise exception 'FAIL T26: the service role deleted from app_log';
   exception when insufficient_privilege then null;
   end;
 end $$;
