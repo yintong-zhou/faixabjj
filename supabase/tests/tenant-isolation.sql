@@ -1169,4 +1169,62 @@ do $$ begin
 end $$;
 rollback;
 
+-- T26: app_log (20261006000000) â€” pruned to 7 days and 2000 rows on every
+-- insert, read by the platform superadmin only, written by nobody but the
+-- service role.
+insert into public.app_log (level, scope, action, created_at)
+values ('event', 'test', 'old', now() - interval '8 days');
+do $$ begin
+  if exists (select 1 from public.app_log where action = 'old') then
+    raise exception 'FAIL T26: a row older than 7 days survived an insert';
+  end if;
+end $$;
+
+insert into public.app_log (level, scope, action)
+select 'event', 'test', 'bulk' from generate_series(1, 2010);
+do $$ begin
+  if (select count(*) from public.app_log) <> 2000 then
+    raise exception 'FAIL T26: app_log is not capped at 2000 rows';
+  end if;
+  if (select min(id) from public.app_log) <> (select max(id) - 1999 from public.app_log) then
+    raise exception 'FAIL T26: the cap kept something other than the 2000 newest rows';
+  end if;
+end $$;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000f0', true);
+do $$ begin
+  if (select count(*) from public.app_log) <> 2000 then
+    raise exception 'FAIL T26: the superadmin cannot read app_log';
+  end if;
+end $$;
+rollback;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+do $$ begin
+  if exists (select 1 from public.app_log) then
+    raise exception 'FAIL T26: a gym admin reads app_log';
+  end if;
+  begin
+    insert into public.app_log (level, scope, action) values ('event', 'test', 'forged');
+    raise exception 'FAIL T26: a gym admin wrote to app_log';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
+begin;
+set local role anon;
+do $$ begin
+  begin
+    perform 1 from public.app_log;
+    raise exception 'FAIL T26: anon reads app_log';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
 select 'tenant isolation: all checks passed' as result;
