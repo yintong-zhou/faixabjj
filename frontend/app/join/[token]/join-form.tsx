@@ -32,14 +32,6 @@ export function JoinForm({
 }) {
   const [state, formAction, pending] = useActionState(action, INITIAL);
 
-  // A Turnstile token is redeemed once: after a refused attempt the widget
-  // needs a fresh one, or the next submit fails the check again.
-  useEffect(() => {
-    if (state.attempt > 0) {
-      (window as unknown as { turnstile?: { reset: () => void } }).turnstile?.reset();
-    }
-  }, [state.attempt]);
-
   return (
     <form action={formAction} className="flex flex-col gap-4">
       {/* Remounted on every attempt so the fields restart from the values the
