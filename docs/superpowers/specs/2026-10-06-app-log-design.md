@@ -83,17 +83,17 @@ Table `public.app_log`, platform-level (not a domain table):
 - **Gyms:** `createGym`, `updateGym`, `setGymStatus`, `deleteGym`,
   `addManager`, `resetManagerPassword`, `revokeManager` (`app/gyms/actions.ts`).
 
-### Login
+### Login and other outsider-caused failures
 
 - Success: not logged.
-- Wrong credentials (`invalid_credentials`, including an unknown username,
-  which signs in against a random address): `console.error` only, as today.
-- Any other cause (`captcha_failed`, rate limit, GoTrue failure): a
-  `level='error'` row through `logDbError`, no actor, no identifier.
-
-Known risk: a burst of non-credential login failures could push useful rows
-past the 2000 cap. Turnstile already limits attempts; pruning events and
-errors separately is the upgrade if it ever happens.
+- Failures anyone can cause at will stay on the console only, for every
+  caller (`errorRow` returns null): `invalid_credentials` (an unknown username
+  included), `captcha_failed` (a POST without the challenge),
+  `over_request_rate_limit`, `email_exists` (`/join`). Otherwise 2000 forged
+  requests would push every useful row out.
+- Any other login failure (GoTrue down, unexpected codes): a `level='error'`
+  row, no actor, no identifier.
+- An email quoted inside a `message` is masked as `<email>`.
 
 ## Page — `/logs`
 

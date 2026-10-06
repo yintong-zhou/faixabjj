@@ -22,7 +22,8 @@ export function logDbError(scope: string, where: string, error: DbError) {
       error.details ?? ""
     }`.trim(),
   );
-  persist(errorRow(scope, where, error));
+  const row = errorRow(scope, where, error);
+  if (row) persist(row);
 }
 
 // A key action that succeeded: who (actor), in which gym, on what (subject).

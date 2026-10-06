@@ -28,9 +28,8 @@ type LogRow = {
 // delete are not shown even if nothing has been written for days.
 const RETENTION_DAYS = 7;
 // PostgREST answers at most 1000 rows per request by default; the table holds
-// up to 2000, so two ranged requests.
+// up to 2000, so a second page when the first is full.
 const PAGE = 1000;
-const PAGES = [0, PAGE];
 
 const short = (id: string | null) => (id ? id.slice(0, 8) : "—");
 
@@ -40,25 +39,24 @@ export default async function LogsPage() {
   const { supabase } = await requirePlatformAdmin("/logs");
 
   const since = new Date(new Date().getTime() - RETENTION_DAYS * 86_400_000).toISOString();
-  const [gymsResult, pages] = await Promise.all([
-    supabase.from("gym").select("id, name"),
-    Promise.all(
-      PAGES.map((from) =>
-        supabase
-          .from("app_log")
-          .select("id, created_at, level, scope, action, code, message, gym_id, actor_id, subject_id")
-          .gte("created_at", since)
-          .order("id", { ascending: false })
-          .range(from, from + PAGE - 1),
-      ),
-    ),
-  ]);
+  const page = () =>
+    supabase
+      .from("app_log")
+      .select("id, created_at, level, scope, action, code, message, gym_id, actor_id, subject_id")
+      .gte("created_at", since)
+      .order("id", { ascending: false })
+      .limit(PAGE);
+  const [gymsResult, first] = await Promise.all([supabase.from("gym").select("id, name"), page()]);
+  const firstRows = (first.data ?? []) as LogRow[];
+  // Below the first page's last id, not by offset: a row written in between
+  // neither repeats nor shifts anything.
+  const second = firstRows.length === PAGE ? await page().lt("id", firstRows[PAGE - 1].id) : null;
 
-  const failed = pages.find((p) => p.error)?.error;
+  const failed = first.error ?? second?.error;
   if (failed) logDbError("logs", "app_log", failed);
   if (gymsResult.error) logDbError("logs", "gym", gymsResult.error);
 
-  const rows = pages.flatMap((p) => (p.data ?? []) as LogRow[]);
+  const rows = [...firstRows, ...((second?.data ?? []) as LogRow[])];
   const gymNames = new Map((gymsResult.data ?? []).map((g) => [g.id as string, g.name as string]));
   // A deleted gym keeps its id in the log: show the id.
   const gymName = (id: string | null) => (id ? (gymNames.get(id) ?? short(id)) : "—");
