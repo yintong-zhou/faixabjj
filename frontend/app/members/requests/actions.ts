@@ -6,7 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { todayIn } from "@/utils/dates";
 import { getDictionary } from "@/utils/i18n/server";
-import { logDbError } from "@/utils/log";
+import { logDbError, logEvent } from "@/utils/log";
 import { parseRegistration } from "@/utils/registration";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireGymSettings } from "@/utils/supabase/gym";
@@ -64,7 +64,8 @@ async function requestInMyGym(supabase: SupabaseClient, id: string): Promise<Req
 // that fails after the gym was assigned puts the account back as pending.
 export async function approveRegistration(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase, access } = await requireUserManager(PATH);
+  const session = await requireUserManager(PATH);
+  const { supabase, access } = session;
   const gym = await requireGymSettings();
 
   const request = await requestInMyGym(supabase, String(formData.get("request_id") ?? ""));
@@ -234,6 +235,7 @@ export async function approveRegistration(formData: FormData) {
   revalidatePath("/members");
   revalidatePath(PATH);
   revalidatePath("/dashboard");
+  logEvent(session, "members", "approveRegistration", personId);
   back({ ok: t.requests.approved(r.fullName) });
 }
 
@@ -242,7 +244,8 @@ export async function approveRegistration(formData: FormData) {
 // pending for this gym, and never touches a platform admin.
 export async function rejectRegistration(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requireUserManager(PATH);
+  const session = await requireUserManager(PATH);
+  const { supabase } = session;
 
   const request = await requestInMyGym(supabase, String(formData.get("request_id") ?? ""));
   if (!request) back({ error: t.requests.alreadyHandled });
@@ -288,5 +291,6 @@ export async function rejectRegistration(formData: FormData) {
   revalidatePath("/members");
   revalidatePath(PATH);
   revalidatePath("/dashboard");
+  logEvent(session, "members", "rejectRegistration", request.auth_user_id);
   back({ ok: t.requests.rejected(request.full_name) });
 }

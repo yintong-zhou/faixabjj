@@ -155,6 +155,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             registro: t.nav.registro,
             account: t.nav.account,
             gyms: t.nav.gyms,
+            logs: t.nav.logs,
             signIn: t.nav.signIn,
             signOut: t.nav.signOut,
             language: t.nav.language,

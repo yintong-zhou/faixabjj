@@ -10,6 +10,8 @@ export type AdminSession = {
   supabase: SupabaseClient;
   userId: string;
   email: string | null;
+  /** The account's gym (`app_metadata.gym_id`); null for the superadmin and a pending account. */
+  gymId: string | null;
   mustChangePassword: boolean;
   /** Signed up through an invite link and not yet approved: no gym, no profile. */
   pendingApproval: boolean;
@@ -77,6 +79,7 @@ export async function requireSession(path: string): Promise<AdminSession> {
     supabase,
     userId: claims.sub as string,
     email: (claims.email as string | undefined) ?? null,
+    gymId: appMetadata?.gym_id ?? null,
     mustChangePassword: appMetadata?.must_change_password === true,
     // Written only by the service role (app/join/actions.ts sets it, approval
     // clears it), like must_change_password.
@@ -91,7 +94,7 @@ export const PENDING_PATH = "/pending";
 // hold no gym flags and RLS shows them no rows, so it answers 404. The
 // dashboard is theirs too — where login lands — and draws the platform's
 // aggregates instead of a gym's.
-const PLATFORM_PATHS = ["/dashboard", "/gyms", "/account"];
+const PLATFORM_PATHS = ["/dashboard", "/gyms", "/logs", "/account"];
 
 // Defense in depth: the proxy (frontend/proxy.ts) already redirects
 // logged-out visitors away from protected routes, but page-level checks

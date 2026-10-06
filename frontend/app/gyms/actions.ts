@@ -7,7 +7,7 @@ import { todayIn } from "@/utils/dates";
 import { DEFAULT_TIMEZONE } from "@/utils/gym-defaults";
 import { deletionConfirmed, parseGymForm } from "@/utils/gyms";
 import { getDictionary } from "@/utils/i18n/server";
-import { logDbError } from "@/utils/log";
+import { logDbError, logEvent } from "@/utils/log";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requirePlatformAdmin } from "@/utils/supabase/require-admin";
 import { generateTemporaryPassword } from "@/utils/temporary-password";
@@ -43,7 +43,8 @@ function gymInput(formData: FormData) {
 
 export async function createGym(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requirePlatformAdmin("/gyms/new");
+  const session = await requirePlatformAdmin("/gyms/new");
+  const { supabase } = session;
 
   const parsed = parseGymForm(gymInput(formData), todayIn(DEFAULT_TIMEZONE));
   if (!parsed.ok) to("/gyms/new", { error: t.gyms.invalid[parsed.error] });
@@ -69,6 +70,7 @@ export async function createGym(formData: FormData) {
   }
 
   revalidatePath(LIST);
+  logEvent({ userId: session.userId, gymId: data.id }, "gyms", "createGym", data.id);
   to(`/gyms/${data.id}`, { ok: t.gyms.msg.created(value.name) });
 }
 
@@ -76,7 +78,8 @@ export async function updateGym(formData: FormData) {
   const { t } = await getDictionary();
   const id = field(formData, "id") ?? "";
   const detail = `/gyms/${id}`;
-  const { supabase } = await requirePlatformAdmin(detail);
+  const session = await requirePlatformAdmin(detail);
+  const { supabase } = session;
 
   const timezone = field(formData, "timezone") ?? DEFAULT_TIMEZONE;
   const parsed = parseGymForm(gymInput(formData), todayIn(timezone));
@@ -104,6 +107,7 @@ export async function updateGym(formData: FormData) {
 
   revalidatePath(LIST);
   revalidatePath(detail);
+  logEvent({ userId: session.userId, gymId: id }, "gyms", "updateGym", id);
   to(detail, { ok: t.gyms.msg.saved });
 }
 
@@ -112,7 +116,8 @@ export async function updateGym(formData: FormData) {
 // nothing is deleted, so reactivating brings everything back.
 export async function setGymStatus(formData: FormData) {
   const { t } = await getDictionary();
-  const { supabase } = await requirePlatformAdmin(LIST);
+  const session = await requirePlatformAdmin(LIST);
+  const { supabase } = session;
 
   const id = field(formData, "id") ?? "";
   const status = field(formData, "status");
@@ -133,6 +138,7 @@ export async function setGymStatus(formData: FormData) {
 
   revalidatePath(LIST);
   revalidatePath(`/gyms/${id}`);
+  logEvent({ userId: session.userId, gymId: id }, "gyms", `setGymStatus.${status}`, id);
   to(back, {
     ok: status === "suspended" ? t.gyms.msg.suspended(data.name) : t.gyms.msg.reactivated(data.name),
   });
@@ -152,7 +158,8 @@ export async function deleteGym(formData: FormData) {
   const { t } = await getDictionary();
   const id = field(formData, "id") ?? "";
   const detail = `/gyms/${id}`;
-  const { supabase } = await requirePlatformAdmin(detail);
+  const session = await requirePlatformAdmin(detail);
+  const { supabase } = session;
 
   const { data: gym, error: gymError } = await supabase
     .from("gym")
@@ -242,6 +249,7 @@ export async function deleteGym(formData: FormData) {
   }
 
   revalidatePath(LIST);
+  logEvent({ userId: session.userId, gymId: id }, "gyms", "deleteGym", id);
   to(LIST, failed ? { error: t.gyms.msg.accountsNotDeleted(failed) } : { ok: t.gyms.msg.deleted(gym.name) });
 }
 
@@ -255,7 +263,8 @@ export async function addManager(formData: FormData) {
   const { t } = await getDictionary();
   const gymId = field(formData, "gym_id") ?? "";
   const detail = `/gyms/${gymId}`;
-  const { supabase } = await requirePlatformAdmin(detail);
+  const session = await requirePlatformAdmin(detail);
+  const { supabase } = session;
 
   const fullName = field(formData, "full_name")?.trim();
   const email = field(formData, "email")?.trim();
@@ -348,6 +357,7 @@ export async function addManager(formData: FormData) {
 
   revalidatePath(detail);
   revalidatePath(LIST);
+  logEvent({ userId: session.userId, gymId }, "gyms", "addManager", gymId);
   to(detail, {
     ok: t.gyms.msg.managerAdded(fullName),
     pw: await flashTemporaryPassword({ email, password, username: claimed }),
@@ -359,12 +369,13 @@ export async function addManager(formData: FormData) {
 // touched — never on an instructor or a student, whom the superadmin does not
 // see.
 async function managerOf(gymId: string, authUserId: string, detail: string) {
-  const { supabase } = await requirePlatformAdmin(detail);
-  const { data, error } = await supabase.rpc("gym_managers", { p_gym_id: gymId });
+  const session = await requirePlatformAdmin(detail);
+  const { data, error } = await session.supabase.rpc("gym_managers", { p_gym_id: gymId });
   if (error) logDbError("gyms", "managerOf", error);
-  return ((data ?? []) as { auth_user_id: string | null; email: string | null }[]).find(
+  const manager = ((data ?? []) as { auth_user_id: string | null; email: string | null }[]).find(
     (m) => m.auth_user_id === authUserId,
   );
+  return { session, manager };
 }
 
 export async function resetManagerPassword(formData: FormData) {
@@ -373,7 +384,7 @@ export async function resetManagerPassword(formData: FormData) {
   const userId = field(formData, "user_id") ?? "";
   const detail = `/gyms/${gymId}`;
 
-  const manager = await managerOf(gymId, userId, detail);
+  const { session, manager } = await managerOf(gymId, userId, detail);
   if (!manager) to(detail, { error: t.gyms.msg.notAManager });
 
   let admin: ReturnType<typeof createAdminClient>;
@@ -403,6 +414,7 @@ export async function resetManagerPassword(formData: FormData) {
   if (rowError) logDbError("gyms", "resetManagerPassword:username", rowError);
 
   const person = row as { username: string | null; full_name: string | null } | null;
+  logEvent({ userId: session.userId, gymId }, "gyms", "resetManagerPassword", userId);
   to(detail, {
     ok: t.gyms.msg.passwordReset(person?.full_name?.trim() || manager.email || ""),
     pw: await flashTemporaryPassword({
@@ -419,7 +431,7 @@ export async function revokeManager(formData: FormData) {
   const userId = field(formData, "user_id") ?? "";
   const detail = `/gyms/${gymId}`;
 
-  const manager = await managerOf(gymId, userId, detail);
+  const { session, manager } = await managerOf(gymId, userId, detail);
   if (!manager) to(detail, { error: t.gyms.msg.notAManager });
 
   let admin: ReturnType<typeof createAdminClient>;
@@ -439,5 +451,6 @@ export async function revokeManager(formData: FormData) {
 
   revalidatePath(detail);
   revalidatePath(LIST);
+  logEvent({ userId: session.userId, gymId }, "gyms", "revokeManager", userId);
   to(detail, { ok: t.gyms.msg.revoked(manager.email ?? "") });
 }

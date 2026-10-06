@@ -43,6 +43,9 @@ export async function login(formData: FormData) {
     // password" and "Supabase refused the request for a reason that has
     // nothing to do with the password" are the same sentence to the reader,
     // and telling them apart used to mean guessing.
+    // app_log keeps only what an outsider cannot cause at will: wrong
+    // credentials, a refused challenge and a rate limit stay on the console
+    // (errorRow, utils/log-row.ts).
     logDbError("login", "signInWithPassword", {
       code: error.code ?? String(error.status ?? ""),
       message: error.message,
