@@ -9,6 +9,7 @@ import {
   CalendarCheckIcon,
   CalendarPlusIcon,
   DashboardIcon,
+  FileTextIcon,
   HomeIcon,
   MailIcon,
   UserIcon,
@@ -31,6 +32,7 @@ export type NavLabels = {
   registro: string;
   account: string;
   gyms: string;
+  logs: string;
   signIn: string;
   signOut: string;
   language: string;
@@ -55,6 +57,7 @@ const DASHBOARD_ITEM = {
 } as const;
 const ACCOUNT_ITEM = { href: "/account", key: "account", icon: UserIcon } as const;
 const GYMS_ITEM = { href: "/gyms", key: "gyms", icon: BuildingIcon } as const;
+const LOGS_ITEM = { href: "/logs", key: "logs", icon: FileTextIcon } as const;
 
 // Only so the list below has a type wide enough to hold every item: an array
 // literal of two entries infers those two `href` strings and rejects the third.
@@ -66,7 +69,8 @@ type NavItem =
   | typeof CORSI_ITEM
   | typeof REGISTRO_ITEM
   | typeof ACCOUNT_ITEM
-  | typeof GYMS_ITEM;
+  | typeof GYMS_ITEM
+  | typeof LOGS_ITEM;
 
 // Hiding a link is a convenience, never the access control: /members, /courses
 // and /attendance each verify the privilege themselves, and the RLS policies
@@ -89,7 +93,7 @@ function navItemsFor(
   // The platform superadmin belongs to no gym: their whole portal is the
   // platform's figures, the list of gyms and their own account.
   if (isPlatformAdmin) {
-    return [DASHBOARD_ITEM, GYMS_ITEM, ACCOUNT_ITEM];
+    return [DASHBOARD_ITEM, GYMS_ITEM, LOGS_ITEM, ACCOUNT_ITEM];
   }
 
   // Home is deliberately absent for *every* signed-in user, staff included —

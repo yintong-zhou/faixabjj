@@ -34,6 +34,7 @@ export const it = {
     registro: "Registro",
     account: "Account",
     gyms: "Palestre",
+    logs: "Log",
     signIn: "Accedi",
     signOut: "Esci",
     menu: "Menu",
@@ -1211,6 +1212,22 @@ export const it = {
       revoked: (email: string) => `Accesso di ${email} revocato.`,
       secretMissing: "Chiave di servizio non configurata: operazione sugli account non disponibile.",
     },
+  },
+  logs: {
+    title: "Log",
+    subtitle: "Errori ed eventi degli ultimi 7 giorni, al massimo 2000 righe. Orari in UTC.",
+    empty: "Nessuna riga negli ultimi 7 giorni.",
+    loadFailed: "Il log non è stato caricato. Riprova più tardi.",
+    columns: {
+      when: "Quando (UTC)",
+      level: "Livello",
+      action: "Azione",
+      error: "Errore",
+      gym: "Palestra",
+      actor: "Autore",
+      subject: "Oggetto",
+    },
+    level: { error: "Errore", event: "Evento" },
   },
 };
 

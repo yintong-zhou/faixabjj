@@ -94,7 +94,7 @@ export const PENDING_PATH = "/pending";
 // hold no gym flags and RLS shows them no rows, so it answers 404. The
 // dashboard is theirs too — where login lands — and draws the platform's
 // aggregates instead of a gym's.
-const PLATFORM_PATHS = ["/dashboard", "/gyms", "/account"];
+const PLATFORM_PATHS = ["/dashboard", "/gyms", "/logs", "/account"];
 
 // Defense in depth: the proxy (frontend/proxy.ts) already redirects
 // logged-out visitors away from protected routes, but page-level checks
