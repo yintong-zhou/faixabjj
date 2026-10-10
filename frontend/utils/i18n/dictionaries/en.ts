@@ -1208,5 +1208,13 @@ export const en: Dictionary = {
     noMatch: "No row matches the chosen filters.",
     newest: "Most recent",
     older: "Older",
+    who: { platform: "Superadmin", staff: "Gym staff", manager: "Manager" },
+    subject: {
+      manager: "Manager",
+      member: "Member",
+      account: "Member's account",
+      request: "Registration request",
+      gymDeleted: "Deleted gym",
+    },
   },
 };

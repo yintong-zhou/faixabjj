@@ -1236,6 +1236,14 @@ export const it = {
     noMatch: "Nessuna riga corrisponde ai filtri scelti.",
     newest: "Più recenti",
     older: "Precedenti",
+    who: { platform: "Superadmin", staff: "Staff della palestra", manager: "Gestore" },
+    subject: {
+      manager: "Gestore",
+      member: "Socio",
+      account: "Account di un socio",
+      request: "Richiesta di registrazione",
+      gymDeleted: "Palestra eliminata",
+    },
   },
 };
 

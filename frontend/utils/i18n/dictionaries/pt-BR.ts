@@ -1211,5 +1211,13 @@ export const ptBR: Dictionary = {
     noMatch: "Nenhuma linha corresponde aos filtros escolhidos.",
     newest: "Mais recentes",
     older: "Anteriores",
+    who: { platform: "Superadmin", staff: "Equipe da academia", manager: "Gestor" },
+    subject: {
+      manager: "Gestor",
+      member: "Aluno",
+      account: "Conta de um aluno",
+      request: "Pedido de cadastro",
+      gymDeleted: "Academia excluída",
+    },
   },
 };
