@@ -40,10 +40,37 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const COLUMNS =
   "lg:grid lg:grid-cols-[9.5rem_4.5rem_minmax(9rem,13rem)_minmax(8rem,1fr)_minmax(6rem,10rem)_minmax(8rem,12rem)_minmax(8rem,12rem)]";
 
+// UTC first, then every IANA zone the runtime knows (it does not list UTC).
+const TIME_ZONES = ["UTC", ...Intl.supportedValuesOf("timeZone").filter((z) => z !== "UTC")];
+const TIME_ZONE_SET = new Set(TIME_ZONES);
+
+// "Europe/Rome (UTC+2)": the offset is today's, so it moves with daylight
+// saving. Rebuilt at most once an hour — 418 formatters are ~50 ms, and an
+// offset changes twice a year at most.
+let zoneLabels: { hour: number; labels: Map<string, string> } | null = null;
+
+function zoneLabel(zone: string): string {
+  const hour = Math.floor(new Date().getTime() / 3_600_000);
+  if (zoneLabels?.hour !== hour) {
+    const now = new Date();
+    const labels = new Map<string, string>();
+    for (const z of TIME_ZONES) {
+      const part = new Intl.DateTimeFormat("en-US", { timeZone: z, timeZoneName: "shortOffset" })
+        .formatToParts(now)
+        .find((p) => p.type === "timeZoneName")?.value;
+      // "GMT+5:30" → "UTC+5:30"; plain "GMT" is "UTC+0".
+      const offset = !part || part === "GMT" ? "UTC+0" : part.replace("GMT", "UTC");
+      labels.set(z, `${z.replaceAll("_", " ")} (${offset})`);
+    }
+    zoneLabels = { hour, labels };
+  }
+  return zoneLabels.labels.get(zone) ?? zone;
+}
+
 const fieldClass =
   "rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-accent";
 
-type Search = { q?: string; level?: string; gym?: string; before?: string };
+type Search = { q?: string; level?: string; gym?: string; tz?: string; before?: string };
 
 const short = (id: string | null) => (id ? id.slice(0, 8) : "—");
 
@@ -71,6 +98,21 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
   const gym = search.gym && UUID.test(search.gym) ? search.gym : "";
   const before = search.before && /^\d{1,18}$/.test(search.before) ? search.before : "";
   const q = search.q ?? "";
+  const tz = search.tz && TIME_ZONE_SET.has(search.tz) ? search.tz : "UTC";
+  // sv-SE writes "2026-10-06 23:54:37": the date goes through formatDate() like
+  // every date in the app, the time as it is.
+  const clock = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+  // What the links keep: the filters and the zone, but not the page.
+  const keep = { ...(q && { q }), ...(level && { level }), ...(gym && { gym }), ...(tz !== "UTC" && { tz }) };
 
   const since = new Date(new Date().getTime() - RETENTION_DAYS * 86_400_000).toISOString();
   let query = supabase
@@ -104,9 +146,11 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
   const filtered = Boolean(level || gym || q);
   const olderHref =
     fetched.length > PAGE
-      ? `/logs?${new URLSearchParams({ ...(q && { q }), ...(level && { level }), ...(gym && { gym }), before: String(rows[PAGE - 1].id) })}`
+      ? `/logs?${new URLSearchParams({ ...keep, before: String(rows[PAGE - 1].id) })}`
       : null;
-  const newestHref = `/logs?${new URLSearchParams({ ...(q && { q }), ...(level && { level }), ...(gym && { gym }) })}`;
+  const newestHref = `/logs?${new URLSearchParams(keep)}`;
+  // Clearing the filters keeps the zone: it is a display choice, not a filter.
+  const clearHref = tz === "UTC" ? "/logs" : `/logs?${new URLSearchParams({ tz })}`;
 
   const gymNames = new Map((gymsResult.data ?? []).map((g) => [g.id as string, g.name as string]));
   // A deleted gym keeps its id in the log: show the id.
@@ -151,7 +195,7 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
           <FileTextIcon className="h-5 w-5 shrink-0 text-accent" />
           {t.logs.title}
         </h1>
-        <p className="text-sm text-foreground/60">{t.logs.subtitle}</p>
+        <p className="text-sm text-foreground/60">{t.logs.subtitle(zoneLabel(tz))}</p>
       </div>
 
       <form method="get" className="flex flex-col gap-2 md:flex-row">
@@ -169,6 +213,13 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
             </option>
           ))}
         </select>
+        <select name="tz" defaultValue={tz} aria-label={t.logs.timeZone} className={`${fieldClass} md:max-w-48`}>
+          {TIME_ZONES.map((zone) => (
+            <option key={zone} value={zone}>
+              {zoneLabel(zone)}
+            </option>
+          ))}
+        </select>
         <div className="flex gap-2">
           <button
             type="submit"
@@ -178,7 +229,7 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
           </button>
           {filtered ? (
             <Link
-              href="/logs"
+              href={clearHref}
               className="flex-1 rounded-lg px-4 py-2.5 text-center text-sm font-medium text-foreground/70 hover:bg-muted md:flex-none"
             >
               {t.logs.reset}
@@ -214,7 +265,7 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
           </div>
           <div role="rowgroup" className="divide-y divide-border">
             {rows.map((row) => {
-              const iso = new Date(row.created_at).toISOString();
+              const stamp = clock.format(new Date(row.created_at));
               return (
                 <div
                   key={row.id}
@@ -224,7 +275,7 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
                   {/* On a phone the time and the level share the first line. */}
                   <div className="flex items-center justify-between gap-2 lg:contents">
                     <span role="cell" className="whitespace-nowrap tabular-nums">
-                      {formatDate(iso.slice(0, 10))} {iso.slice(11, 19)}
+                      {formatDate(stamp.slice(0, 10))} {stamp.slice(11, 19)}
                     </span>
                     <span role="cell" className="lg:justify-self-start">
                       <span

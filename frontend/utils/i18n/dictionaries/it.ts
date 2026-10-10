@@ -1215,11 +1215,11 @@ export const it = {
   },
   logs: {
     title: "Log",
-    subtitle: "Errori ed eventi degli ultimi 7 giorni, al massimo 2000 righe. Orari in UTC.",
+    subtitle: (zone: string) => `Errori ed eventi degli ultimi 7 giorni, al massimo 2000 righe. Orari in ${zone}.`,
     empty: "Nessuna riga negli ultimi 7 giorni.",
     loadFailed: "Il log non è stato caricato. Riprova più tardi.",
     columns: {
-      when: "Quando (UTC)",
+      when: "Quando",
       level: "Livello",
       action: "Azione",
       error: "Errore",
@@ -1229,6 +1229,7 @@ export const it = {
     },
     level: { error: "Errore", event: "Evento" },
     search: "Cerca azione, codice o messaggio",
+    timeZone: "Fuso orario",
     allLevels: "Tutti i livelli",
     allGyms: "Tutte le palestre",
     filter: "Filtra",

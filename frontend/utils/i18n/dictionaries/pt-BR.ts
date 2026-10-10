@@ -1190,11 +1190,11 @@ export const ptBR: Dictionary = {
   },
   logs: {
     title: "Log",
-    subtitle: "Erros e eventos dos últimos 7 dias, no máximo 2000 linhas. Horários em UTC.",
+    subtitle: (zone: string) => `Erros e eventos dos últimos 7 dias, no máximo 2000 linhas. Horários em ${zone}.`,
     empty: "Nenhuma linha nos últimos 7 dias.",
     loadFailed: "Não foi possível carregar o log. Tente novamente mais tarde.",
     columns: {
-      when: "Quando (UTC)",
+      when: "Quando",
       level: "Nível",
       action: "Ação",
       error: "Erro",
@@ -1204,6 +1204,7 @@ export const ptBR: Dictionary = {
     },
     level: { error: "Erro", event: "Evento" },
     search: "Buscar ação, código ou mensagem",
+    timeZone: "Fuso horário",
     allLevels: "Todos os níveis",
     allGyms: "Todas as academias",
     filter: "Filtrar",

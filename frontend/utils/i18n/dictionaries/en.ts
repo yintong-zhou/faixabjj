@@ -1187,11 +1187,11 @@ export const en: Dictionary = {
   },
   logs: {
     title: "Log",
-    subtitle: "Errors and events of the last 7 days, at most 2000 rows. Times in UTC.",
+    subtitle: (zone: string) => `Errors and events of the last 7 days, at most 2000 rows. Times in ${zone}.`,
     empty: "No rows in the last 7 days.",
     loadFailed: "The log could not be loaded. Try again later.",
     columns: {
-      when: "When (UTC)",
+      when: "When",
       level: "Level",
       action: "Action",
       error: "Error",
@@ -1201,6 +1201,7 @@ export const en: Dictionary = {
     },
     level: { error: "Error", event: "Event" },
     search: "Search action, code or message",
+    timeZone: "Time zone",
     allLevels: "All levels",
     allGyms: "All gyms",
     filter: "Filter",
