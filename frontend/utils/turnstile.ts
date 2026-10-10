@@ -6,7 +6,9 @@ import "server-only";
 // its own CAPTCHA protection (Authentication → Attack Protection), which holds
 // the Turnstile secret and calls siteverify itself before it will answer
 // /auth/v1/token or /auth/v1/recover. This app's job is therefore to draw the
-// widget and hand the token to Supabase — not to verify it.
+// widget and hand the token to Supabase — not to verify it. (The reset request
+// no longer calls /recover: it sends its own link, so it verifies its token
+// with utils/turnstile-verify.ts, like the invite signup.)
 //
 // The first version of this file did verify it, with siteverify in the server
 // action, and that is the canonical shape when the backend is your own. It is

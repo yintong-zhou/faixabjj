@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireSession } from "@/utils/supabase/require-admin";
 import { getDictionary } from "@/utils/i18n/server";
+import { sendPasswordChanged } from "@/utils/account-emails";
 
 const PATH = "/change-password";
 
@@ -12,7 +14,7 @@ export async function changePassword(formData: FormData) {
   // requireSession, not requireAdmin: this is the one page a user with a
   // pending password change is allowed to reach.
   const { supabase, userId } = await requireSession(PATH);
-  const { t } = await getDictionary();
+  const { t, locale } = await getDictionary();
 
   const password = (formData.get("password") as string) ?? "";
   const confirm = (formData.get("confirm_password") as string) ?? "";
@@ -41,6 +43,9 @@ export async function changePassword(formData: FormData) {
       `${PATH}?error=${encodeURIComponent(t.auth.updateFailed)}`,
     );
   }
+
+  // The password has changed from here on, whatever happens to the flag.
+  after(() => sendPasswordChanged(userId, locale));
 
   // Clearing the obligation needs the service role: `app_metadata` is
   // deliberately not writable by the user it belongs to.

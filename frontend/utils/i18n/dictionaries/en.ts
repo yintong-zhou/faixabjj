@@ -124,20 +124,29 @@ export const en: Dictionary = {
     showPassword: "Show the password",
     hidePassword: "Hide the password",
     registeredNotice: "Request sent. Sign in with your email or username to follow its status.",
+    resetNotice: "Password updated. Sign in with your new password.",
   },
 
   reset: {
-    checkingTitle: "Reset password",
-    checkingLead: "Checking the link…",
     invalidTitle: "Invalid link",
     invalidLead: "This password reset link is not valid, or it has expired.",
     requestNewLink: "Request a new link",
-    doneTitle: "Password updated",
-    doneLead: "Redirecting you…",
     title: "Choose a new password",
-    lead: "At least 6 characters.",
+    lead: "At least 8 characters.",
     saveButton: "Save password",
     updateFailed: "The password could not be updated. Request a new link.",
+  },
+
+  confirmEmail: {
+    title: "Confirm your new email",
+    lead: (email: string) => `Your account will use ${email} to sign in and to receive email.`,
+    button: "Confirm",
+    invalidTitle: "Invalid link",
+    invalidLead:
+      "This email confirmation link is not valid, has expired or has already been used. Request the change again from Account.",
+    failed: "The email could not be changed. Request the change again from Account.",
+    doneTitle: "Email updated",
+    doneLead: "From now on, sign in with the new address.",
   },
 
   home: {
@@ -1010,6 +1019,7 @@ export const en: Dictionary = {
         heading: "6. Where the data is and who it is shared with",
         paragraphs: [
           "Data is stored on Supabase (database, authentication and storage) and the site is published on Vercel. Both act as processors under Article 28 GDPR.",
+          "Account emails (password reset, email change confirmation, notices) are sent through a service running on Cloudflare Workers and delivered by the email provider configured for it. They receive only the recipient's address, name and the content of the message, and act as processors too.",
           "The project is configured on infrastructure within the European Union. Where a provider processes data outside the European Economic Area, the transfer relies on the Standard Contractual Clauses adopted by the European Commission.",
         ],
       },

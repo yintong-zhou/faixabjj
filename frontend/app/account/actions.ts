@@ -1,14 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { notFound, redirect } from "next/navigation";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAdmin } from "@/utils/supabase/require-admin";
 import { getOrCreateProfile } from "@/utils/supabase/profile";
 import { getDictionary } from "@/utils/i18n/server";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { logDbError } from "@/utils/log";
 import { isValidUsername, normalizeUsername } from "@/utils/username";
+import { sendEmailChangeLink, sendPasswordChanged } from "@/utils/account-emails";
+import { linkSecret } from "@/utils/auth-link-token";
+import type { Locale } from "@/utils/i18n/locales";
+import { isValidEmail } from "@/utils/registration";
+import { findAuthUserByEmail } from "@/utils/supabase/admin";
 
 function back(params: Record<string, string>) {
   redirect(`/account?${new URLSearchParams(params).toString()}`);
@@ -20,7 +25,7 @@ const text = (formData: FormData, key: string) => {
 };
 
 export async function updateProfile(formData: FormData) {
-  const { t } = await getDictionary();
+  const { t, locale } = await getDictionary();
   const { supabase, userId, email: currentEmail } = await requireAdmin("/account");
   const profile = await getOrCreateProfile(supabase, userId, currentEmail);
 
@@ -62,7 +67,7 @@ export async function updateProfile(formData: FormData) {
     return;
   }
 
-  await finishWithEmail(supabase, newEmail, currentEmail, t);
+  await finishWithEmail(userId, newEmail, currentEmail, t, locale);
 }
 
 // 23505: somebody — possibly in another gym, or the superadmin — already has
@@ -87,22 +92,34 @@ function backWithUsernameError(
 }
 
 // The auth record is the source of truth for the email; `person.email` is a
-// convenience copy. Supabase sends a confirmation link and only swaps the
-// address once it is clicked, so the change is never immediate.
+// convenience copy. The change is never immediate: a link goes to the new
+// address (through notify-flow — Supabase sends no email) and the swap happens
+// on /confirm-email, once it is clicked.
 async function finishWithEmail(
-  supabase: SupabaseClient,
+  userId: string,
   newEmail: string | null,
   currentEmail: string | null | undefined,
   t: Dictionary,
+  locale: Locale,
 ) {
-  if (newEmail && newEmail !== currentEmail) {
-    const { error: emailError } = await supabase.auth.updateUser({ email: newEmail });
-
-    if (emailError) {
+  if (newEmail && newEmail.toLowerCase() !== currentEmail?.toLowerCase()) {
+    // An address another account already uses gets the same message as any
+    // other failure, as it did when Supabase refused it.
+    let taken = true;
+    try {
+      taken = !isValidEmail(newEmail) || (await findAuthUserByEmail(newEmail)) !== null;
+    } catch (error) {
+      logDbError("account", "finishWithEmail:lookup", {
+        code: error instanceof Error ? error.name : null,
+        message: error instanceof Error ? error.message : null,
+      });
+    }
+    if (taken || !linkSecret()) {
       back({ error: t.msg.profileSavedEmailFailed });
       return;
     }
 
+    after(() => sendEmailChangeLink(userId, newEmail, locale));
     revalidatePath("/account");
     back({ ok: t.msg.profileSavedEmailPending });
     return;
@@ -116,7 +133,7 @@ async function finishWithEmail(
 // person row, so the username lives on its platform_admin row and is written
 // only by set_platform_admin_username(), which touches the caller's own row.
 export async function updatePlatformAccount(formData: FormData) {
-  const { t } = await getDictionary();
+  const { t, locale } = await getDictionary();
   const { supabase, userId, email: currentEmail, access } = await requireAdmin("/account");
 
   if (!access.isPlatformAdmin) {
@@ -153,12 +170,12 @@ export async function updatePlatformAccount(formData: FormData) {
     }
   }
 
-  await finishWithEmail(supabase, text(formData, "email"), currentEmail, t);
+  await finishWithEmail(userId, text(formData, "email"), currentEmail, t, locale);
 }
 
 export async function updatePassword(formData: FormData) {
-  const { t } = await getDictionary();
-  const { supabase } = await requireAdmin("/account");
+  const { t, locale } = await getDictionary();
+  const { supabase, userId } = await requireAdmin("/account");
 
   const password = formData.get("password") as string;
   const confirm = formData.get("confirm_password") as string;
@@ -180,5 +197,6 @@ export async function updatePassword(formData: FormData) {
     return;
   }
 
+  after(() => sendPasswordChanged(userId, locale));
   back({ ok: t.msg.passwordUpdated });
 }

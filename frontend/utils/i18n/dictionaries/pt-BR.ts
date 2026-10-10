@@ -126,20 +126,29 @@ export const ptBR: Dictionary = {
     showPassword: "Mostrar a senha",
     hidePassword: "Ocultar a senha",
     registeredNotice: "Solicitação enviada. Entre com seu e-mail ou nome de usuário para acompanhar o status.",
+    resetNotice: "Senha atualizada. Entre com a nova senha.",
   },
 
   reset: {
-    checkingTitle: "Redefinir senha",
-    checkingLead: "Verificando o link…",
     invalidTitle: "Link inválido",
     invalidLead: "Este link para redefinir a senha não é válido ou expirou.",
     requestNewLink: "Solicitar um novo link",
-    doneTitle: "Senha atualizada",
-    doneLead: "Redirecionando você…",
     title: "Escolha uma nova senha",
-    lead: "No mínimo 6 caracteres.",
+    lead: "No mínimo 8 caracteres.",
     saveButton: "Salvar senha",
     updateFailed: "Não foi possível atualizar a senha. Solicite um novo link.",
+  },
+
+  confirmEmail: {
+    title: "Confirme seu novo e-mail",
+    lead: (email: string) => `Sua conta usará ${email} para entrar e receber e-mails.`,
+    button: "Confirmar",
+    invalidTitle: "Link inválido",
+    invalidLead:
+      "Este link de confirmação de e-mail não é válido, expirou ou já foi usado. Solicite a alteração novamente em Conta.",
+    failed: "Não foi possível alterar o e-mail. Solicite a alteração novamente em Conta.",
+    doneTitle: "E-mail atualizado",
+    doneLead: "A partir de agora, entre com o novo endereço.",
   },
 
   home: {
@@ -1013,6 +1022,7 @@ export const ptBR: Dictionary = {
         heading: "6. Onde estão os dados e com quem são compartilhados",
         paragraphs: [
           "Os dados são armazenados no Supabase (banco de dados, autenticação e armazenamento) e o site é publicado na Vercel. Ambos atuam como operadores nos termos do artigo 28 do GDPR.",
+          "Os e-mails da conta (redefinição de senha, confirmação de alteração de e-mail, avisos) são enviados por um serviço no Cloudflare Workers e entregues pelo provedor de e-mail configurado. Eles recebem apenas o endereço e o nome do destinatário e o conteúdo da mensagem, e também atuam como operadores.",
           "O projeto está configurado em infraestrutura na União Europeia. Caso um fornecedor trate dados fora do Espaço Econômico Europeu, a transferência apoia-se nas Cláusulas Contratuais-Tipo adotadas pela Comissão Europeia.",
         ],
       },

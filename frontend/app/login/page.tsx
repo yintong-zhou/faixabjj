@@ -8,9 +8,9 @@ import { login } from "./actions";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; next?: string; registered?: string }>;
+  searchParams: Promise<{ error?: string; next?: string; registered?: string; reset?: string }>;
 }) {
-  const { error, next, registered } = await searchParams;
+  const { error, next, registered, reset } = await searchParams;
   const { t } = await getDictionary();
 
   return (
@@ -31,6 +31,13 @@ export default async function LoginPage({
           <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
             <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
             {t.auth.registeredNotice}
+          </p>
+        ) : null}
+
+        {reset === "1" ? (
+          <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
+            <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+            {t.auth.resetNotice}
           </p>
         ) : null}
 
