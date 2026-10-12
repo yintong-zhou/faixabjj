@@ -1225,11 +1225,11 @@ export const it = {
   },
   logs: {
     title: "Log",
-    subtitle: "Errori ed eventi degli ultimi 7 giorni, al massimo 2000 righe. Orari in UTC.",
+    subtitle: (zone: string) => `Errori ed eventi degli ultimi 7 giorni, al massimo 2000 righe. Orari in ${zone}.`,
     empty: "Nessuna riga negli ultimi 7 giorni.",
     loadFailed: "Il log non è stato caricato. Riprova più tardi.",
     columns: {
-      when: "Quando (UTC)",
+      when: "Quando",
       level: "Livello",
       action: "Azione",
       error: "Errore",
@@ -1239,6 +1239,7 @@ export const it = {
     },
     level: { error: "Errore", event: "Evento" },
     search: "Cerca azione, codice o messaggio",
+    timeZone: "Fuso orario",
     allLevels: "Tutti i livelli",
     allGyms: "Tutte le palestre",
     filter: "Filtra",
@@ -1246,6 +1247,14 @@ export const it = {
     noMatch: "Nessuna riga corrisponde ai filtri scelti.",
     newest: "Più recenti",
     older: "Precedenti",
+    who: { platform: "Superadmin", staff: "Staff della palestra", manager: "Gestore" },
+    subject: {
+      manager: "Gestore",
+      member: "Socio",
+      account: "Account di un socio",
+      request: "Richiesta di registrazione",
+      gymDeleted: "Palestra eliminata",
+    },
   },
 };
 

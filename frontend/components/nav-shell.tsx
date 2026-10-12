@@ -145,12 +145,15 @@ export function NavShell({
   labels: NavLabels;
 }) {
   const pathname = usePathname();
+  // The log is a wide table: it gets the full width, the rest of the app a
+  // reading column. Header, content and footer share one width so they align.
+  const width = pathname.startsWith("/logs") ? "max-w-none" : "max-w-5xl";
   const navItems = navItemsFor(isLoggedIn, canViewRegistry, canManageClasses, isPlatformAdmin);
 
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur print:hidden">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5 sm:px-8 sm:py-4">
+        <div className={`mx-auto flex ${width} items-center justify-between px-4 py-2.5 sm:px-8 sm:py-4`}>
           {/* Signed in, the logo goes to the dashboard rather than to "/",
               which would only bounce through the proxy's redirect. That holds
               for the platform superadmin too, who has a dashboard of their own. */}
@@ -222,7 +225,7 @@ export function NavShell({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-20 pt-4 sm:px-8 sm:pb-10 sm:pt-8">
+      <main className={`mx-auto w-full ${width} flex-1 px-4 pb-20 pt-4 sm:px-8 sm:pb-10 sm:pt-8`}>
         {children}
       </main>
 
@@ -230,7 +233,7 @@ export function NavShell({
           anywhere, signed in or not, and a footer is where people look for it.
           Extra bottom padding on small screens so the mobile tab bar does not
           cover it. */}
-      <footer className="mx-auto w-full max-w-5xl px-4 pb-24 sm:px-8 sm:pb-8 print:hidden">
+      <footer className={`mx-auto w-full ${width} px-4 pb-24 sm:px-8 sm:pb-8 print:hidden`}>
         <div className="border-t border-border pt-4 text-xs text-foreground/55">
           <Link href="/privacy" className="hover:text-foreground">
             {labels.privacy}
