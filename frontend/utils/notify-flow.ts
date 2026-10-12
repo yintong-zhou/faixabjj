@@ -11,6 +11,12 @@ import { logDbError } from "@/utils/log";
 // Backend only: the key below must never reach the browser, hence the missing
 // NEXT_PUBLIC_ prefix and the server-only import.
 //
+// Asynchronous (`Prefer: respond-async`): the service queues the message and
+// answers at once with 202 "queued", then makes up to 5 SMTP attempts over
+// about 50 minutes. So a returned id means "accepted for delivery", not
+// "delivered": the outcome is read later with GET /v1/email/{id}, and a final
+// failure never reaches this app's logs.
+//
 // Never log what is sent. The variables carry links with live tokens and the
 // key opens the service: the log gets the template, the returned id and the
 // error code, nothing else.
@@ -45,15 +51,21 @@ export class NotifyError extends Error {
   }
 }
 
-// The service retries the SMTP send before answering, so it can take a while.
+// Async answers as soon as the message is queued, but the contract still asks
+// for at least 30 s.
 const TIMEOUT_MS = 30_000;
+
+// What a queued send (202) or a replay of one (200/202) may report. A replay
+// of a send that already ended in `failed` also answers 200/202, so the
+// status is read, not just the HTTP code.
+const ACCEPTED = new Set(["queued", "processing", "retrying", "submitted"]);
 
 /** The language a template is sent in: one of ours, English otherwise. */
 export function notifyLocale(value: unknown): Locale {
   return typeof value === "string" && isLocale(value) ? value : DEFAULT_LOCALE;
 }
 
-/** Sends one email and returns notify-flow's message id; throws NotifyError. */
+/** Queues one email and returns notify-flow's message id; throws NotifyError. */
 export async function sendEmail(email: Email): Promise<string> {
   const url = process.env.NOTIFY_FLOW_URL?.replace(/\/$/, "");
   const key = process.env.NOTIFY_FLOW_API_KEY;
@@ -66,6 +78,7 @@ export async function sendEmail(email: Email): Promise<string> {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
       "Idempotency-Key": email.idempotencyKey,
+      Prefer: "respond-async",
     },
     body: JSON.stringify({
       template: email.template,
@@ -75,17 +88,21 @@ export async function sendEmail(email: Email): Promise<string> {
     }),
   };
 
-  // One retry, with the same Idempotency-Key, only where the email may never
-  // have been tried: a timeout, a network failure, a 500. A 429 wants a full
-  // minute and a 502 means the SMTP server refused it — neither is retried;
-  // the user asking again is the retry. 4xx are bugs or configuration.
+  // One retry, with the same Idempotency-Key, only where the message may never
+  // have reached the queue: a timeout, a network failure, a 500 or a 503
+  // `queue_unavailable`. Not `smtp_misconfigured` (a 500 that only the
+  // administrator can fix), not a 429 (it wants a full minute), not 4xx (bugs
+  // or configuration). The user asking again is the retry.
   try {
     return await post(`${url}/v1/email/send`, init);
   } catch (error) {
-    if (!(error instanceof NotifyError) || (error.status !== 0 && error.status !== 500)) throw error;
+    if (!(error instanceof NotifyError) || !retryable(error)) throw error;
     return await post(`${url}/v1/email/send`, init);
   }
 }
+
+const retryable = ({ status, code }: NotifyError) =>
+  status === 0 || status === 503 || (status === 500 && code !== "smtp_misconfigured");
 
 async function post(url: string, init: RequestInit): Promise<string> {
   let response: Response;
@@ -98,9 +115,15 @@ async function post(url: string, init: RequestInit): Promise<string> {
 
   const body = (await response.json().catch(() => null)) as {
     id?: unknown;
+    status?: unknown;
     error?: { code?: unknown };
   } | null;
-  if (response.ok && typeof body?.id === "string") return body.id;
+  if (response.ok) {
+    const status = typeof body?.status === "string" ? body.status : "unexpected_response";
+    if (typeof body?.id === "string" && ACCEPTED.has(status)) return body.id;
+    // A replayed key whose send had already failed: `failed` as the code.
+    throw new NotifyError(response.status, status);
+  }
   const code = typeof body?.error?.code === "string" ? body.error.code : "unexpected_response";
   throw new NotifyError(response.status, code);
 }
@@ -112,7 +135,7 @@ async function post(url: string, init: RequestInit): Promise<string> {
 export async function deliver(email: Email): Promise<void> {
   try {
     const id = await sendEmail(email);
-    console.info(`[notify] ${email.template} ${id}`);
+    console.info(`[notify] ${email.template} ${id} accepted`);
   } catch (error) {
     const { status, code } =
       error instanceof NotifyError ? error : { status: 0, code: "unexpected_error" };

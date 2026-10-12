@@ -27,12 +27,12 @@ def load_config():
     return url, key, env
 
 
-def call(method, url, key, body, headers=None):
+def call(method, url, key, body=None, headers=None):
     """Returns (status, parsed JSON or None). 30 s timeout, as in the app."""
     request = urllib.request.Request(
         url,
         method=method,
-        data=json.dumps(body).encode("utf-8"),
+        data=None if body is None else json.dumps(body).encode("utf-8"),
         # Cloudflare (error 1010) rejects urllib's default User-Agent.
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json", "User-Agent": "faixabjj-execution/1.0", **(headers or {})},
     )

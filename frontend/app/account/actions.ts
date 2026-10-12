@@ -15,6 +15,10 @@ import type { Locale } from "@/utils/i18n/locales";
 import { isValidEmail } from "@/utils/registration";
 import { findAuthUserByEmail } from "@/utils/supabase/admin";
 
+// notify-flow's rule for a recipient: printable ASCII only (no accented or IDN
+// addresses).
+const PRINTABLE_ASCII = /^[\x21-\x7e]+$/;
+
 function back(params: Record<string, string>) {
   redirect(`/account?${new URLSearchParams(params).toString()}`);
 }
@@ -104,10 +108,14 @@ async function finishWithEmail(
 ) {
   if (newEmail && newEmail.toLowerCase() !== currentEmail?.toLowerCase()) {
     // An address another account already uses gets the same message as any
-    // other failure, as it did when Supabase refused it.
+    // other failure, as it did when Supabase refused it. So does a non-ASCII
+    // one: notify-flow cannot send to it, so the confirmation would never come.
     let taken = true;
     try {
-      taken = !isValidEmail(newEmail) || (await findAuthUserByEmail(newEmail)) !== null;
+      taken =
+        !isValidEmail(newEmail) ||
+        !PRINTABLE_ASCII.test(newEmail) ||
+        (await findAuthUserByEmail(newEmail)) !== null;
     } catch (error) {
       logDbError("account", "finishWithEmail:lookup", {
         code: error instanceof Error ? error.name : null,

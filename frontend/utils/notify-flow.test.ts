@@ -47,8 +47,8 @@ async function failure(promise: Promise<unknown>): Promise<NotifyError> {
 }
 
 describe("sendEmail", () => {
-  it("posts the contract and returns the id", async () => {
-    fetchMock.mockResolvedValue(json(200, { id: "msg_1", status: "submitted" }));
+  it("queues through the async contract and returns the id", async () => {
+    fetchMock.mockResolvedValue(json(202, { id: "msg_1", status: "queued" }));
 
     await expect(sendEmail(email)).resolves.toBe("msg_1");
 
@@ -59,6 +59,7 @@ describe("sendEmail", () => {
       Authorization: `Bearer ${KEY}`,
       "Content-Type": "application/json",
       "Idempotency-Key": "reset:user-1:1700000000000",
+      Prefer: "respond-async",
     });
     expect(JSON.parse(init.body)).toEqual({
       template: "password-reset",
@@ -93,10 +94,40 @@ describe("sendEmail", () => {
   it("retries a 500 once, with the same Idempotency-Key", async () => {
     fetchMock
       .mockResolvedValueOnce(json(500, { error: { code: "internal_error", message: "x" } }))
-      .mockResolvedValueOnce(json(200, { id: "msg_3", status: "submitted" }));
+      .mockResolvedValueOnce(json(202, { id: "msg_3", status: "queued" }));
     await expect(sendEmail(email)).resolves.toBe("msg_3");
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls[1][1].headers["Idempotency-Key"]).toBe(email.idempotencyKey);
+  });
+
+  it("retries a 503 queue_unavailable once, with the same Idempotency-Key", async () => {
+    fetchMock
+      .mockResolvedValueOnce(json(503, { id: "msg_5", error: { code: "queue_unavailable", message: "x" } }))
+      .mockResolvedValueOnce(json(202, { id: "msg_5", status: "queued" }));
+    await expect(sendEmail(email)).resolves.toBe("msg_5");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][1].headers["Idempotency-Key"]).toBe(email.idempotencyKey);
+  });
+
+  it("does not retry smtp_misconfigured (only the administrator can fix it)", async () => {
+    fetchMock.mockResolvedValue(json(500, { error: { code: "smtp_misconfigured", message: "x" } }));
+    const error = await failure(sendEmail(email));
+    expect([error.status, error.code]).toEqual([500, "smtp_misconfigured"]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats a replay of a failed send as a failure, not a success", async () => {
+    fetchMock.mockResolvedValue(json(200, { id: "msg_6", status: "failed" }));
+    const error = await failure(sendEmail(email));
+    expect([error.status, error.code]).toEqual([200, "failed"]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts a replay of a send still in progress or done", async () => {
+    for (const status of ["processing", "retrying", "submitted"]) {
+      fetchMock.mockResolvedValueOnce(json(200, { id: "msg_7", status }));
+      await expect(sendEmail(email)).resolves.toBe("msg_7");
+    }
   });
 
   it("retries a timeout once, then reports it", async () => {
@@ -134,11 +165,11 @@ describe("deliver", () => {
 
   it("logs the id on success, and nothing it sent", async () => {
     const spies = [vi.spyOn(console, "error").mockImplementation(() => {}), vi.spyOn(console, "info").mockImplementation(() => {})];
-    fetchMock.mockResolvedValue(json(200, { id: "msg_4", status: "submitted" }));
+    fetchMock.mockResolvedValue(json(202, { id: "msg_4", status: "queued" }));
 
     await deliver(email);
 
-    expect(spies[1]).toHaveBeenCalledWith("[notify] password-reset msg_4");
+    expect(spies[1]).toHaveBeenCalledWith("[notify] password-reset msg_4 accepted");
     const output = logged(spies);
     expect(output).not.toContain(KEY);
     expect(output).not.toContain("live-token-never-logged");
