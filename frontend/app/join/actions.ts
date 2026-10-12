@@ -31,7 +31,7 @@ const KEPT = [
 // Account first, then the request: createUser is the step that fails on a
 // taken email. If the request cannot be written, the account is deleted again.
 export async function register(token: string, prev: JoinState, formData: FormData): Promise<JoinState> {
-  const { t } = await getDictionary();
+  const { t, locale } = await getDictionary();
   const values = Object.fromEntries(KEPT.map((key) => [key, String(formData.get(key) ?? "")]));
   const fail = (error: string): JoinState => ({ error, values, attempt: prev.attempt + 1 });
 
@@ -80,7 +80,8 @@ export async function register(token: string, prev: JoinState, formData: FormDat
     email: r.email,
     password: r.password as string,
     email_confirm: true,
-    user_metadata: { full_name: r.fullName },
+    // locale: the language the welcome email is sent in, once approved.
+    user_metadata: { full_name: r.fullName, locale },
     app_metadata: { pending_gym_id: gymId },
   });
   if (authError || !created?.user) {

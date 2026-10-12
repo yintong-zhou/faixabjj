@@ -136,22 +136,31 @@ export const it = {
     showPassword: "Mostra la password",
     hidePassword: "Nascondi la password",
     registeredNotice: "Richiesta inviata. Accedi con la tua email o il tuo username per seguirne lo stato.",
+    resetNotice: "Password aggiornata. Accedi con la nuova password.",
   },
 
   reset: {
-    checkingTitle: "Reimposta password",
-    checkingLead: "Verifica del link in corso…",
     invalidTitle: "Link non valido",
     invalidLead:
       "Questo link per reimpostare la password non è valido o è scaduto.",
     requestNewLink: "Richiedi un nuovo link",
-    doneTitle: "Password aggiornata",
-    doneLead: "Ti sto reindirizzando…",
     title: "Scegli una nuova password",
-    lead: "Minimo 6 caratteri.",
+    lead: "Minimo 8 caratteri.",
     saveButton: "Salva password",
     updateFailed:
       "Non è stato possibile aggiornare la password. Richiedi un nuovo link.",
+  },
+
+  confirmEmail: {
+    title: "Conferma la nuova email",
+    lead: (email: string) => `Il tuo account userà ${email} per accedere e per ricevere le email.`,
+    button: "Conferma",
+    invalidTitle: "Link non valido",
+    invalidLead:
+      "Questo link per confermare l'email non è valido, è scaduto o è già stato usato. Richiedi di nuovo il cambio da Account.",
+    failed: "Non è stato possibile cambiare l'email. Richiedi di nuovo il cambio da Account.",
+    doneTitle: "Email aggiornata",
+    doneLead: "Da ora accedi con il nuovo indirizzo.",
   },
 
   home: {
@@ -1038,6 +1047,7 @@ export const it = {
         heading: "6. Dove sono i dati e a chi li comunichiamo",
         paragraphs: [
           "I dati sono conservati su Supabase (database, autenticazione e archiviazione) e il sito è pubblicato su Vercel. Entrambi agiscono come responsabili del trattamento ai sensi dell'articolo 28 del GDPR.",
+          "Le email dell'account (reimpostazione della password, conferma del cambio email, avvisi) sono inviate tramite un servizio su Cloudflare Workers e recapitate dal provider di posta configurato. Ricevono solo l'indirizzo e il nome del destinatario e il contenuto del messaggio, e agiscono anch'essi come responsabili del trattamento.",
           "Il progetto è configurato su infrastruttura nell'Unione Europea. Qualora un fornitore tratti dati al di fuori dello Spazio Economico Europeo, il trasferimento avviene sulla base delle Clausole Contrattuali Standard adottate dalla Commissione europea.",
         ],
       },

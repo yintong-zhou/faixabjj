@@ -1,12 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { todayIn } from "@/utils/dates";
 import { getDictionary } from "@/utils/i18n/server";
 import { logDbError, logEvent } from "@/utils/log";
+import { deliver, notifyLocale } from "@/utils/notify-flow";
 import { parseRegistration } from "@/utils/registration";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireGymSettings } from "@/utils/supabase/gym";
@@ -236,6 +238,16 @@ export async function approveRegistration(formData: FormData) {
   revalidatePath(PATH);
   revalidatePath("/dashboard");
   logEvent(session, "members", "approveRegistration", personId);
+  // In the athlete's language, stored at signup — not the manager's.
+  after(() =>
+    deliver({
+      template: "welcome",
+      to: r.email,
+      locale: notifyLocale((existing.user.user_metadata as { locale?: unknown } | null)?.locale),
+      variables: { name: r.fullName },
+      idempotencyKey: `welcome:${uid}`,
+    }),
+  );
   back({ ok: t.requests.approved(r.fullName) });
 }
 

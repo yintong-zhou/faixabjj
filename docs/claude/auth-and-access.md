@@ -6,7 +6,7 @@
 
 - `app/login/page.tsx` + `actions.ts` — `"use server"` `signInWithPassword`. Failure → `/login?error=...` with a deliberately generic message; never surface the raw Supabase error (email enumeration).
 - **Email or username** (`20260930000000`): one field (`name="email"`, `autocomplete="username"`). `parseLoginIdentifier()` (`utils/login-identifier.ts`) tells them apart by `@`; a username is resolved to the **account's** email by `emailForUsername()` (`utils/supabase/login-identifier.ts`, server-only) with **one** RPC, `login_email_for_username()` (`20260930010000`, security definer, executable by `service_role` only — found and not-found cost the same round trip, so timing does not reveal a username) and goes through the same `signInWithPassword`. An unknown or invalid username signs in against a **fresh random** `nobody-<uuid>@faixabjj.invalid` (`unknownAccountEmail()`; a fixed sentinel could be registered as a real account, and every unknown username would then sign in as it), so the reply and the Turnstile consumption match a wrong password. Recovery stays email only. The superadmin has no person row, so its username lives on `platform_admin.username` (`20261004000000`), set on `/account` through `set_platform_admin_username()` (own row only, 42501 otherwise; the table keeps no update policy because the row is the grant) and resolved by the same lookup.
-- **Password recovery:** `/forgot-password` calls `resetPasswordForEmail(email, { redirectTo: "<origin>/reset-password" })` and always redirects to `?sent=1`. `/reset-password` must be a **Client Component** (`reset-form.tsx`, server page wraps it for i18n): tokens are in the URL **hash**, never sent to the server. Listen for `onAuthStateChange` `"PASSWORD_RECOVERY"` plus a `getSession()` fallback; "invalid link" after 2s if neither fires.
+- **Password recovery:** `/forgot-password` verifies Turnstile itself (`verifyTurnstile()`), then — in `after()`, so timing is the same either way — looks the account up (`findAuthUserByEmail()`, every account incl. pending and superadmin) and emails `<SITE_URL>/reset-password?token=…` through notify-flow. Always redirects to `?sent=1`. `/reset-password` is a Server Component + action: the token is checked on render and again in the action (`accountForLink()`), the password is set with `admin.updateUserById` (which also clears `must_change_password`), then `/login?reset=1`. No session involved.
 - `app/auth/signout/route.ts` — POST, signs out, → `/login`. `isLoggedIn` computed server-side in `app/layout.tsx` (`getClaims()`), passed as prop to `nav-shell.tsx`.
 - `utils/supabase/proxy.ts`: logged-out visitors on protected routes → `/login?next=<path>`; logged-in visitors on `/login` → `/dashboard`. **`PROTECTED_PREFIXES` is the single source of truth** for gated routes.
 - Every protected page **also** calls `requireAdmin()` (`utils/supabase/require-admin.ts`) — proxy cookie checks are spoofable.
@@ -15,17 +15,41 @@
 
 ## Bot protection (Cloudflare Turnstile)
 
-Challenged: `/login`, `/forgot-password` and `/join/<token>`. `/reset-password` is not (the recovery token is the gate).
+Challenged: `/login`, `/forgot-password` and `/join/<token>`. `/reset-password` is not (the link is the gate).
 
 - **Supabase verifies; the app only draws the widget.** Supabase Auth → Attack Protection (provider Turnstile) holds the secret. `components/turnstile.tsx` renders; `turnstileToken()` in `utils/turnstile.ts` passes `captchaToken` to `signInWithPassword` / `resetPasswordForEmail`.
 - **Never also verify in the server action.** A token is redeemed exactly once: our siteverify consumed it, Supabase got none → `captcha_failed` → correct password reported as wrong. Supabase's check is the one that matters (anyone can POST straight to the endpoint). Trade-off: GoTrue does not check `action`/`hostname`.
-- **The exception is `/join`**: its account is created by the service role, not `signUp()`, so no Supabase check runs and `register` verifies the token itself (`utils/turnstile-verify.ts`, secret `TURNSTILE_SECRET_KEY`, server-only, fails closed without it). Because the token is redeemed there, the form cannot sign the athlete in afterwards: it redirects to `/login?registered=1`.
-- For login and recovery only the sitekey is an env var (`NEXT_PUBLIC_TURNSTILE_SITEKEY`, public). Supabase's secret is not in the repo/deployment; `/join` alone uses `TURNSTILE_SECRET_KEY` (server-only env var, see the `/join` bullet above). No sitekey → no token → Supabase refuses: fails closed with no app logic.
+- **The exceptions are `/join` and `/forgot-password`**, which never reach a Supabase public endpoint (the reset sends its own link, see Email). `/forgot-password` verifies with `verifyTurnstile()` like `/join`. For `/join`: its account is created by the service role, not `signUp()`, so no Supabase check runs and `register` verifies the token itself (`utils/turnstile-verify.ts`, secret `TURNSTILE_SECRET_KEY`, server-only, fails closed without it). Because the token is redeemed there, the form cannot sign the athlete in afterwards: it redirects to `/login?registered=1`.
+- For login only the sitekey is an env var (`NEXT_PUBLIC_TURNSTILE_SITEKEY`, public). Supabase's secret is not in the repo/deployment; `/join` alone uses `TURNSTILE_SECRET_KEY` (server-only env var, see the `/join` bullet above). No sitekey → no token → Supabase refuses: fails closed with no app logic.
 - `captcha_failed` is the one login error with its own message (`t.auth.captchaFailed`); everything else stays generic. Real reason → `logDbError()`.
-- A refused reset still answers `?sent=1`; the call's result is deliberately not read.
+- A refused reset still answers `?sent=1`; nothing about the outcome is read.
 - No reset logic: token single-use, both actions redirect → fresh widget.
 - Widget theme `auto` (Cloudflare iframe, can't follow our toggle); language follows the app via `data-language`.
 - Diagnose from outside: POST `/auth/v1/token?grant_type=password` with the publishable key and a junk address; `captcha protection: request disallowed` means protection is on.
+
+## Email (notify-flow)
+
+**Supabase sends no email** (decided with the user, 2026-10-10). Every email goes through notify-flow, a Cloudflare Worker sending over SMTP (`https://notify-flow.jjservice.workers.dev`, repo `yintong-zhou/notify-flow`). Don't reintroduce `resetPasswordForEmail`, `updateUser({ email })`, `signUp`, `inviteUserByEmail` or a Send Email Hook: each makes Supabase mail.
+
+- `utils/notify-flow.ts` (server-only): `sendEmail()` — Bearer key, `Idempotency-Key`, **async** (`Prefer: respond-async`, decided with the user 2026-10-12): the service queues the message (202 `queued`) and makes up to 5 SMTP attempts over ~50 minutes. A returned id means accepted, not delivered; a final failure never reaches our logs — read it with `GET /v1/email/{id}`, using the id that was logged. A replayed key answers 200/202 even for a send that already `failed`, so the body's `status` is checked, not only the HTTP code. 30 s timeout. One retry with the same key only on timeout/network/500/503 `queue_unavailable` — never `smtp_misconfigured`, 429 or 4xx. `deliver()` never throws and logs only template + id or `status code` (`logDbError("notify", …)`). Never log variables (they carry live links) or the key.
+- notify-flow accepts only **printable-ASCII recipients**: `/account` refuses a non-ASCII new address (generic `profileSavedEmailFailed`), since its confirmation could never be sent. `/join` doesn't check: the only loss there is the welcome.
+- `utils/account-emails.ts`: one function per event, each run inside `after()` so a failed send never fails the action. Links use `SITE_URL`, never the request's Host/Origin.
+
+| Event | Where | Template | Idempotency-Key |
+| --- | --- | --- | --- |
+| Reset requested | `/forgot-password` | `password-reset` (built-in) | `reset:<uid>:<ms>` |
+| Password changed by its owner | `/reset-password`, `/account`, `/change-password` | `password-changed` (built-in) | `pwchanged:<uid>:<ms>` |
+| Email change requested | `/account` (member and superadmin) | `email-change` (custom) → new address | `emailchange:<uid>:<ms>` |
+| Email change confirmed | `/confirm-email` | `email-changed` (custom) → old address | `emailchanged:<uid>:<link expiry>` |
+| Signup approved | `/members/requests` | `welcome` (built-in) | `welcome:<uid>` |
+
+Not sent, on purpose: new sign-in alerts (user's decision), staff password resets (the maestro hands over the temporary password).
+
+- **Links** (`utils/auth-link-token.ts`): stateless, HMAC-signed with `AUTH_LINK_SECRET` (≥ 32 chars), 30 minutes. Single use without a table: the token is bound to a value its action changes — `updated_at` for a reset, the current address for an email change — and `accountForLink()` (`utils/supabase/admin.ts`) refuses it once the account no longer matches. Anything else touching the account first also kills it (the reader asks again); a link can't be revoked, only outlived.
+- **Email change**: `/account` refuses an invalid or taken address with the generic `profileSavedEmailFailed` (as before), else emails the link. `/confirm-email` changes nothing on GET (mail scanners open links); its button applies `updateUserById({ email, email_confirm: true })`, copies it to `person.email`, refreshes the session if this browser holds one.
+- **Language**: the reader's cookie locale for actions they trigger; `user_metadata.locale`, stored at `/join`, for the welcome (the approver's language is not the athlete's). Fallback `en` (`notifyLocale()`).
+- Custom templates live in `execution/notify_templates.py` (PUT, idempotent; fixed copy there, variables only for data). `execution/notify_smoke.py <email>` sends a `welcome`.
+- Env (server-only): `NOTIFY_FLOW_URL`, `NOTIFY_FLOW_API_KEY`, `NOTIFY_FLOW_APP_NAME`, `AUTH_LINK_SECRET`. `instrumentation.ts` reports missing ones at startup; without them every send logs `not_configured` and is skipped.
 
 ## Permission model
 

@@ -5,7 +5,7 @@ Guidance for Claude Code working in this repository. Details live in `docs/claud
 | Working on…                                                                 | Read                                     |
 | --------------------------------------------------------------------------- | ---------------------------------------- |
 | Migrations, RLS, views, Supabase clients, env keys                          | `docs/claude/database.md`                |
-| Login, password recovery, invite registration, Turnstile, roles/permissions, `/account`, forced password change | `docs/claude/auth-and-access.md` |
+| Login, password recovery, invite registration, Turnstile, roles/permissions, `/account`, forced password change, email (notify-flow) | `docs/claude/auth-and-access.md` |
 | `/members` (Registro), account actions, promotions, criteria, belt ladders  | `docs/claude/members-and-promotions.md`  |
 | `/courses`, `/attendance`, roll call, check-in, hours, `/dashboard`         | `docs/claude/attendance-and-dashboard.md`|
 | i18n, privacy/cookies, theme, nav, belts, icons, SEO                        | `docs/claude/frontend-ui.md`             |
@@ -60,6 +60,7 @@ Vitest covers pure functions in `frontend/utils/` only — no jsdom, no componen
 - **Portal-only admin** (active roles exactly `{admin}`, `isPortalOnly()` in `utils/members.ts`) appears in no people list and shows no belt anywhere.
 - **Promotion is never self-service**, and **a member never sees remaining hours, next grade or a verdict**. Eligibility is decided only in `promotionStatus()` (`utils/promotion.ts`).
 - **Hours are added only by check-in or roll call.** One attendance = one hour. Estimated hours are labelled as estimates. `utils/hours.ts` is the single definition.
+- **Email only through notify-flow** (`utils/notify-flow.ts`, `utils/account-emails.ts`); Supabase sends none. Reset and email-change links are the app's own (`utils/auth-link-token.ts`). Never log what an email carries. → `auth-and-access.md`
 - **Service-role client** (`utils/supabase/admin.ts`, `server-only`) bypasses RLS: every action using it re-checks its guard.
 - **Every domain row belongs to a gym.** New table → gym_id + gym_scope trigger + restrictive "gym isolation" policy, then run supabase/tests/replay.sh --isolation. Faixa BJJ is the product name, never a gym's.
 - **No user-facing string hardcoded**; three languages (en default, it authoring, pt-BR). URL paths in English.

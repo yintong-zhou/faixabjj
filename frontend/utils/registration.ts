@@ -45,6 +45,8 @@ export const PASSWORD_MIN = 8;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+export const isValidEmail = (value: string) => EMAIL.test(value);
+
 // "2026-02-30" passes the pattern; the round trip through Date catches it.
 function isoDate(value: string | null): string | null {
   if (!value || !ISO_DATE.test(value)) return null;
