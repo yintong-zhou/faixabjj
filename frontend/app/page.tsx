@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { Belt } from "@/components/belt";
 import { StepBelt } from "@/components/step-belt";
@@ -78,21 +77,6 @@ export default async function Home() {
 
       <section className="grid gap-10 lg:grid-cols-12 lg:items-center lg:gap-12">
         <div className="flex flex-col gap-5 sm:gap-6 lg:col-span-7">
-          {/* The logo is black artwork on transparency, so it needs a light
-              plate to survive the dark theme. `bg-secondary` is fixed light in
-              both themes on purpose — this is one of the few places where a
-              brand colour is used as itself rather than as a role. */}
-          <div className="w-fit rounded-lg border border-border bg-secondary p-3 sm:p-4">
-            <Image
-              src="/logo/faixabjj_logo-removebg-preview.png"
-              alt={SITE_NAME}
-              width={618}
-              height={404}
-              priority
-              className="h-12 w-auto sm:h-16"
-            />
-          </div>
-
           <h1 className="text-balance text-4xl font-bold leading-[1.05] tracking-[-0.025em] sm:text-5xl lg:text-[3.5rem]">
             {t.home.title}
           </h1>
