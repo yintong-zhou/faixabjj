@@ -1,7 +1,7 @@
 import "server-only";
 
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/utils/i18n/locales";
-import { logDbError } from "@/utils/log";
+import { logDbError, logOutcome } from "@/utils/log";
 
 // The app's only way to send email: notify-flow, a Cloudflare Worker that
 // delivers over SMTP. Supabase sends nothing — every link (reset, email
@@ -18,8 +18,8 @@ import { logDbError } from "@/utils/log";
 // failure never reaches this app's logs.
 //
 // Never log what is sent. The variables carry links with live tokens and the
-// key opens the service: the log gets the template, the returned id and the
-// error code, nothing else.
+// key opens the service: the log gets the template, the account it concerns,
+// the returned id and the error code, nothing else.
 
 export type EmailTemplate =
   | "welcome"
@@ -38,6 +38,10 @@ export type Email = {
   // Unique per user action and stable across retries: built from ids, never
   // from a random value made at send time.
   idempotencyKey: string;
+  // The auth user the email is about, for the log only (app_log's subject):
+  // it never travels to notify-flow. Optional — an address with no account
+  // yet has none.
+  accountId?: string;
 };
 
 export class NotifyError extends Error {
@@ -131,14 +135,21 @@ async function post(url: string, init: RequestInit): Promise<string> {
 /**
  * Sends and never throws: a failed email must not fail the action that asked
  * for it. Call it inside after(), so the reader is not kept waiting either.
+ *
+ * Both outcomes reach app_log (/logs), scope `notify`, action the template:
+ * an event `accepted` carrying notify-flow's message id, or an error carrying
+ * `<status> <code>`. Accepted is not delivered — a final SMTP failure comes
+ * later and never reaches this app — so the id is what GET /v1/email/{id}
+ * needs to settle it.
  */
 export async function deliver(email: Email): Promise<void> {
   try {
     const id = await sendEmail(email);
     console.info(`[notify] ${email.template} ${id} accepted`);
+    logOutcome("notify", email.template, { code: "accepted", message: id, subjectId: email.accountId });
   } catch (error) {
     const { status, code } =
       error instanceof NotifyError ? error : { status: 0, code: "unexpected_error" };
-    logDbError("notify", email.template, { code: `${status} ${code}` });
+    logDbError("notify", email.template, { code: `${status} ${code}` }, email.accountId);
   }
 }

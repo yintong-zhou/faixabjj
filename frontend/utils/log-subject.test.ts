@@ -17,4 +17,9 @@ describe("subjectKind", () => {
     expect(subjectKind("members", "setTemporaryPassword")).toBe("account");
     expect(subjectKind("members", "rejectRegistration")).toBe("request");
   });
+
+  it("reads an email as being about an account", () => {
+    expect(subjectKind("notify", "password-reset")).toBe("account");
+    expect(subjectKind("notify", "welcome")).toBe("account");
+  });
 });

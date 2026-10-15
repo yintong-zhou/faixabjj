@@ -5,6 +5,8 @@
 export type SubjectKind = "gym" | "manager" | "member" | "account" | "request";
 
 export function subjectKind(scope: string, action: string): SubjectKind {
+  // An email's subject is the account it was for (utils/notify-flow.ts).
+  if (scope === "notify") return "account";
   if (scope === "gyms") {
     return action === "resetManagerPassword" || action === "revokeManager" ? "manager" : "gym";
   }

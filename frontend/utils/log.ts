@@ -16,14 +16,32 @@ import { createAdminClient, isAdminClientConfigured } from "@/utils/supabase/adm
 // like a query that returned nothing. A dashboard rendering zeros, a list
 // rendering empty and a check-in reported as "closed" have all, at some point
 // in this project, been a broken query with no trace of itself anywhere.
-export function logDbError(scope: string, where: string, error: DbError) {
+export function logDbError(scope: string, where: string, error: DbError, subjectId?: string | null) {
   console.error(
     `[${scope}] ${where} failed: ${error.code ?? "no code"} ${error.message ?? ""} ${
       error.details ?? ""
     }`.trim(),
   );
   const row = errorRow(scope, where, error);
-  if (row) persist(row);
+  if (row) persist({ ...row, subject_id: subjectId ?? null });
+}
+
+// What happened to something no signed-in user is waiting on — an email's
+// outcome, say. No actor: the row says what, to which account, and the code
+// and message carry the result (never what was sent).
+export function logOutcome(
+  scope: string,
+  action: string,
+  outcome: { code: string; message?: string | null; subjectId?: string | null },
+) {
+  persist({
+    level: "event",
+    scope,
+    action,
+    code: outcome.code,
+    message: outcome.message ?? null,
+    subject_id: outcome.subjectId ?? null,
+  });
 }
 
 // A key action that succeeded: who (actor), in which gym, on what (subject).
