@@ -360,7 +360,7 @@ button[data-pending]::after {
 /* The screen lock of a submitted form. It blocks input at once — nothing can
    be pressed twice — but stays invisible for a moment, so an action that
    answers quickly does not flash a veil over the page. Only then does the
-   page dim behind a card with the rolled belt turning. */
+   page dim behind a card where a belt gets its stripes. */
 .pending-overlay {
   position: fixed;
   inset: 0;
@@ -385,50 +385,70 @@ button[data-pending]::after {
   border-radius: 1rem;
   background: var(--surface);
   color: var(--foreground);
-  box-shadow: 0 10px 30px -12px color-mix(in srgb, var(--foreground) 35%, transparent);
+  /* Always a dark shadow: --foreground would turn it into a pale glow on the
+     dark theme. */
+  box-shadow: 0 10px 30px -12px color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+/* The same bordered, tinted plate as components/belt.tsx, for the same reason:
+   it keeps the black rank bar visible on the dark theme. */
+.pending-overlay__plate {
+  display: flex;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--muted);
 }
 
 .pending-overlay__belt {
-  width: 3rem;
-  height: 3rem;
-  animation: belt-roll 1.1s linear infinite;
+  width: 7.5rem;
+  height: auto;
 }
 
-.pending-overlay__belt circle {
-  fill: none;
-  stroke-width: 5;
-  transform-origin: center;
-  transform: rotate(-90deg);
-}
-
-/* Circumference of r=18: ~113.1. Belt 0–78, rank bar 78–100, stripes on it. */
-.pending-overlay__track {
-  stroke: var(--muted);
-}
-
+/* A black belt, red bar, white degrees — the artwork's own colours, the same
+   in both themes. The plate keeps the black visible on the dark one. */
 .pending-overlay__body {
-  stroke: var(--color-accent);
-  stroke-linecap: round;
-  stroke-dasharray: 78 36;
+  fill: #000;
 }
 
-.pending-overlay__tip {
-  stroke: var(--foreground);
-  stroke-dasharray: 22 92;
-  stroke-dashoffset: -78;
+.pending-overlay__bar {
+  fill: #c00;
 }
 
-.pending-overlay__stripe {
-  stroke: var(--surface);
-  stroke-dasharray: 2 112;
+/* How many degrees are on, as a number the browser can animate: --taped runs
+   0 → 6, holds, and runs back. Each degree (--k counts from the end of the
+   bar) wraps on from the top during the first half of its turn and sits still
+   for the second, so they land one after another rather than as a sweep.
+   The registered initial value is 6, so reduced motion — or a browser without
+   @property — shows the belt with all six. */
+@property --taped {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 6;
 }
 
-.pending-overlay__stripe--1 {
-  stroke-dashoffset: -86;
+.pending-overlay__belt {
+  animation: degrees-taped 3.2s linear infinite;
 }
 
-.pending-overlay__stripe--2 {
-  stroke-dashoffset: -92;
+.pending-overlay__degree {
+  fill: #fff;
+  transform-box: fill-box;
+  transform-origin: top;
+  transform: scaleY(clamp(0, (var(--taped) - var(--k)) * 2, 1));
+}
+
+@keyframes degrees-taped {
+  0% {
+    --taped: 0;
+  }
+  66%,
+  90% {
+    --taped: 6;
+  }
+  100% {
+    --taped: 0;
+  }
 }
 
 @keyframes pending-veil {
@@ -437,12 +457,6 @@ button[data-pending]::after {
   }
   to {
     opacity: 1;
-  }
-}
-
-@keyframes belt-roll {
-  to {
-    transform: rotate(360deg);
   }
 }
 

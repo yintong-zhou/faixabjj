@@ -14,7 +14,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 //     globals.css draws three belt stripes filling in beside its label, and a
 //     second submit of the same form is refused until the answer comes;
 //   - a submit also locks the screen: at once for input, and after a short
-//     pause visibly, with a rolled-up belt turning in the middle — the pause
+//     pause visibly, with a black belt getting its degrees in the middle — the pause
 //     keeps a quick action from flashing a veil;
 //   - a submit or an in-app link runs the belt bar across the top.
 //
@@ -36,6 +36,9 @@ import { usePathname, useSearchParams } from "next/navigation";
 export const NAVIGATION_START_EVENT = "faixabjj-navigation-start";
 
 const SAFETY_TIMEOUT_MS = 8_000;
+
+// Left edges of the six degrees on the red bar, in viewBox units.
+const DEGREE_XS = [56.3, 61.9, 67.4, 73, 78.6, 84.1];
 
 function clearPending() {
   for (const el of document.querySelectorAll("[data-pending]")) {
@@ -143,15 +146,26 @@ export function PendingFeedback({ label }: { label: string }) {
       {blocking ? (
         <div className="pending-overlay" role="status" aria-live="polite">
           <div className="pending-overlay__card">
-            {/* A belt rolled into a ring: the accent is the belt, the dark arc
-                its rank bar, the two light marks its stripes. */}
-            <svg viewBox="0 0 48 48" className="pending-overlay__belt" aria-hidden="true">
-              <circle cx="24" cy="24" r="18" className="pending-overlay__track" />
-              <circle cx="24" cy="24" r="18" className="pending-overlay__body" />
-              <circle cx="24" cy="24" r="18" className="pending-overlay__tip" />
-              <circle cx="24" cy="24" r="18" className="pending-overlay__stripe pending-overlay__stripe--1" />
-              <circle cx="24" cy="24" r="18" className="pending-overlay__stripe pending-overlay__stripe--2" />
-            </svg>
+            {/* A black belt as components/belt.tsx draws it (same proportions
+                as public/belts/adults/black-*), getting its six degrees
+                wrapped on one by one, from the end of the red bar. */}
+            <span className="pending-overlay__plate" aria-hidden="true">
+              <svg viewBox="3 3 94 24" className="pending-overlay__belt">
+                <rect x="3" y="3" width="94" height="24" rx="2.4" className="pending-overlay__body" />
+                <rect x="50" y="3" width="39.4" height="24" className="pending-overlay__bar" />
+                {DEGREE_XS.map((x, i) => (
+                  <rect
+                    key={x}
+                    x={x}
+                    y="3"
+                    width="4.5"
+                    height="24"
+                    className="pending-overlay__degree"
+                    style={{ "--k": DEGREE_XS.length - 1 - i } as React.CSSProperties}
+                  />
+                ))}
+              </svg>
+            </span>
             <span className="text-sm font-medium">{label}</span>
           </div>
         </div>
