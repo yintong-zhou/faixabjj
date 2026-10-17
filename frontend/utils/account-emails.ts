@@ -22,8 +22,10 @@ function fail(where: string, error: unknown) {
 
 function secretOrLog(where: string): string | null {
   const secret = linkSecret();
+  // Not caused by whoever asked: a deployment that lost its secret sends no
+  // reset and no confirmation, which the log has to show.
   if (!secret) {
-    console.error(`[notify] ${where}: AUTH_LINK_SECRET is missing or shorter than 32 characters`);
+    logDbError("notify", where, { code: "link_secret_missing", message: "AUTH_LINK_SECRET is missing or shorter than 32 characters" });
   }
   return secret;
 }
@@ -49,6 +51,7 @@ export async function sendResetLink(email: string, locale: Locale) {
       },
       // A second request is a second link, so a second email.
       idempotencyKey: `reset:${user.id}:${now}`,
+      accountId: user.id,
     });
   } catch (error) {
     fail("password-reset", error);
@@ -66,6 +69,7 @@ export async function sendPasswordChanged(userId: string, locale: Locale) {
       locale,
       variables: { name: await accountName(data.user) },
       idempotencyKey: `pwchanged:${userId}:${Date.now()}`,
+      accountId: userId,
     });
   } catch (error) {
     fail("password-changed", error);
@@ -93,6 +97,7 @@ export async function sendEmailChangeLink(userId: string, newEmail: string, loca
         confirmUrl: `${SITE_URL}/confirm-email?token=${token}`,
       },
       idempotencyKey: `emailchange:${user.id}:${now}`,
+      accountId: user.id,
     });
   } catch (error) {
     fail("email-change", error);
@@ -114,6 +119,7 @@ export async function sendEmailChanged(
       variables: { name: await accountName(user), newEmail: user.email ?? "" },
       // One link, one change, one notice.
       idempotencyKey: `emailchanged:${user.id}:${linkExpiry}`,
+      accountId: user.id,
     });
   } catch (error) {
     fail("email-changed", error);

@@ -172,6 +172,8 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
   const actorOf = (row: LogRow): Named => {
     const name = row.actor_id ? managers.get(row.actor_id) : undefined;
     if (name) return { label: name, detail: t.logs.who.manager };
+    // No actor: something the app did on its own, an email's outcome.
+    if (!row.actor_id) return { label: t.logs.who.system };
     // Gym actions can only be the platform's; the rest is some other staff.
     if (row.actor_id === userId || row.scope === "gyms") return { label: t.logs.who.platform };
     return { label: t.logs.who.staff, detail: short(row.actor_id) };

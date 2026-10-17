@@ -246,6 +246,7 @@ export async function approveRegistration(formData: FormData) {
       locale: notifyLocale((existing.user.user_metadata as { locale?: unknown } | null)?.locale),
       variables: { name: r.fullName },
       idempotencyKey: `welcome:${uid}`,
+      accountId: uid,
     }),
   );
   back({ ok: t.requests.approved(r.fullName) });

@@ -1247,7 +1247,7 @@ export const it = {
     noMatch: "Nessuna riga corrisponde ai filtri scelti.",
     newest: "Più recenti",
     older: "Precedenti",
-    who: { platform: "Superadmin", staff: "Staff della palestra", manager: "Gestore" },
+    who: { platform: "Superadmin", staff: "Staff della palestra", manager: "Gestore", system: "Sistema" },
     subject: {
       manager: "Gestore",
       member: "Socio",

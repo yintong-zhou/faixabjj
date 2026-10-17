@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 const logDbError = vi.fn();
-vi.mock("@/utils/log", () => ({ logDbError: (...args: unknown[]) => logDbError(...args) }));
+const logOutcome = vi.fn();
+vi.mock("@/utils/log", () => ({
+  logDbError: (...args: unknown[]) => logDbError(...args),
+  logOutcome: (...args: unknown[]) => logOutcome(...args),
+}));
 
 import { NotifyError, deliver, notifyLocale, sendEmail, type Email } from "./notify-flow";
 
@@ -15,6 +19,7 @@ const email: Email = {
   locale: "it",
   variables: { name: "Ana", resetUrl: RESET_URL },
   idempotencyKey: "reset:user-1:1700000000000",
+  accountId: "11111111-1111-4111-8111-111111111111",
 };
 
 const json = (status: number, body: unknown) =>
@@ -29,6 +34,7 @@ beforeEach(() => {
   fetchMock = vi.fn();
   vi.stubGlobal("fetch", fetchMock);
   logDbError.mockReset();
+  logOutcome.mockReset();
 });
 
 afterEach(() => {
@@ -148,7 +154,7 @@ describe("sendEmail", () => {
 
 describe("deliver", () => {
   const logged = (spies: ReturnType<typeof vi.spyOn>[]) =>
-    JSON.stringify([...spies.flatMap((s) => s.mock.calls), ...logDbError.mock.calls]);
+    JSON.stringify([...spies.flatMap((s) => s.mock.calls), ...logDbError.mock.calls, ...logOutcome.mock.calls]);
 
   it("never throws, and logs only the template and the error code", async () => {
     const spies = [vi.spyOn(console, "error").mockImplementation(() => {}), vi.spyOn(console, "info").mockImplementation(() => {})];
@@ -156,7 +162,13 @@ describe("deliver", () => {
 
     await expect(deliver(email)).resolves.toBeUndefined();
 
-    expect(logDbError).toHaveBeenCalledWith("notify", "password-reset", { code: "401 unauthorized" });
+    expect(logDbError).toHaveBeenCalledWith(
+      "notify",
+      "password-reset",
+      { code: "401 unauthorized" },
+      email.accountId,
+    );
+    expect(logOutcome).not.toHaveBeenCalled();
     const output = logged(spies);
     expect(output).not.toContain(KEY);
     expect(output).not.toContain("live-token-never-logged");
@@ -170,9 +182,18 @@ describe("deliver", () => {
     await deliver(email);
 
     expect(spies[1]).toHaveBeenCalledWith("[notify] password-reset msg_4 accepted");
+    // The row that /logs shows: which email, for which account, with the id
+    // notify-flow's status endpoint needs.
+    expect(logOutcome).toHaveBeenCalledWith("notify", "password-reset", {
+      code: "accepted",
+      message: "msg_4",
+      subjectId: email.accountId,
+    });
+    expect(logDbError).not.toHaveBeenCalled();
     const output = logged(spies);
     expect(output).not.toContain(KEY);
     expect(output).not.toContain("live-token-never-logged");
+    expect(output).not.toContain(email.to);
   });
 });
 

@@ -1219,7 +1219,7 @@ export const en: Dictionary = {
     noMatch: "No row matches the chosen filters.",
     newest: "Most recent",
     older: "Older",
-    who: { platform: "Superadmin", staff: "Gym staff", manager: "Manager" },
+    who: { platform: "Superadmin", staff: "Gym staff", manager: "Manager", system: "System" },
     subject: {
       manager: "Manager",
       member: "Member",
