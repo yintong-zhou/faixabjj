@@ -61,6 +61,13 @@ Server-rendered, state in the URL: `v=griglia` = month grid (default weekly list
 - **A course with attendance can only be suspended, never deleted** — `before delete` trigger `guard_course_delete` (service role bypasses RLS; cascades would take the hours).
 - **Cancelling a lesson** = `status = 'cancelled'`: check-in closes, struck through, attendance survives.
 
+## Open mat
+
+- **A one-off lesson outside the course schedule** (`20261017000000_open_mat.sql`). Staff (`requireClassManager`) create it from the "Aggiungi open mat" link on `/attendance` → `/attendance/open-mat` (date from today on, start/end, instructor defaulting to the creator). `addOpenMat` (`app/attendance/actions.ts`) inserts a **one-day course** (`is_open_mat = true`, name `openMatName`, `starts_on = ends_on`, `weekdays` empty) and calls `sync_course_sessions` with that single date; if the session fails the course is deleted again.
+- Chosen over a course-less `class_session`: check-in window, roll call, hours, delete guard and gym scope already hang off `course`. **One attendance = one hour still** — no duration, no second way of adding hours. Check-in stays open until the end time, so a late arrival can still check in.
+- **Hidden from `/courses`** (`.eq("is_open_mat", false)`): editing it there would re-sync it as a recurring rule. Cancel it like any lesson from its roll call. No past dates (no back-filling). Open mats at other gyms are not recorded, by decision.
+- Known: the superadmin's per-gym course count includes open mats.
+
 ## Not duplication
 
 - **Weekday expansion** in TypeScript (`utils/schedule.ts`, `schedule.test.ts`); SQL `sync_course_sessions(course_id, dates[])` atomically drops superseded future sessions **without attendance** and inserts the rest. Past sessions untouched.

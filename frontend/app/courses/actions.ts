@@ -6,7 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { todayIn } from "@/utils/dates";
 import { requireGymSettings } from "@/utils/supabase/gym";
 import { requireClassManager } from "@/utils/supabase/require-admin";
-import { addDays, expandWeekdays, parseWeekdays } from "@/utils/schedule";
+import { addDays, expandWeekdays, parseWeekdays, readTime } from "@/utils/schedule";
 import type { Dictionary } from "@/utils/i18n/dictionaries/it";
 import { getDictionary } from "@/utils/i18n/server";
 
@@ -48,22 +48,6 @@ type CourseValues = {
   checkin_opens_minutes_before: number;
   checkin_closes_minutes_after: number;
 };
-
-// The form posts hour and minute separately rather than using an
-// <input type="time">, whose widget follows the operating system's locale and
-// shows AM/PM on a machine that is not set to Italian. Two selects read the
-// same on every locale, and this is where they become "HH:MM".
-function readTime(formData: FormData, prefix: string): string | null {
-  const hour = (formData.get(`${prefix}_hour`) as string | null)?.trim();
-  const minute = (formData.get(`${prefix}_minute`) as string | null)?.trim();
-
-  const h = Number.parseInt(hour ?? "", 10);
-  const m = Number.parseInt(minute ?? "", 10);
-  if (!Number.isInteger(h) || h < 0 || h > 23) return null;
-  if (!Number.isInteger(m) || m < 0 || m > 59) return null;
-
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
 
 // Validated here and not only through the form's `required` attributes, which
 // a crafted POST skips.
