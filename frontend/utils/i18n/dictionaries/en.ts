@@ -914,6 +914,13 @@ export const en: Dictionary = {
     promoteTitle: (name: string) => `Promote ${name}`,
     targetBelt: "New belt",
     targetStripes: "Stripes",
+    adultBelts: "Adults",
+    kidBelts: "Kids",
+    targetDegrees: "Degrees",
+    degreesOption: (n: number) =>
+      n === 0 ? "No degrees" : `${n}${["st", "nd", "rd"][n - 1] ?? "th"} degree`,
+    stripesOption: (n: number) =>
+      n === 0 ? "No stripes" : n === 1 ? "1 stripe" : `${n} stripes`,
     promotedOn: "Promotion date",
     promotionNotes: "Notes",
     confirm: "Record promotion",

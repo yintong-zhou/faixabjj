@@ -1,52 +1,8 @@
 import Image from "next/image";
 
+import { beltImageSrc } from "@/utils/belt-artwork";
 import { beltLabel } from "@/utils/supabase/profile";
 import { getDictionary } from "@/utils/i18n/server";
-
-// What artwork exists, and how many stripe variants of it.
-//
-// The files are named after the `belt_rank` enum value with `_` written as `-`,
-// so the key is also the filename prefix, and they sit in two folders because
-// the children's belts are a separate set: public/belts/adults and
-// public/belts/kids. White is in `adults` only and is shared — a child's white
-// belt is the same belt, not a second graphic.
-//
-// The ceiling is per colour rather than one number: the person table caps
-// stripes at 4, a black belt has degrees up to 7, and a children's belt has 3.
-// A belt with no entry in either map has no artwork, and Belt falls back to the
-// words rather than requesting an image that is not there.
-const ADULT_ARTWORK: Record<string, number> = {
-  white: 4,
-  blue: 4,
-  purple: 4,
-  brown: 4,
-  black: 7,
-};
-
-const KID_ARTWORK: Record<string, number> = {
-  gray_white: 3,
-  gray: 3,
-  gray_black: 3,
-  yellow_white: 3,
-  yellow: 3,
-  yellow_black: 3,
-  orange_white: 3,
-  orange: 3,
-  orange_black: 3,
-  green_white: 3,
-  green: 3,
-  green_black: 3,
-};
-
-function artworkFor(belt: string): { dir: string; maxStripes: number } | null {
-  if (ADULT_ARTWORK[belt] !== undefined) {
-    return { dir: "adults", maxStripes: ADULT_ARTWORK[belt] };
-  }
-  if (KID_ARTWORK[belt] !== undefined) {
-    return { dir: "kids", maxStripes: KID_ARTWORK[belt] };
-  }
-  return null;
-}
 
 // 1000 × 300 source images, so every size keeps the 10:3 ratio.
 const SIZES = {
@@ -83,12 +39,12 @@ export async function Belt({
   className?: string;
 }) {
   const { t } = await getDictionary();
-  const artwork = artworkFor(belt);
+  const src = beltImageSrc(belt, stripes);
   const label = t.belts.label(beltLabel(belt, t), stripes);
 
   // An unknown colour means a new enum value arrived without its artwork.
   // Falling back to the words is better than a broken image.
-  if (!artwork) {
+  if (!src) {
     return (
       <span
         className={`w-fit self-start rounded-full bg-secondary/40 px-2 py-0.5 text-xs ${className}`}
@@ -98,8 +54,6 @@ export async function Belt({
     );
   }
 
-  const capped = Math.min(Math.max(0, Math.round(stripes)), artwork.maxStripes);
-  const file = `${belt.replace(/_/g, "-")}-${capped}-stripe.png`;
   const width = SIZES[size];
 
   // `w-fit` and `self-start` are what keep every belt the same size. A flex
@@ -113,7 +67,7 @@ export async function Belt({
       className={`inline-flex w-fit shrink-0 self-start items-center rounded-[4px] border border-border bg-muted p-[3px] ${className}`}
     >
       <Image
-        src={`/belts/${artwork.dir}/${file}`}
+        src={src}
         alt={label}
         width={width}
         height={Math.round(width * 0.3)}

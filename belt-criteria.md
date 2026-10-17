@@ -177,7 +177,8 @@ practice.
 ## black_belt_degrees
 
 The black belt is not promoted to a further belt; it is divided into 6 degrees.
-Out of scope for this app, which models belts and stripes only.
+The app records them by hand (0–6 on a black belt) but suggests none: the
+minimums below are not modelled.
 
 ```yaml
 - degree: 1

@@ -941,6 +941,12 @@ export const it = {
     promoteTitle: (name: string) => `Promuovi ${name}`,
     targetBelt: "Nuova cintura",
     targetStripes: "Tacche",
+    adultBelts: "Adulti",
+    kidBelts: "Bambini",
+    targetDegrees: "Gradi",
+    degreesOption: (n: number) => (n === 0 ? "Nessun grado" : `${n}° grado`),
+    stripesOption: (n: number) =>
+      n === 0 ? "Nessuna tacca" : n === 1 ? "1 tacca" : `${n} tacche`,
     promotedOn: "Data della promozione",
     promotionNotes: "Note",
     confirm: "Registra promozione",

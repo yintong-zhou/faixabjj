@@ -452,6 +452,7 @@ export default async function MemberDetailPage({
           <PromotePanel
             personId={member.id}
             personName={member.full_name}
+            currentBelt={member.current_belt}
             status={status}
             today={today}
             t={t}

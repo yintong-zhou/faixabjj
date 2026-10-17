@@ -27,6 +27,13 @@ export const MAX_STRIPES = 4;
 export const KID_MAX_STRIPES = 3;
 
 /**
+ * Six degrees on a black belt (IBJJF; the seventh is worn on the red-and-black
+ * belt, not modelled). record_promotion() accepts 0–6 there since
+ * 20261017000000. Recorded by hand only: nextStep() suggests none.
+ */
+export const BLACK_MAX_DEGREES = 6;
+
+/**
  * The age at which the children's ladder ends and an adult belt is given.
  * belt-criteria.md's "transition at 16": grey, yellow and orange become blue,
  * green becomes blue or purple at the professor's discretion. Converting

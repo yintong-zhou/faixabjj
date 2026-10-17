@@ -917,6 +917,12 @@ export const ptBR: Dictionary = {
     promoteTitle: (name: string) => `Promover ${name}`,
     targetBelt: "Nova faixa",
     targetStripes: "Graus",
+    adultBelts: "Adultos",
+    kidBelts: "Crianças",
+    targetDegrees: "Graus",
+    degreesOption: (n: number) => (n === 0 ? "Nenhum grau" : `${n}º grau`),
+    stripesOption: (n: number) =>
+      n === 0 ? "Nenhum grau" : n === 1 ? "1 grau" : `${n} graus`,
     promotedOn: "Data da promoção",
     promotionNotes: "Observações",
     confirm: "Registrar promoção",
