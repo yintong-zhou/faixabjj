@@ -547,6 +547,13 @@ export const ptBR: Dictionary = {
     closed: "check-in encerrado",
     openState: "check-in aberto",
     checkIn: "Check-in",
+
+    addOpenMat: "Adicionar open mat",
+    openMatName: "Open mat",
+    openMatHint:
+      "Um open mat é uma aula avulsa fora das turmas: aparece no calendário, os alunos fazem check-in como sempre e cada presença vale uma hora.",
+    openMatDate: "Data",
+    createOpenMat: "Criar open mat",
   },
 
   checkin: {
@@ -809,6 +816,9 @@ export const ptBR: Dictionary = {
     courseDeleted: "Aula excluída.",
     courseHasAttendance: "A aula tem presenças registradas: você só pode suspendê-la.",
     deleteFailed: "A exclusão não foi concluída.",
+    openMatDateInvalid: "Escolha uma data de hoje em diante.",
+    openMatNotCreated: "O open mat não foi criado.",
+    openMatCreated: (date: string) => `Open mat de ${date} adicionado ao calendário.`,
 
     sessionNotSpecified: "Aula não especificada.",
     checkinClosed: "O check-in para esta aula não está aberto.",

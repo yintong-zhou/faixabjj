@@ -544,6 +544,13 @@ export const en: Dictionary = {
     closed: "check-in closed",
     openState: "check-in open",
     checkIn: "Check in",
+
+    addOpenMat: "Add open mat",
+    openMatName: "Open mat",
+    openMatHint:
+      "An open mat is a one-off lesson outside the courses: it shows in the calendar, members check in as usual and each attendance counts as one hour.",
+    openMatDate: "Date",
+    createOpenMat: "Create open mat",
   },
 
   checkin: {
@@ -806,6 +813,9 @@ export const en: Dictionary = {
     courseDeleted: "Class deleted.",
     courseHasAttendance: "The class has recorded attendance: you can only suspend it.",
     deleteFailed: "The deletion did not go through.",
+    openMatDateInvalid: "Pick a date from today on.",
+    openMatNotCreated: "The open mat was not created.",
+    openMatCreated: (date: string) => `Open mat on ${date} added to the calendar.`,
 
     sessionNotSpecified: "No lesson specified.",
     checkinClosed: "Check-in for this lesson is not open.",
