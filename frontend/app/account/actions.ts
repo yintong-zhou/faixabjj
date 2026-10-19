@@ -129,7 +129,7 @@ async function finishWithEmail(
 
     after(() => sendEmailChangeLink(userId, newEmail, locale));
     revalidatePath("/account");
-    back({ ok: t.msg.profileSavedEmailPending });
+    back({ ok: t.msg.profileSavedEmailPending, mail: "email-change" });
     return;
   }
 
@@ -206,5 +206,5 @@ export async function updatePassword(formData: FormData) {
   }
 
   after(() => sendPasswordChanged(userId, locale));
-  back({ ok: t.msg.passwordUpdated });
+  back({ ok: t.msg.passwordUpdated, mail: "password" });
 }

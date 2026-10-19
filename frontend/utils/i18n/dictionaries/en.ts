@@ -969,6 +969,22 @@ export const en: Dictionary = {
     more: "Privacy and cookies",
     accept: "Got it",
   },
+  emailNotice: {
+    emailChange: {
+      title: "Check your new inbox",
+      body: "We sent a link to the new address. The change only applies once you open it and confirm, within 30 minutes: until then the old address stays.",
+    },
+    password: {
+      title: "Password changed",
+      body: "We sent you an email confirming the change. If it wasn't you, tell your gym straight away.",
+    },
+    reset: {
+      title: "Check your email",
+      body: "If the address is registered, we sent you a link to reset your password, valid for 30 minutes.",
+    },
+    spamHint: "Can't find it? Look in your spam or junk folder.",
+    close: "Got it",
+  },
 
   privacy: {
     title: "Privacy and cookies",

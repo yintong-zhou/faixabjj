@@ -971,6 +971,22 @@ export const ptBR: Dictionary = {
     more: "Privacidade e cookies",
     accept: "Entendi",
   },
+  emailNotice: {
+    emailChange: {
+      title: "Verifique a nova caixa de e-mail",
+      body: "Enviamos um link para o novo endereço. A alteração só vale depois que você o abrir e confirmar, em até 30 minutos: até lá, continua o endereço antigo.",
+    },
+    password: {
+      title: "Senha alterada",
+      body: "Enviamos um e-mail confirmando a alteração. Se não foi você, avise sua academia imediatamente.",
+    },
+    reset: {
+      title: "Verifique seu e-mail",
+      body: "Se o endereço estiver cadastrado, enviamos um link para redefinir a senha, válido por 30 minutos.",
+    },
+    spamHint: "Não encontrou? Procure na pasta de spam ou lixo eletrônico.",
+    close: "Entendi",
+  },
 
   privacy: {
     title: "Privacidade e cookies",

@@ -67,5 +67,5 @@ export async function changePassword(formData: FormData) {
   await supabase.auth.refreshSession();
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/dashboard?mail=password");
 }

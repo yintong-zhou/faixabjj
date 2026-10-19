@@ -43,6 +43,8 @@ Challenged: `/login`, `/forgot-password` and `/join/<token>`. `/reset-password` 
 | Email change confirmed | `/confirm-email` | `email-changed` (custom) → old address | `emailchanged:<uid>:<link expiry>` |
 | Signup approved | `/members/requests` | `welcome` (built-in) | `welcome:<uid>` |
 
+**Telling the reader:** an action that emails the person who acted redirects with `?mail=email-change|password|reset`; `components/email-notice.tsx` (in the layout) opens a "check your inbox, and the spam folder" modal on it and drops the parameter on close. A new kind needs its texts in `t.emailNotice` and the layout's `texts` map. Emails to someone else (welcome, notice to the old address) don't use it.
+
 Not sent, on purpose: new sign-in alerts (user's decision), staff password resets (the maestro hands over the temporary password).
 
 - **Links** (`utils/auth-link-token.ts`): stateless, HMAC-signed with `AUTH_LINK_SECRET` (≥ 32 chars), 30 minutes. Single use without a table: the token is bound to a value its action changes — `updated_at` for a reset, the current address for an email change — and `accountForLink()` (`utils/supabase/admin.ts`) refuses it once the account no longer matches. Anything else touching the account first also kills it (the reader asks again); a link can't be revoked, only outlived.

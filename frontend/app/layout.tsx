@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { InlineScript } from "@/components/inline-script";
 import { CookieNotice } from "@/components/cookie-notice";
+import { EmailNotice } from "@/components/email-notice";
 import { NavShell } from "@/components/nav-shell";
 import { PendingFeedback } from "@/components/pending-feedback";
 import { createClient } from "@/utils/supabase/server";
@@ -137,6 +138,20 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             as a fallback: the bar is invisible until something is pending. */}
         <Suspense fallback={null}>
           <PendingFeedback label={t.common.loading} />
+        </Suspense>
+
+        {/* "Check your inbox" after an action that emailed the reader; opens
+            on `?mail=`. Suspense for the same reason as above. */}
+        <Suspense fallback={null}>
+          <EmailNotice
+            texts={{
+              "email-change": t.emailNotice.emailChange,
+              password: t.emailNotice.password,
+              reset: t.emailNotice.reset,
+            }}
+            spamHint={t.emailNotice.spamHint}
+            closeLabel={t.emailNotice.close}
+          />
         </Suspense>
 
         <NavShell

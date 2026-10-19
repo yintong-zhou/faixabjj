@@ -996,6 +996,22 @@ export const it = {
     more: "Privacy e cookie",
     accept: "Ho capito",
   },
+  emailNotice: {
+    emailChange: {
+      title: "Controlla la nuova casella email",
+      body: "Ti abbiamo inviato un link al nuovo indirizzo. Il cambio vale solo dopo che lo apri e confermi, entro 30 minuti: fino ad allora resta quello vecchio.",
+    },
+    password: {
+      title: "Password cambiata",
+      body: "Ti abbiamo inviato un'email che conferma il cambio. Se non sei stato tu, avvisa subito la tua palestra.",
+    },
+    reset: {
+      title: "Controlla la tua email",
+      body: "Se l'indirizzo è registrato, ti abbiamo inviato un link per reimpostare la password, valido 30 minuti.",
+    },
+    spamHint: "Non la trovi? Guarda nella cartella spam o posta indesiderata.",
+    close: "Ho capito",
+  },
 
   privacy: {
     title: "Privacy e cookie",

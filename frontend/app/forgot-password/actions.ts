@@ -24,5 +24,5 @@ export async function requestPasswordReset(formData: FormData) {
   // The outcome is not read, and a refusal is not reported: this page answers
   // ?sent=1 whatever happens, or it becomes an oracle for which addresses have
   // an account.
-  redirect("/forgot-password?sent=1");
+  redirect("/forgot-password?sent=1&mail=reset");
 }

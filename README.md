@@ -241,13 +241,3 @@ The app runs against real data end to end: registry, promotions and
 eligibility, courses, attendance with geofenced and QR check-in, invite
 registration, dashboards, multi-gym administration and three languages. What is
 missing before a gym relies on it is the pilot itself.
-
-Roadmap, in order:
-
-1. ~~Project setup and database schema~~
-2. ~~Person registry and role management~~
-3. ~~Attendance log and hour count~~
-4. ~~Promotion criteria and eligibility~~
-5. ~~Dashboards~~
-6. ~~Multi-gym platform~~
-7. Free pilot with a real gym

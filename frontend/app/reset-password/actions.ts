@@ -34,5 +34,5 @@ export async function resetPassword(formData: FormData) {
   }
 
   after(() => sendPasswordChanged(account.user.id, locale));
-  redirect("/login?reset=1");
+  redirect("/login?reset=1&mail=password");
 }
