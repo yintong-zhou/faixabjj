@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { AlertCircleIcon, CheckCircleIcon } from "@/components/icons";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
-import { APP_TEMPLATES, isAppTemplate, isTemplateName, sampleValues } from "@/utils/email-templates";
+import { APP_TEMPLATES, contentKey, isAppTemplate, isTemplateName, sampleValues } from "@/utils/email-templates";
 import { LOCALES, LOCALE_SHORT, isLocale } from "@/utils/i18n/locales";
 import { getDictionary } from "@/utils/i18n/server";
 import { logDbError } from "@/utils/log";
@@ -109,6 +109,7 @@ export default async function TemplatePage({
           ) : null}
 
           <TemplateEditor
+            key={contentKey(template)}
             name={name}
             locale={locale}
             isNew={isNew}

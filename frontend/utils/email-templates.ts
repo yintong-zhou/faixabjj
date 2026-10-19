@@ -80,6 +80,18 @@ export function renderPreview(html: string, values: Record<string, string>): str
   );
 }
 
+/**
+ * A React key for the editor: the editor keeps its own state, and Next keeps
+ * client state when only the search params change. A redirect back with new
+ * content (a restored built-in) must start the editor afresh; one with the
+ * same content (a refused save) must keep the unsaved edits.
+ */
+export function contentKey(
+  content: { subject: string; html: string; text: string; builtin: boolean } | null,
+): string {
+  return content ? JSON.stringify([content.builtin, content.subject, content.html, content.text]) : "none";
+}
+
 // builtin    — notify-flow's own text, untouched
 // customised — our row over a built-in (deleting it restores the built-in)
 // custom     — our row, nothing behind it

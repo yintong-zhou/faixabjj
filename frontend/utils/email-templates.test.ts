@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   APP_TEMPLATES,
+  contentKey,
   declaredVariables,
   isAppTemplate,
   isTemplateName,
@@ -68,6 +69,26 @@ describe("sampleValues", () => {
       for (const variable of variables) expect(values[variable]).toBeTruthy();
     }
     expect(values.resetUrl.startsWith("https://faixabjj.example/")).toBe(true);
+  });
+});
+
+describe("contentKey", () => {
+  const custom = { subject: "S", html: "<p>mine</p>", text: "mine", builtin: false };
+
+  it("changes when the loaded content changes, so the editor drops its state", () => {
+    const restored = { subject: "S", html: "<p>default</p>", text: "default", builtin: true };
+    expect(contentKey(custom)).not.toBe(contentKey(restored));
+    expect(contentKey(null)).not.toBe(contentKey(custom));
+  });
+
+  it("stays the same for the same content, so unsaved edits survive an error", () => {
+    expect(contentKey({ ...custom })).toBe(contentKey(custom));
+  });
+
+  it("can't be fooled by a separator inside a field", () => {
+    expect(contentKey({ ...custom, subject: "a|b", html: "c" })).not.toBe(
+      contentKey({ ...custom, subject: "a", html: "b|c" }),
+    );
   });
 });
 
