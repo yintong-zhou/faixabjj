@@ -69,12 +69,19 @@ export function notifyLocale(value: unknown): Locale {
   return typeof value === "string" && isLocale(value) ? value : DEFAULT_LOCALE;
 }
 
-/** Queues one email and returns notify-flow's message id; throws NotifyError. */
-export async function sendEmail(email: Email): Promise<string> {
+/** The service's address, our key and the app's name; null if any is missing. */
+export function notifyConfig(): { url: string; key: string; appName: string } | null {
   const url = process.env.NOTIFY_FLOW_URL?.replace(/\/$/, "");
   const key = process.env.NOTIFY_FLOW_API_KEY;
   const appName = process.env.NOTIFY_FLOW_APP_NAME;
-  if (!url || !key || !appName) throw new NotifyError(0, "not_configured");
+  return url && key && appName ? { url, key, appName } : null;
+}
+
+/** Queues one email and returns notify-flow's message id; throws NotifyError. */
+export async function sendEmail(email: Email): Promise<string> {
+  const config = notifyConfig();
+  if (!config) throw new NotifyError(0, "not_configured");
+  const { url, key, appName } = config;
 
   const init = {
     method: "POST",
