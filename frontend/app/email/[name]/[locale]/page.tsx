@@ -109,7 +109,7 @@ export default async function TemplatePage({
           ) : null}
 
           <TemplateEditor
-            key={contentKey(template)}
+            key={contentKey(name, locale, template)}
             name={name}
             locale={locale}
             isNew={isNew}

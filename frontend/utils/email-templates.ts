@@ -84,12 +84,20 @@ export function renderPreview(html: string, values: Record<string, string>): str
  * A React key for the editor: the editor keeps its own state, and Next keeps
  * client state when only the search params change. A redirect back with new
  * content (a restored built-in) must start the editor afresh; one with the
- * same content (a refused save) must keep the unsaved edits.
+ * same content (a refused save) must keep the unsaved edits. Name and
+ * locale are part of it, so two templates or languages that are both missing
+ * (or say the same) never share an editor's state.
  */
 export function contentKey(
+  name: string,
+  locale: string,
   content: { subject: string; html: string; text: string; builtin: boolean } | null,
 ): string {
-  return content ? JSON.stringify([content.builtin, content.subject, content.html, content.text]) : "none";
+  return JSON.stringify([
+    name,
+    locale,
+    content ? [content.builtin, content.subject, content.html, content.text] : null,
+  ]);
 }
 
 // builtin    — notify-flow's own text, untouched

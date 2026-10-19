@@ -77,17 +77,23 @@ describe("contentKey", () => {
 
   it("changes when the loaded content changes, so the editor drops its state", () => {
     const restored = { subject: "S", html: "<p>default</p>", text: "default", builtin: true };
-    expect(contentKey(custom)).not.toBe(contentKey(restored));
-    expect(contentKey(null)).not.toBe(contentKey(custom));
+    expect(contentKey("welcome", "it", custom)).not.toBe(contentKey("welcome", "it", restored));
+    expect(contentKey("welcome", "it", null)).not.toBe(contentKey("welcome", "it", custom));
+  });
+
+  it("changes with the template or the language, even when both are missing or identical", () => {
+    expect(contentKey("email-change", "it", null)).not.toBe(contentKey("email-change", "en", null));
+    expect(contentKey("email-change", "it", null)).not.toBe(contentKey("email-changed", "it", null));
+    expect(contentKey("promo", "it", custom)).not.toBe(contentKey("promo", "pt-BR", custom));
   });
 
   it("stays the same for the same content, so unsaved edits survive an error", () => {
-    expect(contentKey({ ...custom })).toBe(contentKey(custom));
+    expect(contentKey("welcome", "it", { ...custom })).toBe(contentKey("welcome", "it", custom));
   });
 
   it("can't be fooled by a separator inside a field", () => {
-    expect(contentKey({ ...custom, subject: "a|b", html: "c" })).not.toBe(
-      contentKey({ ...custom, subject: "a", html: "b|c" }),
+    expect(contentKey("welcome", "it", { ...custom, subject: "a|b", html: "c" })).not.toBe(
+      contentKey("welcome", "it", { ...custom, subject: "a", html: "b|c" }),
     );
   });
 });
