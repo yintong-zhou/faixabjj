@@ -3,7 +3,9 @@
     python execution/notify_templates.py
 
 Idempotent: PUT replaces a template, so running it again only rewrites the
-same text. The other emails (welcome, password-reset, password-changed) use
+same text.
+It also overwrites whatever the superadmin edited for these two emails on
+/email in the app: run it only to reset them to the text below. The other emails (welcome, password-reset, password-changed) use
 notify-flow's built-in templates and are not uploaded.
 
 Fixed copy lives here; variables carry only what changes. Each placeholder

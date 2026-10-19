@@ -29,9 +29,10 @@ const td = "border-t border-border py-2 pr-3 text-sm";
 //
 // One /v1 call per load (the template list), plus /health: the request budget
 // is shared with every real email.
-export default async function EmailPage() {
+export default async function EmailPage({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
   const { t } = await getDictionary();
   const { supabase } = await requirePlatformAdmin("/email");
+  const { ok } = await searchParams;
   const e = t.emailAdmin;
 
   const [healthy, list, byGym, byTemplate, gyms] = await Promise.all([
@@ -99,6 +100,13 @@ export default async function EmailPage() {
         </h1>
         <p className="text-sm text-foreground/60">{e.subtitle}</p>
       </div>
+
+      {ok ? (
+        <p className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-sm">
+          <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          {ok}
+        </p>
+      ) : null}
 
       <section className={card}>
         <h2 className="font-heading text-base font-semibold">{e.connection.title}</h2>
