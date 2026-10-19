@@ -13,7 +13,7 @@ import {
 import { isLocale, type Locale } from "@/utils/i18n/locales";
 import { getDictionary } from "@/utils/i18n/server";
 import { logDbError, logEvent, logOutcome } from "@/utils/log";
-import { deleteTemplate, emailStatus, getTemplate, putTemplate, sendTest } from "@/utils/notify-admin";
+import { deleteTemplate, emailStatus, getTemplate, listTemplates, putTemplate, sendTest } from "@/utils/notify-admin";
 import { NotifyError, notifyConfig } from "@/utils/notify-flow";
 import { SITE_NAME, SITE_URL } from "@/utils/site";
 import { requirePlatformAdmin } from "@/utils/supabase/require-admin";
@@ -183,4 +183,31 @@ export async function refreshTestStatus(formData: FormData) {
     editor(name, locale, { test: id, error: t.emailAdmin.errors.unavailable });
   }
   editor(name, locale, { test: id, status: result.status, ...(result.errorCode ? { code: result.errorCode } : {}) });
+}
+
+// A template of our own, for one language: checked against notify-flow's list
+// (one call), then the editor opens empty and its first Save creates it. A
+// name the app sends or a built-in is edited, never created; a name we
+// already have in another language may gain this one.
+export async function createTemplate(formData: FormData) {
+  await requirePlatformAdmin("/email");
+  const { t } = await getDictionary();
+  const errors = t.emailAdmin.errors;
+  const name = String(formData.get("name") ?? "").trim();
+  const locale = String(formData.get("locale") ?? "");
+  const back = (error: string): never => redirect(`/email/new?${new URLSearchParams({ error, name })}`);
+
+  if (!isTemplateName(name) || !isLocale(locale)) back(errors.badName);
+  if (isAppTemplate(name)) back(errors.nameTaken);
+
+  let list;
+  try {
+    list = await listTemplates();
+  } catch (error) {
+    logNotify("createTemplate", error);
+    return back(errors.unavailable);
+  }
+  if (list.some((row) => row.name === name && (row.builtin || row.locale === locale))) back(errors.nameTaken);
+
+  redirect(`/email/${name}/${locale}?new=1`);
 }
