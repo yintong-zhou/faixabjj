@@ -19,6 +19,7 @@ const PROTECTED_PREFIXES = [
   "/gym",
   "/pending",
   "/logs",
+  "/email",
 ];
 
 const PASSWORD_CHANGE_PATH = "/change-password";
