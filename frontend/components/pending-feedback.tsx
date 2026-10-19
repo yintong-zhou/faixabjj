@@ -37,8 +37,9 @@ export const NAVIGATION_START_EVENT = "faixabjj-navigation-start";
 
 const SAFETY_TIMEOUT_MS = 8_000;
 
-// Left edges of the six degrees on the red bar, in viewBox units.
-const DEGREE_XS = [56.3, 61.9, 67.4, 73, 78.6, 84.1];
+// Left edges of the six degrees on the red bar, in viewBox units, measured
+// from public/belts/adults/black-6-stripe.png (4.5 wide, 6.25 apart).
+const DEGREE_XS = [52, 58.3, 64.5, 70.7, 77, 83.2];
 
 function clearPending() {
   for (const el of document.querySelectorAll("[data-pending]")) {
