@@ -13,11 +13,11 @@ import { NotifyError, notifyConfig } from "@/utils/notify-flow";
 import { SITE_NAME, SITE_URL } from "@/utils/site";
 import { requirePlatformAdmin } from "@/utils/supabase/require-admin";
 
-import { removeTemplate } from "../../actions";
+import { refreshTestStatus, removeTemplate, sendTemplateTest } from "../../actions";
 import { TemplateEditor } from "./template-editor";
 
 type Params = { name: string; locale: string };
-type Search = { ok?: string; error?: string; new?: string };
+type Search = { ok?: string; error?: string; new?: string; test?: string; status?: string; code?: string };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { t } = await getDictionary();
@@ -140,6 +140,44 @@ export default async function TemplatePage({
                 {restores ? e.editor.restore : e.editor.delete}
               </ConfirmSubmitButton>
             </form>
+          ) : null}
+
+          {template !== null ? (
+            <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 sm:p-5">
+              <h2 className="font-heading text-base font-semibold">{e.test.title}</h2>
+              <p className="text-xs text-foreground/55">{e.test.hint}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <form action={sendTemplateTest}>
+                  <input type="hidden" name="name" value={name} />
+                  <input type="hidden" name="locale" value={locale} />
+                  <button
+                    type="submit"
+                    className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                  >
+                    {e.test.send}
+                  </button>
+                </form>
+                {search.test ? (
+                  <form action={refreshTestStatus}>
+                    <input type="hidden" name="name" value={name} />
+                    <input type="hidden" name="locale" value={locale} />
+                    <input type="hidden" name="id" value={search.test} />
+                    <button
+                      type="submit"
+                      className="rounded-full px-3 py-2 text-sm font-medium text-foreground/70 hover:text-foreground"
+                    >
+                      {e.test.refresh}
+                    </button>
+                  </form>
+                ) : null}
+              </div>
+              {search.test && search.status ? (
+                <p className="text-sm">
+                  {e.test.status(e.test.statuses[search.status] ?? e.test.statuses.unknown)}
+                  {search.code ? <span className="ml-1.5 font-mono text-xs text-foreground/50">{search.code}</span> : null}
+                </p>
+              ) : null}
+            </section>
           ) : null}
         </>
       )}
