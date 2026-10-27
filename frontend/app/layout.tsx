@@ -171,6 +171,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             account: t.nav.account,
             gyms: t.nav.gyms,
             logs: t.nav.logs,
+            email: t.nav.email,
             signIn: t.nav.signIn,
             signOut: t.nav.signOut,
             language: t.nav.language,

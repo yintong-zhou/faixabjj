@@ -1253,4 +1253,61 @@ do $$ begin
 end $$;
 rollback;
 
+-- T27: email stats (20261019000000) — counts of notify sends from app_log,
+-- per recipient's gym and per template, tests excluded; platform admin only.
+-- No 8-day-old row: prune_app_log() deletes it on its own insert (T26).
+begin;
+insert into public.app_log (level, scope, action, subject_id) values
+  ('event', 'notify', 'email-change', '00000000-0000-0000-0000-0000000000a1'),
+  ('event', 'notify', 'email-change', '00000000-0000-0000-0000-0000000000a1'),
+  ('error', 'notify', 'welcome', null),
+  ('event', 'notify', 'test:email-change', '00000000-0000-0000-0000-0000000000a1');
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000f0', true);
+do $$ begin
+  if (select row(sent, failed) from public.platform_email_by_gym(7)
+      where gym_id = current_setting('test.gym_a')::uuid) is distinct from row(2::bigint, 0::bigint) then
+    raise exception 'FAIL T27: gym A should have 2 sent, 0 failed';
+  end if;
+  if (select failed from public.platform_email_by_gym(7) where gym_id is null) is distinct from 1 then
+    raise exception 'FAIL T27: the send with no recipient account should count as failed under no gym';
+  end if;
+  if (select sent from public.platform_email_by_template(7) where template = 'email-change') is distinct from 2 then
+    raise exception 'FAIL T27: email-change should count 2 sent';
+  end if;
+  if exists (select 1 from public.platform_email_by_template(7) where template like 'test:%') then
+    raise exception 'FAIL T27: test sends must not count';
+  end if;
+end $$;
+rollback;
+
+begin;
+insert into public.app_log (level, scope, action, subject_id) values
+  ('event', 'notify', 'welcome', '00000000-0000-0000-0000-0000000000a1');
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
+do $$ begin
+  if exists (select 1 from public.platform_email_by_gym(7))
+     or exists (select 1 from public.platform_email_by_template(7)) then
+    raise exception 'FAIL T27: a gym admin read the platform email stats';
+  end if;
+end $$;
+rollback;
+
+begin;
+set local role anon;
+do $$ begin
+  begin
+    perform public.platform_email_by_gym(7);
+    raise exception 'FAIL T27: anon can call platform_email_by_gym';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.platform_email_by_template(7);
+    raise exception 'FAIL T27: anon can call platform_email_by_template';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+rollback;
+
 select 'tenant isolation: all checks passed' as result;
