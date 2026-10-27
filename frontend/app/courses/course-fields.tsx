@@ -35,8 +35,9 @@ const MINUTES = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50
 // Hour and minute as two selects rather than <input type="time">: the native
 // time widget follows the operating system's locale and shows AM/PM on a
 // machine that is not set to Italian. Two selects read as 24-hour everywhere,
-// still need no client JS, and are a reasonable picker on a phone.
-function TimeField({
+// still need no client JS, and are a reasonable picker on a phone. The open-mat
+// form on /attendance/open-mat uses it too.
+export function TimeField({
   label,
   prefix,
   value,

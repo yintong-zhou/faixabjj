@@ -563,6 +563,13 @@ export const it = {
     closed: "check-in chiuso",
     openState: "check-in aperto",
     checkIn: "Check-in",
+
+    addOpenMat: "Aggiungi open mat",
+    openMatName: "Open mat",
+    openMatHint:
+      "Un open mat è una lezione singola fuori dai corsi: compare nel calendario, gli allievi fanno il check-in come sempre e ogni presenza vale un'ora.",
+    openMatDate: "Data",
+    createOpenMat: "Crea open mat",
   },
 
   checkin: {
@@ -828,6 +835,9 @@ export const it = {
     courseDeleted: "Corso eliminato.",
     courseHasAttendance: "Il corso ha presenze registrate: puoi solo sospenderlo.",
     deleteFailed: "Eliminazione non riuscita.",
+    openMatDateInvalid: "Scegli una data da oggi in poi.",
+    openMatNotCreated: "Open mat non creato.",
+    openMatCreated: (date: string) => `Open mat del ${date} aggiunto al calendario.`,
 
     // presenze
     sessionNotSpecified: "Lezione non specificata.",
