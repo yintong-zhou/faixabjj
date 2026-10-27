@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { Belt } from "@/components/belt";
 import {
   CalendarCheckIcon,
+  CheckCircleIcon,
   ChevronRightIcon,
   TrendingUpIcon,
 } from "@/components/icons";
@@ -107,26 +108,37 @@ export async function MemberDashboard({
   return (
     <>
       {/* First thing on the page, because it is the thing done most often and
-          on a phone: scan the gym's QR to check in. Drawn for everybody who
-          reaches this view — members and the staff's own view alike, since a
-          maestro trains too — and never for a portal-only admin, who gets no
-          personal view at all. */}
-      <CheckinScanner
-        labels={{
-          open: t.dashboard.scanQr,
-          title: t.dashboard.scanTitle,
-          help: t.dashboard.scanHelp,
-          starting: t.dashboard.scanStarting,
-          wrongQr: t.dashboard.scanWrongQr,
-          retry: t.checkin.retry,
-          close: t.common.close,
-          failure: {
-            denied: t.dashboard.scanDenied,
-            unavailable: t.dashboard.scanUnavailable,
-            unsupported: t.dashboard.scanUnsupported,
-          },
-        }}
-      />
+          on a phone: check in. Drawn for everybody who reaches this view —
+          members and the staff's own view alike, since a maestro trains too —
+          and never for a portal-only admin, who gets no personal view at all. */}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        {/* The same page the QR opens, reached without the camera: it lists the
+            lessons open now and check_in() applies the same rules (window,
+            gym, position), so this is a shortcut, not a second way in. */}
+        <Link
+          href="/check-in"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:w-fit"
+        >
+          <CheckCircleIcon className="h-5 w-5 shrink-0" />
+          {t.presenze.checkIn}
+        </Link>
+        <CheckinScanner
+          labels={{
+            open: t.dashboard.scanQr,
+            title: t.dashboard.scanTitle,
+            help: t.dashboard.scanHelp,
+            starting: t.dashboard.scanStarting,
+            wrongQr: t.dashboard.scanWrongQr,
+            retry: t.checkin.retry,
+            close: t.common.close,
+            failure: {
+              denied: t.dashboard.scanDenied,
+              unavailable: t.dashboard.scanUnavailable,
+              unsupported: t.dashboard.scanUnsupported,
+            },
+          }}
+        />
+      </div>
 
       <Section title={t.dashboard.yourRank} icon={TrendingUpIcon}>
         <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
