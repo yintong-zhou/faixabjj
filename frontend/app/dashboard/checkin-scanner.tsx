@@ -167,7 +167,7 @@ export function CheckinScanner({ labels }: { labels: CheckinScannerLabels }) {
         type="button"
         onClick={open}
         aria-haspopup="dialog"
-        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:w-fit"
+        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-medium transition-colors hover:bg-muted sm:w-fit"
       >
         <QrCodeIcon className="h-5 w-5 shrink-0" />
         {labels.open}

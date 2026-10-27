@@ -108,11 +108,20 @@ export async function MemberDashboard({
   return (
     <>
       {/* First thing on the page, because it is the thing done most often and
-          on a phone: scan the gym's QR to check in. Drawn for everybody who
-          reaches this view — members and the staff's own view alike, since a
-          maestro trains too — and never for a portal-only admin, who gets no
-          personal view at all. */}
+          on a phone: check in. Drawn for everybody who reaches this view —
+          members and the staff's own view alike, since a maestro trains too —
+          and never for a portal-only admin, who gets no personal view at all. */}
       <div className="flex flex-col gap-2 sm:flex-row">
+        {/* The same page the QR opens, reached without the camera: it lists the
+            lessons open now and check_in() applies the same rules (window,
+            gym, position), so this is a shortcut, not a second way in. */}
+        <Link
+          href="/check-in"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:w-fit"
+        >
+          <CheckCircleIcon className="h-5 w-5 shrink-0" />
+          {t.presenze.checkIn}
+        </Link>
         <CheckinScanner
           labels={{
             open: t.dashboard.scanQr,
@@ -129,16 +138,6 @@ export async function MemberDashboard({
             },
           }}
         />
-        {/* The same page the QR opens, reached without the camera: it lists the
-            lessons open now and check_in() applies the same rules (window,
-            gym, position), so this is a shortcut, not a second way in. */}
-        <Link
-          href="/check-in"
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-medium transition-colors hover:bg-muted sm:w-fit"
-        >
-          <CheckCircleIcon className="h-5 w-5 shrink-0" />
-          {t.presenze.checkIn}
-        </Link>
       </div>
 
       <Section title={t.dashboard.yourRank} icon={TrendingUpIcon}>
