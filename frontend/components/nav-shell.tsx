@@ -12,6 +12,7 @@ import {
   FileTextIcon,
   HomeIcon,
   MailIcon,
+  TrendingUpIcon,
   UserIcon,
   UsersIcon,
 } from "@/components/icons";
@@ -38,12 +39,18 @@ export type NavLabels = {
   signOut: string;
   language: string;
   privacy: string;
+  changelog: string;
   themeToLight: string;
   themeToDark: string;
 };
 
 const HOME_ITEM = { href: "/", key: "home", icon: HomeIcon } as const;
 const DEMO_ITEM = { href: "/demo", key: "demo", icon: MailIcon } as const;
+const CHANGELOG_ITEM = {
+  href: "/changelog",
+  key: "changelog",
+  icon: TrendingUpIcon,
+} as const;
 const PRESENZE_ITEM = {
   href: "/attendance",
   key: "presenze",
@@ -66,6 +73,7 @@ const EMAIL_ITEM = { href: "/email", key: "email", icon: MailIcon } as const;
 type NavItem =
   | typeof HOME_ITEM
   | typeof DEMO_ITEM
+  | typeof CHANGELOG_ITEM
   | typeof DASHBOARD_ITEM
   | typeof PRESENZE_ITEM
   | typeof CORSI_ITEM
@@ -85,12 +93,14 @@ function navItemsFor(
   isPlatformAdmin: boolean,
 ) {
   if (!isLoggedIn) {
-    // A visitor's menu is the two public pages worth a tab: the landing and
-    // the demo request, which is how a gym that is not on the portal yet gets
-    // in touch. Every other section requires a session, so offering it only
-    // produces a bounce through /login. Signed in, the demo tab is gone: the
-    // reader is already a member of a gym.
-    return [HOME_ITEM, DEMO_ITEM];
+    // A visitor's menu is the public pages worth a tab: the landing, what is
+    // new (the page that shows the app is alive and growing) and the demo
+    // request, which is how a gym that is not on the portal yet gets in touch,
+    // last so it stays the one in the accent. Every other section requires a
+    // session, so offering it only produces a bounce through /login. Signed in,
+    // the demo tab is gone — the reader is already a member of a gym — and the
+    // changelog is left to the footer rather than crowding the menu.
+    return [HOME_ITEM, CHANGELOG_ITEM, DEMO_ITEM];
   }
 
   // The platform superadmin belongs to no gym: their whole portal is the
@@ -232,12 +242,15 @@ export function NavShell({
         {children}
       </main>
 
-      {/* One link, on every page: the privacy notice has to be reachable from
-          anywhere, signed in or not, and a footer is where people look for it.
-          Extra bottom padding on small screens so the mobile tab bar does not
-          cover it. */}
+      {/* The privacy notice has to be reachable from anywhere, signed in or
+          not, and a footer is where people look for it; the changelog sits
+          beside it for the same reason. Extra bottom padding on small screens
+          so the mobile tab bar does not cover it. */}
       <footer className={`mx-auto w-full ${width} px-4 pb-24 sm:px-8 sm:pb-8 print:hidden`}>
-        <div className="border-t border-border pt-4 text-xs text-foreground/55">
+        <div className="flex flex-wrap gap-x-5 gap-y-1 border-t border-border pt-4 text-xs text-foreground/55">
+          <Link href="/changelog" className="hover:text-foreground">
+            {labels.changelog}
+          </Link>
           <Link href="/privacy" className="hover:text-foreground">
             {labels.privacy}
           </Link>

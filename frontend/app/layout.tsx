@@ -176,6 +176,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             signOut: t.nav.signOut,
             language: t.nav.language,
             privacy: t.nav.privacy,
+            changelog: t.nav.changelog,
             themeToLight: t.nav.theme.toLight,
             themeToDark: t.nav.theme.toDark,
           }}

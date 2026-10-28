@@ -509,3 +509,150 @@ button[data-pending]::after {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Changelog (app/changelog/page.tsx)
+   ---------------------------------------------------------------------------
+   A belt runs down the left of the page. Each month's track fills in accent as
+   it scrolls into view, and each novelty is a rank bar with a stripe taped on
+   it, the same pieces as the belt bar in pending-feedback. After the last
+   novelty the belt fades out, as if the next stripe were still to come.
+
+   Like the roll-call demo, the resting styles are the finished state and the
+   scroll-driven keyframes only run *from* the unset look. A browser without
+   scroll-driven animations, or a reader who asked for reduced motion, sees the
+   whole belt complete. Colours are the themed tokens, so it reads in both
+   themes (the accent is already lightened for the dark one). */
+.changelog {
+  --rail: 0.75rem;
+  --gutter: 2.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.changelog__month,
+.changelog__next {
+  position: relative;
+  padding-left: var(--gutter);
+}
+
+.changelog__month {
+  padding-bottom: 0.5rem;
+}
+
+/* The track (border colour) and, over it, the fill (accent). */
+.changelog__month::before,
+.changelog__month::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--rail);
+}
+
+.changelog__month::before {
+  background: var(--border);
+}
+
+.changelog__month::after {
+  background: var(--color-accent);
+  transform-origin: top;
+}
+
+.changelog > :first-child::before,
+.changelog > :first-child::after {
+  border-radius: 999px 999px 0 0;
+}
+
+.changelog__entry {
+  position: relative;
+  padding-bottom: 2rem;
+}
+
+/* The rank bar across the belt, centred on it and a little wider. The stripe
+   on it is the page background colour, as in the belt bar at the top of every
+   page. */
+.changelog__tape {
+  position: absolute;
+  z-index: 1;
+  top: 0.25rem;
+  left: calc(var(--gutter) * -1 - 0.3125rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--rail) + 0.625rem);
+  height: 1.625rem;
+  border-radius: 4px;
+}
+
+.changelog__tape {
+  background: var(--foreground);
+}
+
+/* Vertical, like the stripes on the real rank bar. */
+.changelog__tape::after {
+  content: "";
+  width: 3px;
+  height: 62%;
+  border-radius: 1px;
+  background: var(--background);
+}
+
+/* After the last novelty the belt does not stop: it carries on and fades away,
+   which is how the page says there is more to come. */
+.changelog__next {
+  min-height: 8rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1rem;
+}
+
+.changelog__next::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--rail);
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(
+    to bottom,
+    var(--color-accent),
+    color-mix(in srgb, var(--color-accent) 35%, transparent) 55%,
+    transparent
+  );
+}
+
+@keyframes changelog-fill {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes changelog-tape {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/* `animation-timeline` goes after the `animation` shorthand, which would reset
+   it. The fill head follows the bottom of the screen and is complete once the
+   month has entered it — not later, because the last month ends where the page
+   does and could never be scrolled further to finish. Each stripe is taped on
+   as its bar comes into view. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .changelog__month::after {
+      animation: changelog-fill linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+
+    .changelog__tape::after {
+      animation: changelog-tape linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 25%;
+    }
+  }
+}

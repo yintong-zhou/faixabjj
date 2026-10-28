@@ -22,7 +22,7 @@ export const SITE_URL =
 // belongs here because it has to be readable before signing up — a legal
 // notice behind a login is not a notice — and /demo because it is where a gym
 // that found the landing page asks to see the app.
-export const PUBLIC_PATHS = ["/", "/demo", "/privacy"];
+export const PUBLIC_PATHS = ["/", "/demo", "/changelog", "/privacy"];
 
 // Where demo requests go (/demo). Public on purpose: it is printed on the page.
 export const DEMO_EMAIL = "contactdm.yt@gmail.com";

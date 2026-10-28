@@ -38,6 +38,7 @@ export const ptBR: Dictionary = {
     theme: { toLight: "Mudar para o tema claro", toDark: "Mudar para o tema escuro" },
     language: "Idioma",
     privacy: "Privacidade e cookies",
+    changelog: "Novidades",
   },
 
   belts: {
@@ -1100,6 +1101,66 @@ export const ptBR: Dictionary = {
       nameHint: "Letras minúsculas, números e hífens, por exemplo promo-verao.",
       locale: "Idioma",
       submit: "Criar e abrir o editor",
+    },
+  },
+
+  changelog: {
+    metaTitle: "Novidades",
+    metaDescription:
+      "Como o Faixa BJJ cresceu: presenças, faixas e graduações pelas regras da IBJJF, check-in com QR, várias academias e mais. E vem mais novidade por aí.",
+    title: "Novidades",
+    lead: "Cada recurso que chegou ao Faixa BJJ, do primeiro ao mais recente.",
+    updated: (date: string) => `Última atualização: ${date}`,
+    listLabel: "Linha do tempo das novidades",
+    upcoming: {
+      title: "O próximo grau está a caminho",
+      body: "Tem mais novidade sendo preparada. Esta página é atualizada a cada lançamento: volte logo.",
+    },
+    entries: {
+      courses: {
+        title: "Aulas e registro de presenças",
+        body: "Defina as aulas recorrentes, faça a chamada a cada treino e deixe os alunos marcarem presença. Cada presença vale uma hora.",
+      },
+      languages: {
+        title: "Italiano, inglês e português",
+        body: "O app fala italiano, inglês e português do Brasil e lembra da sua escolha. O aviso de privacidade também está nos três idiomas.",
+      },
+      promotions: {
+        title: "Faixas, graus e graduações pela IBJJF",
+        body: "A escada de faixas, para adultos e crianças, e os critérios de graduação seguem o regulamento e as recomendações da IBJJF. O app indica quem cumpre os requisitos; a decisão fica sempre com o professor.",
+      },
+      multiGym: {
+        title: "Várias academias, cada uma por si",
+        body: "Cada academia tem seus próprios alunos, aulas, horários e fuso horário, separados dos das outras.",
+      },
+      checkinQr: {
+        title: "Check-in com QR e geolocalização",
+        body: "A academia exibe o seu QR e o aluno o escaneia para marcar presença. O check-in só funciona se ele estiver mesmo na academia.",
+      },
+      username: {
+        title: "Login com nome de usuário",
+        body: "Entre com o e-mail ou com o nome de usuário.",
+      },
+      dashboard: {
+        title: "Painel com gráfico e leitor de QR",
+        body: "A evolução das suas presenças num gráfico e um leitor de QR integrado para fazer o check-in pelo celular.",
+      },
+      invite: {
+        title: "Cadastro por link de convite",
+        body: "A academia compartilha um link e o aluno se cadastra sozinho. Um responsável aprova cada pedido: ninguém entra sem o sinal verde.",
+      },
+      blackBelt: {
+        title: "Os graus da faixa preta",
+        body: "A faixa preta mostra seus graus na barra vermelha, como a de verdade.",
+      },
+      emailTemplates: {
+        title: "E-mails com modelos personalizáveis",
+        body: "As mensagens que o app envia, como as boas-vindas ou a troca de senha, saem de modelos que podem ser reescritos, com pré-visualização e envio de teste.",
+      },
+      checkinButton: {
+        title: "Check-in sem escanear",
+        body: "Um botão Check-in, o primeiro do painel, abre as aulas disponíveis sem usar a câmera. Valem as mesmas regras do QR.",
+      },
     },
   },
 
