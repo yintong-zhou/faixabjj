@@ -42,6 +42,7 @@ export const it = {
     theme: { toLight: "Passa al tema chiaro", toDark: "Passa al tema scuro" },
     language: "Lingua",
     privacy: "Privacy e cookie",
+    changelog: "Novità",
   },
 
   belts: {
@@ -1126,6 +1127,68 @@ export const it = {
       nameHint: "Lettere minuscole, numeri e trattini, per esempio promo-estate.",
       locale: "Lingua",
       submit: "Crea e apri l'editor",
+    },
+  },
+
+  // /changelog. Le voci stanno qui e non in utils/changelog.ts, che ne conosce
+  // solo l'id e la data: così le tre lingue restano allineate per costruzione.
+  changelog: {
+    metaTitle: "Novità",
+    metaDescription:
+      "Come Faixa BJJ è cresciuta: presenze, cinture e promozioni secondo l'IBJJF, check-in con QR, più palestre e altro. E altre novità sono in arrivo.",
+    title: "Novità",
+    lead: "Ogni funzione arrivata in Faixa BJJ, dalla prima all'ultima.",
+    updated: (date: string) => `Ultimo aggiornamento: ${date}`,
+    listLabel: "Cronologia delle novità",
+    upcoming: {
+      title: "La prossima tacca è in arrivo",
+      body: "Altre novità sono in lavorazione. Questa pagina si aggiorna a ogni uscita: ripassa presto.",
+    },
+    entries: {
+      courses: {
+        title: "Corsi e registro presenze",
+        body: "Definisci i corsi ricorrenti, fai l'appello a ogni lezione e lascia che gli allievi si segnino presenti. Ogni presenza vale un'ora.",
+      },
+      languages: {
+        title: "Italiano, inglese e portoghese",
+        body: "L'app parla italiano, inglese e portoghese del Brasile e ricorda la tua scelta. Anche l'informativa sulla privacy è nelle tre lingue.",
+      },
+      promotions: {
+        title: "Cinture, tacche e promozioni secondo l'IBJJF",
+        body: "La scala delle cinture, per adulti e bambini, e i criteri di promozione seguono il regolamento e i consigli dell'IBJJF. L'app segnala chi ha i requisiti; la decisione resta sempre al maestro.",
+      },
+      multiGym: {
+        title: "Più palestre, ognuna per conto suo",
+        body: "Ogni palestra ha i propri iscritti, corsi, orari e fuso orario, separati da quelli delle altre.",
+      },
+      checkinQr: {
+        title: "Check-in con QR e geolocalizzazione",
+        body: "La palestra espone il suo QR e l'allievo lo inquadra per segnarsi presente. Il check-in funziona solo se è davvero in sede.",
+      },
+      username: {
+        title: "Accesso con username",
+        body: "Entra con l'email oppure con lo username.",
+      },
+      dashboard: {
+        title: "Dashboard con grafico e scanner QR",
+        body: "L'andamento delle tue presenze in un grafico, e uno scanner QR integrato per il check-in dal telefono.",
+      },
+      invite: {
+        title: "Iscrizione con link d'invito",
+        body: "La palestra condivide un link e l'allievo si registra da solo. Un responsabile approva ogni richiesta: nessuno entra senza il via libera.",
+      },
+      blackBelt: {
+        title: "I gradi della cintura nera",
+        body: "La cintura nera mostra i suoi gradi sulla barra rossa, come quella vera.",
+      },
+      emailTemplates: {
+        title: "Email con modelli personalizzabili",
+        body: "I messaggi che l'app invia, come il benvenuto o il cambio password, partono da modelli riscrivibili, con anteprima e invio di prova.",
+      },
+      checkinButton: {
+        title: "Check-in senza scansione",
+        body: "Un pulsante Check-in, il primo della dashboard, apre le lezioni disponibili senza usare la fotocamera. Valgono le stesse regole del QR.",
+      },
     },
   },
 

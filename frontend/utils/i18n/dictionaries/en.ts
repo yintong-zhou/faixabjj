@@ -37,6 +37,7 @@ export const en: Dictionary = {
     theme: { toLight: "Switch to light theme", toDark: "Switch to dark theme" },
     language: "Language",
     privacy: "Privacy and cookies",
+    changelog: "What's new",
   },
 
   belts: {
@@ -1098,6 +1099,66 @@ export const en: Dictionary = {
       nameHint: "Lowercase letters, digits and hyphens, for example summer-promo.",
       locale: "Language",
       submit: "Create and open the editor",
+    },
+  },
+
+  changelog: {
+    metaTitle: "What's new",
+    metaDescription:
+      "How Faixa BJJ has grown: attendance, belts and promotions by the IBJJF rules, QR check-in, multiple gyms and more. More is on the way.",
+    title: "What's new",
+    lead: "Every feature that has reached Faixa BJJ, from the first to the latest.",
+    updated: (date: string) => `Last updated: ${date}`,
+    listLabel: "Timeline of what's new",
+    upcoming: {
+      title: "The next stripe is on its way",
+      body: "More is in the works. This page updates with every release, so check back soon.",
+    },
+    entries: {
+      courses: {
+        title: "Courses and attendance register",
+        body: "Set up recurring courses, take the roll call at every lesson and let students mark themselves present. Every attendance counts as one hour.",
+      },
+      languages: {
+        title: "Italian, English and Portuguese",
+        body: "The app speaks Italian, English and Brazilian Portuguese and remembers your choice. The privacy notice is in all three too.",
+      },
+      promotions: {
+        title: "Belts, stripes and promotions by the IBJJF",
+        body: "The belt ladder, for adults and kids, and the promotion criteria follow the IBJJF rules and recommendations. The app flags who meets the requirements; the decision always stays with the instructor.",
+      },
+      multiGym: {
+        title: "Multiple gyms, each on its own",
+        body: "Every gym has its own members, courses, schedule and time zone, kept apart from every other gym's.",
+      },
+      checkinQr: {
+        title: "QR check-in with geolocation",
+        body: "The gym displays its QR code and students scan it to mark themselves present. Check-in only works if they are actually at the gym.",
+      },
+      username: {
+        title: "Sign in with a username",
+        body: "Sign in with your email or with your username.",
+      },
+      dashboard: {
+        title: "Dashboard with chart and QR scanner",
+        body: "Your attendance trend in a chart, and a built-in QR scanner to check in from your phone.",
+      },
+      invite: {
+        title: "Sign-up through an invite link",
+        body: "The gym shares a link and the student signs up on their own. A manager approves every request: nobody gets in without a green light.",
+      },
+      blackBelt: {
+        title: "Black belt degrees",
+        body: "The black belt shows its degrees on the red bar, like the real one.",
+      },
+      emailTemplates: {
+        title: "Emails from customisable templates",
+        body: "The messages the app sends, like the welcome or a password change, come from templates you can rewrite, with a preview and a test send.",
+      },
+      checkinButton: {
+        title: "Check-in without scanning",
+        body: "A Check-in button, the first on the dashboard, opens the lessons available right now without using the camera. The same rules as the QR apply.",
+      },
     },
   },
 
