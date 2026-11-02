@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   attendanceSeries,
   niceMax,
+  periodStats,
   parsePeriod,
   periodRange,
   shiftPeriod,
   type SeriesSession,
+  type StatsSession,
 } from "./attendance-series";
 
 describe("parsePeriod", () => {
@@ -169,5 +171,59 @@ describe("niceMax", () => {
       expect(niceMax(v) % 2).toBe(0);
       expect(niceMax(v)).toBeGreaterThanOrEqual(v);
     }
+  });
+});
+
+describe("periodStats", () => {
+  const lesson = (over: Partial<StatsSession>): StatsSession => ({
+    session_date: "2026-10-05",
+    status: "scheduled",
+    present_count: 5,
+    course_name: "Gi",
+    start_time: "19:00:00",
+    end_time: "20:30:00",
+    ends_at: "2026-10-05T18:30:00+00:00",
+    ...over,
+  });
+  const now = new Date("2026-10-06T12:00:00Z");
+
+  it("counts only lessons that are over, not cancelled and with someone present", () => {
+    const stats = periodStats(
+      [
+        lesson({}),
+        lesson({ status: "cancelled" }),
+        // No roll call: nothing proves it was held.
+        lesson({ present_count: 0 }),
+        lesson({ present_count: null }),
+        // Today, but still to finish.
+        lesson({ session_date: "2026-10-06", ends_at: "2026-10-06T18:30:00+00:00" }),
+      ],
+      now,
+    );
+    expect(stats.held).toBe(1);
+    expect(stats.minutes).toBe(90);
+  });
+
+  it("groups courses sharing a name into one type, largest share first", () => {
+    const stats = periodStats(
+      [
+        lesson({ course_name: "No-Gi", start_time: "12:00:00", end_time: "13:00:00" }),
+        lesson({ course_name: "Gi" }),
+        lesson({ course_name: " gi " }),
+        lesson({ course_name: "Kids", start_time: "17:00:00", end_time: "18:00:00" }),
+      ],
+      now,
+    );
+    expect(stats.held).toBe(4);
+    expect(stats.minutes).toBe(60 + 90 + 90 + 60);
+    expect(stats.byType).toEqual([
+      { name: "Gi", lessons: 2, share: 0.5 },
+      { name: "Kids", lessons: 1, share: 0.25 },
+      { name: "No-Gi", lessons: 1, share: 0.25 },
+    ]);
+  });
+
+  it("is empty for a period with nothing held", () => {
+    expect(periodStats([], now)).toEqual({ held: 0, minutes: 0, byType: [] });
   });
 });

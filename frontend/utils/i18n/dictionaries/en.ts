@@ -472,6 +472,17 @@ export const en: Dictionary = {
     noInstructor: "no instructor",
     presentCount: (n: number) => `${n} present`,
     rollCall: "Roll call",
+    lessonsHeld: "Lessons held",
+    lessonsHeldHint: "with at least one present",
+    lessonHours: "Lesson hours",
+    lessonHoursHint: "from the lesson times",
+    lessonHoursValue: (hours: number) =>
+      `${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 }).format(hours)} h`,
+    classTypes: "Class types",
+    classTypeShare: (share: number) =>
+      new Intl.NumberFormat("en-GB", { style: "percent" }).format(share),
+    classTypeLessons: (n: number) => `${n} lesson${n === 1 ? "" : "s"}`,
+    noLessonsHeld: "No lessons held in this period.",
 
     belts: "Belts",
     beltSpread: (n: number) => `Spread across the ${n} active members.`,

@@ -475,6 +475,17 @@ export const ptBR: Dictionary = {
     noInstructor: "sem instrutor",
     presentCount: (n: number) => `${n} presentes`,
     rollCall: "Chamada",
+    lessonsHeld: "Aulas realizadas",
+    lessonsHeldHint: "com pelo menos um presente",
+    lessonHours: "Horas de aula",
+    lessonHoursHint: "pelo horário das aulas",
+    lessonHoursValue: (hours: number) =>
+      `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(hours)} h`,
+    classTypes: "Tipos de aula",
+    classTypeShare: (share: number) =>
+      new Intl.NumberFormat("pt-BR", { style: "percent" }).format(share),
+    classTypeLessons: (n: number) => `${n} aula${n === 1 ? "" : "s"}`,
+    noLessonsHeld: "Nenhuma aula realizada neste período.",
 
     belts: "Faixas",
     beltSpread: (n: number) => `Distribuição entre os ${n} membros ativos.`,

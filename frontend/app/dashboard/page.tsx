@@ -174,6 +174,7 @@ export default async function DashboardPage({
           locale={locale}
           period={parsePeriod(periodo)}
           anchor={da && ISO_DATE.test(da) ? da : today}
+          showPeriodStats={access.canManageUsers}
         />
       ) : profile ? (
         <MemberDashboard supabase={supabase} profile={profile} today={today} gym={gym} t={t} />

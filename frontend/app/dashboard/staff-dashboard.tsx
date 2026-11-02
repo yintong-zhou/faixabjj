@@ -14,9 +14,11 @@ import {
   attendanceSeries,
   niceMax,
   periodRange,
+  periodStats,
   shiftPeriod,
   type Period,
-  type SeriesSession,
+  type PeriodStats,
+  type StatsSession,
 } from "@/utils/attendance-series";
 import { formatDate } from "@/utils/dates";
 import { estimateCutoff } from "@/utils/hours";
@@ -74,6 +76,7 @@ export async function StaffDashboard({
   locale,
   period,
   anchor,
+  showPeriodStats,
 }: {
   supabase: SupabaseClient;
   today: string;
@@ -85,6 +88,9 @@ export async function StaffDashboard({
   // of view state here.
   period: Period;
   anchor: string;
+  // Lessons held, their hours and the split by class type, for the same
+  // period as the chart: asked for the gym account and the head coach.
+  showPeriodStats: boolean;
 }) {
   const range = periodRange(period, anchor);
 
@@ -104,10 +110,11 @@ export async function StaffDashboard({
         // Whoever only runs the portal is not a student of the gym and would
         // skew every count on this page.
         .not("active_roles", "eq", PORTAL_ONLY_ROLES),
-      // Only what the chart needs, and only for the period it shows.
+      // Only what the chart and its period summary need, and only for the
+      // period they show.
       supabase
         .from("session_overview")
-        .select("session_date, status, present_count")
+        .select("session_date, status, present_count, course_name, start_time, end_time, ends_at")
         .gte("session_date", range.from)
         .lte("session_date", range.until),
       supabase
@@ -185,7 +192,9 @@ export async function StaffDashboard({
 
   // The chart: one bar per day of the period. The strings are composed here, in
   // the reader's language, so the client component holds no dictionary.
-  const series = attendanceSeries((chartRows ?? []) as SeriesSession[], range, today);
+  const periodRows = (chartRows ?? []) as StatsSession[];
+  const series = attendanceSeries(periodRows, range, today);
+  const stats = showPeriodStats ? periodStats(periodRows, new Date()) : null;
   const weekdays = weekdayLabels(t);
   const chartDays: ChartDay[] = series.map((day, index) => {
     const dayOfMonth = Number(formatDayNumber(day.date));
@@ -335,6 +344,21 @@ export async function StaffDashboard({
             </Link>
           </nav>
 
+          {stats ? (
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <Stat
+                label={t.dashboard.lessonsHeld}
+                value={stats.held}
+                hint={t.dashboard.lessonsHeldHint}
+              />
+              <Stat
+                label={t.dashboard.lessonHours}
+                value={t.dashboard.lessonHoursValue(stats.minutes / 60)}
+                hint={t.dashboard.lessonHoursHint}
+              />
+            </div>
+          ) : null}
+
           {/* Keyed by the period: moving to another week or month starts from
               a clean selection instead of carrying a stale day across. */}
           <AttendanceChart
@@ -347,6 +371,8 @@ export async function StaffDashboard({
               hint: t.dashboard.chartHint,
             }}
           />
+
+          {stats ? <ClassTypeSplit stats={stats} t={t} /> : null}
         </div>
 
         <div className="flex flex-col gap-2">
@@ -447,6 +473,50 @@ export async function StaffDashboard({
         ) : null}
       </Section>
     </>
+  );
+}
+
+// Share of the held lessons per class type. One series, so one colour (the
+// accent, like the belt bars) and a bar per row rather than a pie: a dozen
+// slices cannot be compared, a dozen bars on one track can. The track stands
+// for the whole period, so each bar's length is its share without reading
+// the number.
+function ClassTypeSplit({ stats, t }: { stats: PeriodStats; t: Dictionary }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="text-xs uppercase tracking-wide text-foreground/55">
+        {t.dashboard.classTypes}
+      </h3>
+      {stats.byType.length === 0 ? (
+        <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
+          {t.dashboard.noLessonsHeld}
+        </p>
+      ) : (
+        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+          {stats.byType.map((type) => (
+            <li key={type.name} className="flex items-center gap-3 px-3 py-3 sm:px-4">
+              <span className="flex w-28 shrink-0 flex-col gap-0.5 sm:w-40">
+                <span className="truncate text-sm font-medium" title={type.name}>
+                  {type.name}
+                </span>
+                <span className="text-xs tabular-nums text-foreground/55">
+                  {t.dashboard.classTypeLessons(type.lessons)}
+                </span>
+              </span>
+              <span className="h-2 min-w-0 flex-1 rounded-full bg-muted" aria-hidden="true">
+                <span
+                  className="block h-full min-w-0.5 rounded-full bg-accent/70"
+                  style={{ width: `${type.share * 100}%` }}
+                />
+              </span>
+              <span className="w-11 shrink-0 text-right text-sm font-semibold tabular-nums">
+                {t.dashboard.classTypeShare(type.share)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
