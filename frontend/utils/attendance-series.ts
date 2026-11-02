@@ -78,6 +78,61 @@ export function attendanceSeries(
   return days;
 }
 
+// What the period summary needs on top of the chart's columns; all of it is in
+// `session_overview`, so the chart's own query carries it.
+export type StatsSession = SeriesSession & {
+  course_name: string;
+  start_time: string;
+  end_time: string;
+  // The instant the lesson ends, timezone already applied in SQL.
+  ends_at: string;
+};
+
+export type PeriodStats = {
+  // Lessons over by `now` with at least one presence. Not cancelled is not
+  // enough: the roll call marks the instructor present, so a lesson with
+  // nobody present never had one, and nothing proves it took place.
+  held: number;
+  // Their timetable length, summed: what the gym taught, not what anyone trained.
+  minutes: number;
+  // Share of the held lessons per class type, largest first.
+  byType: { name: string; lessons: number; share: number }[];
+};
+
+const minutesOf = (time: string) => {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+
+// A "type" is the course name, not the course: a class taught at different
+// times on different days is two courses with one name (see `course`), and
+// counting them apart would split one type in two.
+export function periodStats(sessions: StatsSession[], now: Date): PeriodStats {
+  const held = sessions.filter(
+    (s) =>
+      s.status !== "cancelled" &&
+      Number(s.present_count ?? 0) > 0 &&
+      Date.parse(s.ends_at) <= now.getTime(),
+  );
+
+  const byName = new Map<string, { name: string; lessons: number }>();
+  for (const session of held) {
+    const name = session.course_name.trim();
+    const key = name.toLocaleLowerCase();
+    const entry = byName.get(key) ?? { name, lessons: 0 };
+    entry.lessons += 1;
+    byName.set(key, entry);
+  }
+
+  return {
+    held: held.length,
+    minutes: held.reduce((sum, s) => sum + minutesOf(s.end_time) - minutesOf(s.start_time), 0),
+    byType: [...byName.values()]
+      .map((entry) => ({ ...entry, share: entry.lessons / held.length }))
+      .sort((a, b) => b.lessons - a.lessons || a.name.localeCompare(b.name)),
+  };
+}
+
 // The top of the value axis: at least 4, and always even so the middle grid
 // line is a whole number. Under 10 it rounds up to the next even number, above
 // that to the next multiple of the value's own order of magnitude (20, 30 …

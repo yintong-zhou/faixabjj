@@ -491,6 +491,17 @@ export const it = {
     noInstructor: "nessun istruttore",
     presentCount: (n: number) => `${n} presenti`,
     rollCall: "Appello",
+    lessonsHeld: "Lezioni svolte",
+    lessonsHeldHint: "con almeno un presente",
+    lessonHours: "Ore di lezione",
+    lessonHoursHint: "dall'orario delle lezioni",
+    lessonHoursValue: (hours: number) =>
+      `${new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 }).format(hours)} h`,
+    classTypes: "Tipi di lezione",
+    classTypeShare: (share: number) =>
+      new Intl.NumberFormat("it-IT", { style: "percent" }).format(share),
+    classTypeLessons: (n: number) => `${n} ${n === 1 ? "lezione" : "lezioni"}`,
+    noLessonsHeld: "Nessuna lezione svolta in questo periodo.",
 
     belts: "Cinture",
     beltSpread: (n: number) => `Distribuzione fra i ${n} membri attivi.`,
