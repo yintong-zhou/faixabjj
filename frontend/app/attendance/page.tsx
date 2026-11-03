@@ -371,36 +371,55 @@ export default async function PresenzePage({
         <div className="flex flex-col gap-4">
           {days
             .filter((date) => (byDay.get(date) ?? []).length > 0)
-            .map((date) => (
-              <section key={date} className="flex flex-col gap-2">
-                <h2
-                  className={`font-heading text-sm font-semibold ${
-                    date === today ? "text-accent" : "text-foreground/70"
-                  }`}
-                >
-                  {formatDayHeading(date, t)}
-                  {date === today ? t.presenze.todaySuffix : ""}
-                </h2>
-
-                <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
-                  {(byDay.get(date) ?? []).map((session) => (
-                    <SessionRow
-                      key={session.id}
-                      session={session}
-                      isStaff={isStaff}
-                      allowCheckin
-                      checkedIn={ownAttendance.get(session.id)}
-                      now={now}
-                      profileMissing={profileMissing}
-                      query={currentQuery}
-                      needsLocation={needsLocation}
-                      checkinLabels={checkinLabels}
-                      t={t}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ))}
+            .map((date) => {
+              // Today is what the page is opened for (the roll call), so it
+              // stands out; days already gone stay listed but recede to one
+              // compact line per lesson.
+              const tone = date === today ? "today" : date < today ? "past" : undefined;
+              return (
+                <section key={date} className={`flex flex-col ${tone === "past" ? "gap-1" : "gap-2"}`}>
+                  <h2
+                    className={
+                      tone === "today"
+                        ? "flex flex-wrap items-center gap-2 font-heading text-base font-semibold"
+                        : `font-heading font-semibold ${
+                            tone === "past" ? "text-xs text-foreground/55" : "text-sm text-foreground/70"
+                          }`
+                    }
+                  >
+                    {tone === "today" ? (
+                      <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-background">
+                        {t.common.today}
+                      </span>
+                    ) : null}
+                    {formatDayHeading(date, t)}
+                  </h2>
+  
+                  <ul
+                    className={`flex flex-col divide-y divide-border rounded-xl border ${
+                      tone === "today" ? "border-accent/60 bg-accent/5" : "border-border"
+                    }`}
+                  >
+                    {(byDay.get(date) ?? []).map((session) => (
+                      <SessionRow
+                        key={session.id}
+                        session={session}
+                        tone={tone}
+                        isStaff={isStaff}
+                        allowCheckin
+                        checkedIn={ownAttendance.get(session.id)}
+                        now={now}
+                        profileMissing={profileMissing}
+                        query={currentQuery}
+                        needsLocation={needsLocation}
+                        checkinLabels={checkinLabels}
+                        t={t}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
         </div>
       )}
     </div>
@@ -543,13 +562,16 @@ function DayCell({
   const shell = [
     "min-h-14 flex-col gap-1 rounded-lg border border-border p-1 text-left sm:min-h-24 sm:p-1.5",
     isOpen ? "sm:border-accent sm:bg-accent/5" : "",
+    // Today is circled: a ring round the cell (a shadow, so it never fights
+    // the border above) and the day number in a filled disc.
+    isToday ? "ring-2 ring-accent" : "",
     inMonth ? "" : "opacity-45",
   ].join(" ");
 
   const number = [
     "text-xs font-semibold",
     isToday
-      ? "flex h-5 w-5 items-center justify-center rounded-full bg-accent text-background"
+      ? "flex h-6 w-6 items-center justify-center rounded-full bg-accent text-background"
       : "px-0.5 text-foreground/70",
   ].join(" ");
 
@@ -636,6 +658,7 @@ function DayCell({
 
 function SessionRow({
   session,
+  tone,
   isStaff,
   allowCheckin,
   checkedIn,
@@ -647,6 +670,9 @@ function SessionRow({
   t,
 }: {
   session: Session;
+  // Weekly list only: "today" highlights the row, "past" shrinks it to one
+  // line (time and course). The grid's lists use the plain row.
+  tone?: "today" | "past";
   isStaff: boolean;
   allowCheckin: boolean;
   checkedIn: boolean | undefined;
@@ -665,28 +691,54 @@ function SessionRow({
     now,
   });
 
+  const past = tone === "past";
+  const rollCallClass =
+    tone === "today"
+      ? "gap-1.5 bg-accent px-3.5 py-1.5 text-sm font-semibold text-background hover:bg-accent/90"
+      : past
+        ? "gap-1 px-2 py-1.5 text-xs font-medium text-foreground/60 hover:bg-muted"
+        : "gap-1.5 border border-border px-3.5 py-1.5 text-sm font-medium hover:bg-muted";
+
   return (
-    <li className="flex items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:p-4">
-      <div className="flex min-w-0 flex-col gap-0.5">
+    <li
+      className={`flex items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4 ${
+        past ? "py-1.5" : "py-3 sm:py-4"
+      }`}
+    >
+      {past ? (
         <span
-          className={`text-sm font-medium ${
-            cancelled ? "line-through text-foreground/50" : ""
+          className={`min-w-0 text-sm text-foreground/60 [overflow-wrap:anywhere] ${
+            cancelled ? "line-through" : ""
           }`}
         >
-          {formatTime(session.start_time)} · {session.course_name}
-        </span>
-        <span className="text-xs text-foreground/55">
-          {formatTime(session.start_time)}–{formatTime(session.end_time)}
+          <span className="tabular-nums">{formatTime(session.start_time)}</span>
           {" · "}
-          {session.instructor_name ?? t.presenze.noInstructor}
-          {cancelled ? t.presenze.cancelledSuffix : ""}
+          {session.course_name}
         </span>
-      </div>
+      ) : (
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span
+            className={`font-medium [overflow-wrap:anywhere] ${
+              tone === "today" ? "text-base" : "text-sm"
+            } ${cancelled ? "line-through text-foreground/50" : ""}`}
+          >
+            {session.course_name}
+          </span>
+          <span className="text-xs text-foreground/55">
+            <span className="tabular-nums">
+              {formatTime(session.start_time)}–{formatTime(session.end_time)}
+            </span>
+            {" · "}
+            {session.instructor_name ?? t.presenze.noInstructor}
+            {cancelled ? t.presenze.cancelledSuffix : ""}
+          </span>
+        </div>
+      )}
 
       {isStaff ? (
         <Link
           href={`/attendance/${session.id}?from=${encodeURIComponent(query)}`}
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+          className={`flex shrink-0 items-center rounded-full transition-colors ${rollCallClass}`}
         >
           {session.present_count > 0
             ? t.presenze.presentCount(session.present_count)

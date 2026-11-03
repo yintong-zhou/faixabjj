@@ -32,6 +32,7 @@
 
 Server-rendered, state in the URL: `v=griglia` = month grid (default weekly list), `da` = anchor date, `g` = day opened under the grid.
 - `da` is read as week or month — toggling keeps your place; no second param.
+- **Weekly list, mobile first**: today is the highlighted block ("Oggi" pill, accent border, filled roll-call button); past days stay listed but recede to one compact line per lesson (time · course, small roll-call link); future days are plain. A row names the course once, then `start–end · instructor` (the start time is not repeated). `SessionRow` `tone` prop; the grid's lists use the plain row.
 - Grid queries `monthGridRange()` (whole Mon–Sun weeks). Month helpers (`monthStart`, `shiftMonth`, `monthGridRange`, `formatMonthHeading`) in `utils/schedule.ts`, unit-tested incl. 31-January.
 - **No check-in button in the grid** (explicit): shows a tick/"presente"; action stays in the list. Staff keep roll-call link in both.
 - **Cells are rendered per width** (`DayCell`, `app/attendance/page.tsx`). Phone (< `sm`): number + one dot per lesson (max 4; grey = cancelled, accent = member was present), no text; a day with lessons is a button opening a **modal** (`DayDialog`, client, native `<dialog>`) with that day's lessons — a tap always shows them, never jumps to a roll call unseen. `sm` and up: course names in the cell, cell is a link.

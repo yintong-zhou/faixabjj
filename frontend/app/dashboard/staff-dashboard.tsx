@@ -494,23 +494,28 @@ function ClassTypeSplit({ stats, t }: { stats: PeriodStats; t: Dictionary }) {
       ) : (
         <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
           {stats.byType.map((type) => (
-            <li key={type.name} className="flex items-center gap-3 px-3 py-3 sm:px-4">
-              <span className="flex w-28 shrink-0 flex-col gap-0.5 sm:w-40">
-                <span className="truncate text-sm font-medium" title={type.name}>
+            // Name and numbers on one line, the bar on its own line below:
+            // a long course name ("Lezioni fondamentali") gets the full width
+            // instead of being cut to fit beside the bar.
+            <li key={type.name} className="flex flex-col gap-2 px-3 py-3 sm:px-4">
+              <span className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 text-sm font-medium [overflow-wrap:anywhere]">
                   {type.name}
                 </span>
-                <span className="text-xs tabular-nums text-foreground/55">
-                  {t.dashboard.classTypeLessons(type.lessons)}
+                <span className="flex shrink-0 items-baseline gap-2 tabular-nums">
+                  <span className="text-xs text-foreground/55">
+                    {t.dashboard.classTypeLessons(type.lessons)}
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {t.dashboard.classTypeShare(type.share)}
+                  </span>
                 </span>
               </span>
-              <span className="h-2 min-w-0 flex-1 rounded-full bg-muted" aria-hidden="true">
+              <span className="h-2 rounded-full bg-muted" aria-hidden="true">
                 <span
                   className="block h-full min-w-0.5 rounded-full bg-accent/70"
                   style={{ width: `${type.share * 100}%` }}
                 />
-              </span>
-              <span className="w-11 shrink-0 text-right text-sm font-semibold tabular-nums">
-                {t.dashboard.classTypeShare(type.share)}
               </span>
             </li>
           ))}

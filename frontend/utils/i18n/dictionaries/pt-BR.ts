@@ -689,10 +689,8 @@ export const ptBR: Dictionary = {
     next: "Próxima",
 
     noAccount: "sem conta",
-    trainingFor: (days: string) => `${days} na academia`,
     atCurrentBelt: (days: string) => `${days} na faixa atual`,
     noActiveRole: "Nenhuma função ativa",
-    memberSince: " · desde ",
     estimateSuffix: " (estimativa)",
 
     rowActions: (name: string) => `Ações para ${name}`,
