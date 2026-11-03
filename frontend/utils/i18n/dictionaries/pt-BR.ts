@@ -691,7 +691,8 @@ export const ptBR: Dictionary = {
     noAccount: "sem conta",
     atCurrentBelt: (days: string) => `${days} na faixa atual`,
     noActiveRole: "Nenhuma função ativa",
-    estimateSuffix: " (estimativa)",
+    estimateLabel: "estimativa",
+    hoursUnit: "h",
 
     rowActions: (name: string) => `Ações para ${name}`,
     details: "Detalhes",
