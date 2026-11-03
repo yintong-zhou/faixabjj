@@ -705,10 +705,8 @@ export const it = {
     next: "Successiva",
 
     noAccount: "senza account",
-    trainingFor: (days: string) => `${days} in palestra`,
     atCurrentBelt: (days: string) => `${days} con la cintura attuale`,
     noActiveRole: "Nessun ruolo attivo",
-    memberSince: " · dal ",
     estimateSuffix: " (stima)",
 
     rowActions: (name: string) => `Azioni per ${name}`,

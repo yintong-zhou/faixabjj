@@ -22,7 +22,7 @@ import {
   UserMinusIcon,
   UserPlusIcon,
 } from "@/components/icons";
-import { daysSince, formatDate, formatDays, todayIn } from "@/utils/dates";
+import { daysSince, formatDays, todayIn } from "@/utils/dates";
 import { estimateCutoff, estimateNote, formatHours, hoursFor } from "@/utils/hours";
 import { logDbError } from "@/utils/log";
 import { PORTAL_ONLY_ROLE, PORTAL_ONLY_ROLES } from "@/utils/members";
@@ -614,24 +614,13 @@ export default async function RegistroPage({
                 </span>
 
 
-                {/* Two counters, from two different dates: how long they have
-                    trained at all (joined_at) and how long at the current rank
-                    (rank_since) — the second is what promotion eligibility
-                    actually hangs on. */}
+                {/* Kept minimal: time at the current rank (what eligibility
+                    hangs on) and hours. Join date and days at the gym live on
+                    the detail page. */}
                 <span className="text-xs text-foreground/70">
-                  {t.registro.trainingFor(formatDays(daysSince(member.joined_at, today), t))}
-                  {" · "}
-                  {/* The colour is no longer spelled out here: the belt is
-                      drawn next to the name, a few pixels above. */}
                   {t.registro.atCurrentBelt(
                     formatDays(daysSince(member.rank_since, today), t),
                   )}
-                </span>
-
-                <span className="text-xs text-foreground/55">
-                  {member.active_roles.length > 0
-                    ? member.active_roles.map((r) => roleLabel(r, t)).join(", ")
-                    : t.registro.noActiveRole}
                   {" · "}
                   {/* Mostly estimated until the gym has been recording for a
                       while, so the row says so rather than presenting an
@@ -640,8 +629,12 @@ export default async function RegistroPage({
                     {formatHours(hours.total, t)}
                     {hours.isPartlyEstimated ? t.registro.estimateSuffix : ""}
                   </span>
-                  {t.registro.memberSince}
-                  {formatDate(member.joined_at)}
+                </span>
+
+                <span className="text-xs text-foreground/55">
+                  {member.active_roles.length > 0
+                    ? member.active_roles.map((r) => roleLabel(r, t)).join(", ")
+                    : t.registro.noActiveRole}
                 </span>
               </div>
 

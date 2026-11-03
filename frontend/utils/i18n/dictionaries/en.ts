@@ -686,10 +686,8 @@ export const en: Dictionary = {
     next: "Next",
 
     noAccount: "no account",
-    trainingFor: (days: string) => `${days} at the gym`,
     atCurrentBelt: (days: string) => `${days} at the current belt`,
     noActiveRole: "No active role",
-    memberSince: " · since ",
     estimateSuffix: " (estimate)",
 
     rowActions: (name: string) => `Actions for ${name}`,
