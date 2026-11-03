@@ -32,7 +32,7 @@ const menuIconClass = "h-4 w-4 shrink-0";
 // Same shape as the Registro's two chips: a link that navigates, with no
 // chevron, so that it does not read as a panel that opens in place.
 const PANEL_LINK =
-  "flex min-h-11 w-fit items-center gap-2 rounded-xl border border-border px-3 py-2.5 font-heading text-sm font-semibold transition-colors hover:bg-muted";
+  "flex min-h-11 w-fit items-center gap-2 rounded-xl border border-border px-3 py-2.5 font-heading text-sm font-semibold transition-colors hover:bg-muted bg-surface raised-button";
 
 
 
@@ -111,7 +111,7 @@ export default async function CorsiPage({
         </Link>
       </div>
 
-      <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+      <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
         {courses.map((course) => (
           <li key={course.id} className="flex flex-col px-3 py-3 sm:p-4">
             <div className="flex items-center justify-between gap-2 sm:gap-3">
@@ -203,7 +203,7 @@ export default async function CorsiPage({
                 />
                 <button
                   type="submit"
-                  className="self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+                  className="self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
                 >
                   {t.common.saveChanges}
                 </button>

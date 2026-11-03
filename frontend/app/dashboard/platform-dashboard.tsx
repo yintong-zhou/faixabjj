@@ -181,7 +181,7 @@ export async function PlatformDashboard({
         {gyms.length === 0 ? (
           <p className="text-sm text-foreground/60">{t.platformDashboard.empty}</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+          <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
             {gyms.map((gym) => (
               <li key={gym.id} className="flex flex-col gap-2.5 px-4 py-3">
                 <div className="flex flex-wrap items-center gap-2">

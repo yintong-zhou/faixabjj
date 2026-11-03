@@ -59,7 +59,7 @@ export default async function NewGymPage({ searchParams }: { searchParams: Promi
         />
         <button
           type="submit"
-          className="self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          className="self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
         >
           {t.gyms.create}
         </button>

@@ -269,7 +269,7 @@ export default async function MemberDetailPage({
         </p>
       ) : null}
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5 bg-surface raised">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
           <UserIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
           {t.registro.personalSection}
@@ -310,7 +310,7 @@ export default async function MemberDetailPage({
 
                   <button
                     type="submit"
-                    className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-fit"
+                    className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-fit raised-button"
                   >
                     {t.common.saveChanges}
                   </button>
@@ -327,7 +327,7 @@ export default async function MemberDetailPage({
 
       {portalOnly ? null : (
         <>
-        <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+        <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5 bg-surface raised">
           <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
             <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
             {t.registro.pathSection}
@@ -435,7 +435,7 @@ export default async function MemberDetailPage({
 
                 <button
                   type="submit"
-                  className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto"
+                  className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto raised-button"
                 >
                   {t.common.saveChanges}
                 </button>
@@ -459,7 +459,7 @@ export default async function MemberDetailPage({
           />
         ) : null}
 
-        <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+        <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5 bg-surface raised">
           <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
             <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
             {t.promotions.history}
@@ -509,7 +509,7 @@ export default async function MemberDetailPage({
         </>
       )}
 
-      <section className="flex flex-col gap-2 rounded-xl border border-border p-4 sm:gap-3 sm:p-5">
+      <section className="flex flex-col gap-2 rounded-xl border border-border p-4 sm:gap-3 sm:p-5 bg-surface raised">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
           <FileTextIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
           {t.registro.notesSection}
@@ -519,7 +519,7 @@ export default async function MemberDetailPage({
         </p>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5 bg-surface raised">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
           <UsersIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
           {t.registro.rolesSection}
@@ -584,7 +584,7 @@ export default async function MemberDetailPage({
 
               <button
                 type="submit"
-                className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto"
+                className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto raised-button"
               >
                 {t.common.saveChanges}
               </button>

@@ -94,7 +94,7 @@ export default async function RequestsPage({
         {requests.map((request) => {
           const linked = linkedPersonIn(people, request.email);
           return (
-            <li key={request.id} className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:p-5">
+            <li key={request.id} className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:p-5 bg-surface raised">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="flex flex-col gap-1">
                   <p className="font-medium">{request.full_name}</p>
@@ -160,7 +160,7 @@ export default async function RequestsPage({
                   <div className="sm:col-span-2">
                     <button
                       type="submit"
-                      className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+                      className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
                     >
                       {t.requests.approve}
                     </button>
@@ -172,7 +172,7 @@ export default async function RequestsPage({
                 <input type="hidden" name="request_id" value={request.id} />
                 <ConfirmSubmitButton
                   message={t.requests.rejectConfirm(request.full_name)}
-                  className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-accent transition-colors hover:bg-muted"
+                  className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-accent transition-colors hover:bg-muted bg-surface raised-button"
                 >
                   {t.requests.reject}
                 </ConfirmSubmitButton>

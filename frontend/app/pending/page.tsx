@@ -33,7 +33,7 @@ export default async function PendingPage() {
         <form action={checkAgain}>
           <button
             type="submit"
-            className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
           >
             {t.pending.checkAgain}
           </button>
@@ -41,7 +41,7 @@ export default async function PendingPage() {
         <form action="/auth/signout" method="post">
           <button
             type="submit"
-            className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
+            className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
           >
             {t.nav.signOut}
           </button>

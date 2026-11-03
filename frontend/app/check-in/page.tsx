@@ -146,15 +146,15 @@ export default async function CheckInPage({
       ) : null}
 
       {portalOnly ? (
-        <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/70 sm:p-4">
+        <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/70 sm:p-4 bg-surface raised">
           {t.checkin.staffUseRollCall}
         </p>
       ) : open.length === 0 ? (
-        <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
+        <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4 bg-surface raised">
           {t.checkin.noOpenSession}
         </p>
       ) : (
-        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
           {open.map((session) => {
             const state = recorded.get(session.id);
             return (

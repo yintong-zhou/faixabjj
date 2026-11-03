@@ -27,7 +27,7 @@ export default async function ResetPasswordPage({
         </p>
         <Link
           href="/forgot-password"
-          className="w-fit rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          className="w-fit rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
         >
           {t.reset.requestNewLink}
         </Link>
@@ -69,7 +69,7 @@ export default async function ResetPasswordPage({
 
         <button
           type="submit"
-          className="mt-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          className="mt-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
         >
           {t.reset.saveButton}
         </button>

@@ -97,7 +97,7 @@ export function LocationFields({
             type="button"
             onClick={fillFromDevice}
             disabled={locating}
-            className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-40"
+            className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-40 bg-surface raised-button"
           >
             {locating ? labels.locating : labels.useCurrent}
           </button>

@@ -50,7 +50,7 @@ export function JoinForm({
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60"
+        className="mt-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60 raised-button"
       >
         {pending ? labels.sending : labels.submit}
       </button>

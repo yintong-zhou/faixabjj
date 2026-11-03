@@ -74,7 +74,7 @@ export function PromotePanel({
   );
 
   return (
-    <details id="promote" className="rounded-xl border border-border">
+    <details id="promote" className="rounded-xl border border-border bg-surface raised">
       <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
         {t.promotions.promoteTitle(personName)}
       </summary>
@@ -125,7 +125,7 @@ export function PromotePanel({
 
           <button
             type="submit"
-            className="inline-flex h-11 items-center justify-self-start rounded-full bg-foreground px-5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            className="inline-flex h-11 items-center justify-self-start rounded-full bg-foreground px-5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
           >
             {t.promotions.confirm}
           </button>

@@ -84,7 +84,7 @@ export default async function GymsPage({ searchParams }: { searchParams: Promise
       <div className="flex flex-wrap items-center gap-2">
         <Link
           href="/gyms/new"
-          className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+          className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
         >
           {t.gyms.newGym}
         </Link>
@@ -97,7 +97,7 @@ export default async function GymsPage({ searchParams }: { searchParams: Promise
           <option value="active">{t.gyms.status.active}</option>
           <option value="suspended">{t.gyms.status.suspended}</option>
         </select>
-        <button type="submit" className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-muted">
+        <button type="submit" className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-muted bg-surface raised-button">
           {t.gyms.filter}
         </button>
       </form>
@@ -105,7 +105,7 @@ export default async function GymsPage({ searchParams }: { searchParams: Promise
       {gyms.length === 0 ? (
         <p className="text-sm text-foreground/60">{t.gyms.empty}</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
           {gyms.map((gym) => (
             <li key={gym.id} className="flex items-center justify-between gap-3 px-4 py-3">
               <div className="flex min-w-0 flex-col gap-0.5">

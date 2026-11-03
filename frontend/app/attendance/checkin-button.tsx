@@ -120,7 +120,7 @@ export function CheckinButton({
         aria-busy={busy}
         className={
           className ??
-          "rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+          "rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40 raised-button"
         }
       >
         {label}

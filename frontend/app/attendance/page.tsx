@@ -248,7 +248,7 @@ export default async function PresenzePage({
         <nav className="flex items-center justify-between gap-2">
           <Link
             href={href({ da: previous, g: null })}
-            className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
           >
             <ChevronLeftIcon className="h-4 w-4" />
             {isGrid ? t.presenze.previousMonth : t.presenze.previousWeek}
@@ -263,7 +263,7 @@ export default async function PresenzePage({
 
           <Link
             href={href({ da: next, g: null })}
-            className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
           >
             {isGrid ? t.presenze.nextMonth : t.presenze.nextWeek}
             <ChevronRightIcon className="h-4 w-4" />
@@ -344,7 +344,7 @@ export default async function PresenzePage({
               </h3>
 
               {openSessions.length === 0 ? (
-                <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
+                <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4 bg-surface raised">
                   {t.presenze.noLessonsThisDay}
                 </p>
               ) : (
@@ -364,7 +364,7 @@ export default async function PresenzePage({
           ) : null}
         </>
       ) : sessions.length === 0 ? (
-        <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
+        <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4 bg-surface raised">
           {t.presenze.noLessonsThisWeek}
         </p>
       ) : (
@@ -394,10 +394,14 @@ export default async function PresenzePage({
                     ) : null}
                     {formatDayHeading(date, t)}
                   </h2>
-  
+
                   <ul
                     className={`flex flex-col divide-y divide-border rounded-xl border ${
-                      tone === "today" ? "border-accent/60 bg-accent/5" : "border-border"
+                      tone === "today"
+                        ? "border-accent/60 bg-accent/5 raised"
+                        : tone === "past"
+                          ? "border-border"
+                          : "border-border bg-surface raised"
                     }`}
                   >
                     {(byDay.get(date) ?? []).map((session) => (
@@ -490,7 +494,7 @@ function GridSessionList({
   t: Dictionary;
 }) {
   return (
-    <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+    <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
       {sessions.map((session) => (
         <SessionRow
           key={session.id}
@@ -694,10 +698,10 @@ function SessionRow({
   const past = tone === "past";
   const rollCallClass =
     tone === "today"
-      ? "gap-1.5 bg-accent px-3.5 py-1.5 text-sm font-semibold text-background hover:bg-accent/90"
+      ? "gap-1.5 bg-accent px-3.5 py-1.5 text-sm font-semibold text-background hover:bg-accent/90 raised-button"
       : past
         ? "gap-1 px-2 py-1.5 text-xs font-medium text-foreground/60 hover:bg-muted"
-        : "gap-1.5 border border-border px-3.5 py-1.5 text-sm font-medium hover:bg-muted";
+        : "gap-1.5 border border-border px-3.5 py-1.5 text-sm font-medium hover:bg-muted bg-surface raised-button";
 
   return (
     <li
@@ -832,7 +836,7 @@ function CheckinControl({
             <input type="hidden" name="session_id" value={sessionId} />
             <button
               type="submit"
-              className="rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted"
+              className="rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted bg-surface raised-button"
             >
               {t.presenze.undo}
             </button>

@@ -44,7 +44,7 @@ export default async function SuspendedPage() {
       <form action="/auth/signout" method="post">
         <button
           type="submit"
-          className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+          className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
         >
           {t.nav.signOut}
         </button>

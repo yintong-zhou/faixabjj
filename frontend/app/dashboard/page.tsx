@@ -114,7 +114,7 @@ export default async function DashboardPage({
             {!showingMine && access.canManageUsers ? (
               <Link
                 href="/gym#qr"
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
               >
                 <QrCodeIcon className="h-4 w-4" />
                 {t.dashboard.checkinQr}
