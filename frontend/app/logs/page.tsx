@@ -225,7 +225,7 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
         <div className="flex gap-2">
           <button
             type="submit"
-            className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-muted md:flex-none"
+            className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-muted md:flex-none bg-surface raised-button"
           >
             {t.logs.filter}
           </button>
@@ -252,7 +252,7 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
         // COLUMNS grid from md up. No horizontal scroll at any width; the error
         // column takes whatever the others leave. ARIA roles because the
         // elements are not a <table>.
-        <div role="table" className="overflow-hidden rounded-xl border border-border text-sm">
+        <div role="table" className="overflow-hidden rounded-xl border border-border text-sm bg-surface raised">
           <div
             role="row"
             className={`${COLUMNS} hidden gap-x-3 bg-muted px-4 py-2 text-xs font-medium text-foreground/60`}
@@ -321,14 +321,14 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
       {before || olderHref ? (
         <nav className="flex justify-between gap-2 pb-2 text-sm font-medium">
           {before ? (
-            <Link href={newestHref} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-center hover:bg-muted sm:flex-none">
+            <Link href={newestHref} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-center hover:bg-muted sm:flex-none bg-surface raised-button">
               {t.logs.newest}
             </Link>
           ) : (
             <span />
           )}
           {olderHref ? (
-            <Link href={olderHref} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-center hover:bg-muted sm:flex-none">
+            <Link href={olderHref} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-center hover:bg-muted sm:flex-none bg-surface raised-button">
               {t.logs.older}
             </Link>
           ) : null}

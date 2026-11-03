@@ -60,7 +60,7 @@ export function DayDialog({
             <button
               type="button"
               onClick={() => dialog.current?.close()}
-              className="shrink-0 rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted"
+              className="shrink-0 rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted bg-surface raised-button"
             >
               {closeLabel}
             </button>

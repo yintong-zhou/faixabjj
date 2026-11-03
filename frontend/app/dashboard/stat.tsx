@@ -15,7 +15,7 @@ export function Stat({
   hint?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-3 sm:p-4">
+    <div className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-3 raised sm:p-4">
       <span className="text-xs uppercase tracking-wide text-foreground/55">
         {label}
       </span>

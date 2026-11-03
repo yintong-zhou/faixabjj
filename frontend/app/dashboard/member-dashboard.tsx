@@ -117,7 +117,7 @@ export async function MemberDashboard({
             gym, position), so this is a shortcut, not a second way in. */}
         <Link
           href="/check-in"
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:w-fit"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background raised-button hover:opacity-90 sm:w-fit"
         >
           <CheckCircleIcon className="h-5 w-5 shrink-0" />
           {t.presenze.checkIn}
@@ -141,7 +141,7 @@ export async function MemberDashboard({
       </div>
 
       <Section title={t.dashboard.yourRank} icon={TrendingUpIcon}>
-        <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
+        <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 raised sm:flex-row sm:items-center sm:gap-6 sm:p-5">
           <Belt
             belt={profile.current_belt}
             stripes={profile.current_stripes}
@@ -221,11 +221,11 @@ export async function MemberDashboard({
 
       <Section title={t.dashboard.nextLessons} icon={CalendarCheckIcon}>
         {upcoming.length === 0 ? (
-          <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
+          <p className="rounded-xl border border-border bg-surface px-3 py-3 text-sm text-foreground/60 raised sm:p-4">
             {t.dashboard.noUpcoming}
           </p>
         ) : (
-          <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+          <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
             {upcoming.map((session) => (
               <li key={session.id} className="flex flex-col gap-0.5 px-3 py-3 sm:p-4">
                 <span className="text-sm font-medium">

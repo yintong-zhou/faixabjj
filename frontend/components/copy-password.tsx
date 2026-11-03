@@ -87,7 +87,7 @@ export function CopyCredentials({
       <button
         type="button"
         onClick={() => copy(text)}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted bg-surface raised-button"
       >
         {state === "copied" ? (
           <CheckIcon className="h-3.5 w-3.5 shrink-0 text-success" />

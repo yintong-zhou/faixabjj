@@ -70,7 +70,7 @@ export default async function ConfirmEmailPage({
 
         <button
           type="submit"
-          className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
         >
           {t.confirmEmail.button}
         </button>

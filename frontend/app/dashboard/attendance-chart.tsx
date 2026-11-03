@@ -66,7 +66,7 @@ export function AttendanceChart({
   const ticks = [max, max / 2, 0];
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-3 sm:p-4">
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-3 sm:p-4 raised">
       {/* aria-live: a keyboard user moving along the bars hears each one. */}
       <p aria-live="polite" className="min-h-10 text-sm leading-snug sm:min-h-5">
         {selected ? (

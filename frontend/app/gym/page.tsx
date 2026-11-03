@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.myGym.title };
 }
 
-const sectionClass = "flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5";
+const sectionClass = "flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5 bg-surface raised";
 
 // A manager's own gym: its position, which turns on the distance check at
 // check-in, and the QR code to print. The QR holds one address for every gym,
@@ -103,7 +103,7 @@ export default async function MyGymPage({
           <div className="flex flex-wrap gap-2">
             <button
               type="submit"
-              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
             >
               {t.myGym.save}
             </button>
@@ -112,7 +112,7 @@ export default async function MyGymPage({
                 type="submit"
                 name="_clear"
                 value="1"
-                className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
+                className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
               >
                 {t.myGym.clear}
               </button>
@@ -143,14 +143,14 @@ export default async function MyGymPage({
           {inviteUrl ? (
             <ConfirmSubmitButton
               message={t.myGym.inviteRegenerateConfirm}
-              className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
+              className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
             >
               {t.myGym.inviteRegenerate}
             </ConfirmSubmitButton>
           ) : (
             <button
               type="submit"
-              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
             >
               {t.myGym.inviteGenerate}
             </button>
@@ -182,7 +182,7 @@ export default async function MyGymPage({
           <a
             href={qrPng}
             download={qrFileName}
-            className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
           >
             {t.myGym.saveImage}
           </a>

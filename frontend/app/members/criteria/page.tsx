@@ -88,7 +88,7 @@ export default async function CriteriaPage({
         </p>
       ) : null}
 
-      <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+      <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
         {criteria.map((criterion) => (
           <li key={`${criterion.belt}-${criterion.stripe}`} className="p-3 sm:p-4">
             {/* Two layouts from one markup.
@@ -175,7 +175,7 @@ export default async function CriteriaPage({
 
               <button
                 type="submit"
-                className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto"
+                className="min-h-11 w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:min-h-0 sm:w-auto raised-button"
               >
                 {t.promotions.save}
               </button>

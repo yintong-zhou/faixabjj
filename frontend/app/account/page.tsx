@@ -36,7 +36,7 @@ export default async function AccountPage({
   // Used by every branch below — the superadmin's page included — so it is
   // built once, right after the dictionary it is the only thing it reads.
   const passwordSection = (
-    <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
+    <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5 bg-surface raised">
       <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
         <KeyIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
         {t.account.passwordSection}
@@ -76,7 +76,7 @@ export default async function AccountPage({
 
         <button
           type="submit"
-          className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
         >
           {t.account.updatePassword}
         </button>
@@ -126,7 +126,7 @@ export default async function AccountPage({
 
         {feedback}
 
-        <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
+        <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5 bg-surface raised">
           <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
             <UserIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
             {t.account.signInDetails}
@@ -171,7 +171,7 @@ export default async function AccountPage({
 
             <button
               type="submit"
-              className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
             >
               {t.common.saveChanges}
             </button>
@@ -239,7 +239,7 @@ export default async function AccountPage({
 
       {feedback}
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
+      <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5 bg-surface raised">
         <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
           <UserIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
           {t.account.personalData}
@@ -344,14 +344,14 @@ export default async function AccountPage({
 
           <button
             type="submit"
-            className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            className="mt-1 self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
           >
             {t.common.saveChanges}
           </button>
         </form>
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
+      <section className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5 bg-surface raised">
         <div className="flex flex-col gap-1">
           <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
             <TrendingUpIcon className="h-4.5 w-4.5 shrink-0 text-accent" />

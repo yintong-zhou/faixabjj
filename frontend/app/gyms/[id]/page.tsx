@@ -44,9 +44,9 @@ const fieldClass =
 const menuItemClass =
   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-muted";
 const menuIconClass = "h-4 w-4 shrink-0";
-const sectionClass = "flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5";
+const sectionClass = "flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5 bg-surface raised";
 const primaryButtonClass =
-  "self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90";
+  "self-start rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button";
 
 type Manager = {
   person_id: string;
@@ -148,7 +148,7 @@ export default async function GymDetailPage({
           <input type="hidden" name="_back" value="detail" />
           <input type="hidden" name="status" value={gym.status === "active" ? "suspended" : "active"} />
           <ConfirmSubmitButton
-            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
+            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted bg-surface raised-button"
             message={gym.status === "active" ? t.gyms.confirmSuspend(gym.name) : t.gyms.confirmReactivate(gym.name)}
           >
             {gym.status === "active" ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
@@ -219,7 +219,7 @@ export default async function GymDetailPage({
               <input id="email" name="email" type="email" required className={fieldClass} />
             </div>
           </div>
-          <button type="submit" className="flex w-fit items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted">
+          <button type="submit" className="flex w-fit items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted bg-surface raised-button">
             <UserPlusIcon className="h-4 w-4" />
             {t.gyms.addManager}
           </button>

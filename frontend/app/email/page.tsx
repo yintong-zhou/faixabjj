@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 type Count = { sent: number; failed: number };
 
-const card = "flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 sm:p-5";
+const card = "flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 sm:p-5 raised";
 const th = "pb-2 text-left text-xs font-medium text-foreground/55";
 const td = "border-t border-border py-2 pr-3 text-sm";
 
@@ -154,7 +154,7 @@ export default async function EmailPage({ searchParams }: { searchParams: Promis
           <h2 className="font-heading text-base font-semibold">{e.templates.title}</h2>
           <Link
             href="/email/new"
-            className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+            className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
           >
             {e.templates.new}
           </Link>

@@ -136,7 +136,7 @@ export default async function TemplatePage({
               <input type="hidden" name="locale" value={locale} />
               <ConfirmSubmitButton
                 message={restores ? e.editor.restoreConfirm : e.editor.deleteConfirm}
-                className="rounded-full border border-border px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-muted"
+                className="rounded-full border border-border px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-muted bg-surface raised-button"
               >
                 {restores ? e.editor.restore : e.editor.delete}
               </ConfirmSubmitButton>
@@ -144,7 +144,7 @@ export default async function TemplatePage({
           ) : null}
 
           {template !== null ? (
-            <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 sm:p-5">
+            <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 sm:p-5 raised">
               <h2 className="font-heading text-base font-semibold">{e.test.title}</h2>
               <p className="text-xs text-foreground/55">{e.test.hint}</p>
               <div className="flex flex-wrap items-center gap-2">
@@ -153,7 +153,7 @@ export default async function TemplatePage({
                   <input type="hidden" name="locale" value={locale} />
                   <button
                     type="submit"
-                    className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                    className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
                   >
                     {e.test.send}
                   </button>

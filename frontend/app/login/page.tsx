@@ -90,7 +90,7 @@ export default async function LoginPage({
 
         <button
           type="submit"
-          className="mt-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          className="mt-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
         >
           {t.auth.signInButton}
         </button>

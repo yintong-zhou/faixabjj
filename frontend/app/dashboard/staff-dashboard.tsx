@@ -322,7 +322,7 @@ export async function StaffDashboard({
           <nav className="flex items-center justify-between gap-2">
             <Link
               href={href(period, shiftPeriod(period, anchor, -1))}
-              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
             >
               <ChevronLeftIcon className="h-4 w-4" />
               {period === "week" ? t.presenze.previousWeek : t.presenze.previousMonth}
@@ -337,7 +337,7 @@ export async function StaffDashboard({
 
             <Link
               href={href(period, shiftPeriod(period, anchor, 1))}
-              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
             >
               {period === "week" ? t.presenze.nextWeek : t.presenze.nextMonth}
               <ChevronRightIcon className="h-4 w-4" />
@@ -380,11 +380,11 @@ export async function StaffDashboard({
             {t.dashboard.todayHeading}
           </h3>
           {todaySessions.length === 0 ? (
-            <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
+            <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4 bg-surface raised">
               {t.dashboard.noLessonsToday}
             </p>
           ) : (
-            <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+            <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
               {todaySessions.map((session) => (
                 <li
                   key={session.id}
@@ -406,7 +406,7 @@ export async function StaffDashboard({
                   </div>
                   <Link
                     href={`/attendance/${session.id}`}
-                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
                   >
                     {session.present_count > 0
                       ? t.dashboard.presentCount(session.present_count)
@@ -425,7 +425,7 @@ export async function StaffDashboard({
           {t.dashboard.beltSpread(active.length)}
         </p>
 
-        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
           {beltCounts.map(({ belt, members: atBelt }) => (
             <li key={belt}>
               {/* The whole row is the link, not the number inside it: the count
@@ -488,11 +488,11 @@ function ClassTypeSplit({ stats, t }: { stats: PeriodStats; t: Dictionary }) {
         {t.dashboard.classTypes}
       </h3>
       {stats.byType.length === 0 ? (
-        <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4">
+        <p className="rounded-xl border border-border px-3 py-3 text-sm text-foreground/60 sm:p-4 bg-surface raised">
           {t.dashboard.noLessonsHeld}
         </p>
       ) : (
-        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
           {stats.byType.map((type) => (
             // Name and numbers on one line, the bar on its own line below:
             // a long course name ("Lezioni fondamentali") gets the full width

@@ -67,7 +67,7 @@ export function EmailNotice({
           type="button"
           autoFocus
           onClick={() => dialog.current?.close()}
-          className="mt-2 self-end rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          className="mt-2 self-end rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
         >
           {closeLabel}
         </button>

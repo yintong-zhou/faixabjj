@@ -73,7 +73,7 @@ const PANEL_CHEVRON =
 // <summary> concerns — a link has no marker to hide and no cursor to set — and
 // minus the chevron, so the difference in behaviour is visible before tapping.
 const PANEL_LINK =
-  "flex min-h-11 items-center gap-2 rounded-xl border border-border px-3 py-2.5 font-heading text-sm font-semibold transition-colors hover:bg-muted";
+  "flex min-h-11 items-center gap-2 rounded-xl border border-border px-3 py-2.5 font-heading text-sm font-semibold transition-colors hover:bg-muted bg-surface raised-button";
 
 type Member = {
   id: string;
@@ -426,7 +426,7 @@ export default async function RegistroPage({
 
       <details
         open={activeFilters.length > 0}
-        className="group rounded-xl border border-border open:basis-full"
+        className="group rounded-xl border border-border open:basis-full bg-surface raised"
       >
         <summary className={PANEL_SUMMARY}>
           <FilterIcon className="h-4.5 w-4.5 shrink-0 text-accent" />
@@ -516,14 +516,14 @@ export default async function RegistroPage({
           <div className="flex items-center gap-2">
             <button
               type="submit"
-              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 raised-button"
             >
               {t.registro.filter}
             </button>
             {activeFilters.length > 0 ? (
               <Link
                 href="/members"
-                className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
+                className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
               >
                 {t.registro.reset}
               </Link>
@@ -536,7 +536,7 @@ export default async function RegistroPage({
       {/* The queue is a line above this list, not a list of its own: putting
           the eligible people in their own list would show the same person
           twice on one screen. It is a link that filters the list below. */}
-      <div className="flex flex-col gap-1.5 rounded-xl border border-border px-4 py-3 sm:px-5 sm:py-4">
+      <div className="flex flex-col gap-1.5 rounded-xl border border-border px-4 py-3 sm:px-5 sm:py-4 bg-surface raised">
         {eligibleCount === 0 ? (
           <span className="flex items-center gap-2 text-sm text-foreground/60">
             <TrendingUpIcon className="h-4 w-4 shrink-0" />
@@ -578,7 +578,7 @@ export default async function RegistroPage({
           : t.registro.countAndPage(total, page, lastPage)}
       </p>
 
-      <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+      <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
         {members.map((member) => {
           const canRestore =
             !member.auth_user_id && member.email && isAdminClientConfigured();
@@ -763,7 +763,7 @@ export default async function RegistroPage({
           {page > 1 ? (
             <Link
               href={`/members?${queryString(search, { p: String(page - 1) })}`}
-              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
             >
               <ChevronLeftIcon className="h-4 w-4" />
               {t.registro.previous}
@@ -775,7 +775,7 @@ export default async function RegistroPage({
           {page < lastPage ? (
             <Link
               href={`/members?${queryString(search, { p: String(page + 1) })}`}
-              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
             >
               {t.registro.next}
               <ChevronRightIcon className="h-4 w-4" />

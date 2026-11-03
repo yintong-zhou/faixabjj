@@ -238,7 +238,7 @@ export default async function RollCallPage({
         </p>
       ) : null}
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5">
+      <section className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:gap-4 sm:p-5 bg-surface raised">
         <h2 className="font-heading text-lg font-semibold">
           {t.rollCall.lessonSection}
         </h2>
@@ -269,7 +269,7 @@ export default async function RollCallPage({
           </div>
           <button
             type="submit"
-            className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
+            className="rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
           >
             {t.common.save}
           </button>
@@ -281,7 +281,7 @@ export default async function RollCallPage({
             <input type="hidden" name="from" value={from ?? ""} />
             <button
               type="submit"
-              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
             >
               <PlayIcon className="h-4 w-4" />
               {t.rollCall.restoreLesson}
@@ -326,7 +326,7 @@ export default async function RollCallPage({
           ))}
         </ul>
 
-        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface raised">
           {members.map((member) => {
             const row = recorded.get(member.id);
             const current = stateFor(member.id);
@@ -413,7 +413,7 @@ export default async function RollCallPage({
         {members.length > 0 ? (
           <button
             type="submit"
-            className="sticky bottom-24 self-center rounded-full bg-foreground px-6 py-2.5 text-sm font-medium text-background shadow-lg transition-opacity hover:opacity-90 sm:bottom-6"
+            className="sticky bottom-24 self-center rounded-full bg-foreground px-6 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:bottom-6 raised-button"
           >
             {t.rollCall.saveRollCall}
           </button>

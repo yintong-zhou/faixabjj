@@ -167,7 +167,7 @@ export function CheckinScanner({ labels }: { labels: CheckinScannerLabels }) {
         type="button"
         onClick={open}
         aria-haspopup="dialog"
-        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-medium transition-colors hover:bg-muted sm:w-fit"
+        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-border bg-surface px-5 py-3 text-sm font-medium raised-button hover:bg-muted sm:w-fit"
       >
         <QrCodeIcon className="h-5 w-5 shrink-0" />
         {labels.open}
@@ -191,7 +191,7 @@ export function CheckinScanner({ labels }: { labels: CheckinScannerLabels }) {
             <button
               type="button"
               onClick={() => dialog.current?.close()}
-              className="shrink-0 rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted"
+              className="shrink-0 rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted bg-surface raised-button"
             >
               {labels.close}
             </button>
@@ -232,7 +232,7 @@ export function CheckinScanner({ labels }: { labels: CheckinScannerLabels }) {
                 <button
                   type="button"
                   onClick={() => void start()}
-                  className="rounded-full border border-border px-4 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+                  className="rounded-full border border-border px-4 py-1.5 text-sm font-medium transition-colors hover:bg-muted bg-surface raised-button"
                 >
                   {labels.retry}
                 </button>
