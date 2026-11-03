@@ -707,7 +707,8 @@ export const it = {
     noAccount: "senza account",
     atCurrentBelt: (days: string) => `${days} con la cintura attuale`,
     noActiveRole: "Nessun ruolo attivo",
-    estimateSuffix: " (stima)",
+    estimateLabel: "stima",
+    hoursUnit: "h",
 
     rowActions: (name: string) => `Azioni per ${name}`,
     details: "Dettagli",

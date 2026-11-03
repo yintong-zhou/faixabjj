@@ -132,7 +132,7 @@ export default async function RegistroPage({
   searchParams: Promise<Search>;
 }) {
   const search = await searchParams;
-  const { t } = await getDictionary();
+  const { locale, t } = await getDictionary();
   // Staff only: an allievo or assistente gets a 404 here, not a redirect.
   const { supabase, access } = await requireRegistryViewer("/members");
   // Pending self-registrations, for the chip below. User managers only: RLS
@@ -208,6 +208,10 @@ export default async function RegistroPage({
     today,
     trackingStartedOn: estimateCutoff(gym.trackingStartedOn, createdById.get(personId), gym.timezone),
   });
+
+  // The row shows whole hours: the decimal of an estimate is precision it does
+  // not have (the detail page keeps the exact figure).
+  const wholeNumber = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
 
   // numeric/bigint columns can come back from PostgREST as strings — coerced
   // wherever criteria rows enter a page, so that a string never wins a `<`
@@ -581,62 +585,77 @@ export default async function RegistroPage({
           const canManageAccount = Boolean(member.auth_user_id);
           const hours = hoursFor(member.joined_at, member.total_hours, hoursOptionsFor(member.id));
 
-          // items-center keeps the kebab vertically centred against the row,
-          // whose height is set by the details block on the left.
+          const daysAtBelt = formatDays(daysSince(member.rank_since, today), t);
+
+          // Three columns: who (name, belt, role), how much (hours), actions.
+          // items-center keeps the hours and the kebab centred on the row.
+          // Join date and days at the gym live on the detail page.
           return (
-            <li key={member.id} className="flex items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:p-4">
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium">
+            <li key={member.id} className="flex items-center gap-3 px-4 py-4 sm:gap-4 sm:px-6">
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <span className="flex min-w-0 items-center gap-2">
                   {/* Its own element, so a long name can break and wrap
                       instead of widening the row past the screen. */}
                   <span
                     title={member.full_name}
-                    className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]"
+                    className="line-clamp-2 min-w-0 font-heading text-[0.95rem] font-semibold leading-snug [overflow-wrap:anywhere]"
                   >
                     {member.full_name}
                   </span>
-                  <Belt
-                    belt={member.current_belt}
-                    stripes={member.current_stripes}
-                  />
                   {eligibleIds.has(member.id) ? (
                     <span
-                      className="inline-block h-2 w-2 rounded-full bg-[var(--success)]"
+                      role="img"
+                      className="h-2 w-2 shrink-0 rounded-full bg-[var(--success)]"
                       title={t.promotions.queueTitle}
                       aria-label={t.promotions.queueTitle}
                     />
                   ) : null}
+                </span>
+
+                {/* The belt and how long it has been held, side by side: being
+                    next to the belt is what labels the number, so the sentence
+                    is left to screen readers. */}
+                <span className="flex items-center gap-2">
+                  <Belt belt={member.current_belt} stripes={member.current_stripes} />
+                  <span className="text-sm font-medium tabular-nums text-foreground/80">
+                    <span aria-hidden="true">{daysAtBelt}</span>
+                    <span className="sr-only">{t.registro.atCurrentBelt(daysAtBelt)}</span>
+                  </span>
+                </span>
+
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground/55">
+                  {member.active_roles.length > 0
+                    ? member.active_roles.map((r) => roleLabel(r, t)).join(", ")
+                    : t.registro.noActiveRole}
                   {member.auth_user_id ? null : (
-                    <span className="rounded-full border border-border px-2 py-0.5 text-xs font-normal text-foreground/55">
+                    <span className="rounded-full border border-border px-2 py-0.5">
                       {t.registro.noAccount}
                     </span>
                   )}
                 </span>
+              </div>
 
-
-                {/* Kept minimal: time at the current rank (what eligibility
-                    hangs on) and hours. Join date and days at the gym live on
-                    the detail page. */}
-                <span className="text-xs text-foreground/70">
-                  {t.registro.atCurrentBelt(
-                    formatDays(daysSince(member.rank_since, today), t),
-                  )}
-                  {" · "}
-                  {/* Mostly estimated until the gym has been recording for a
-                      while, so the row says so rather than presenting an
-                      assumption as a count. */}
-                  <span title={hours.isPartlyEstimated ? estimateNote(hours.estimated, gym, t) : undefined}>
-                    {formatHours(hours.total, t)}
-                    {hours.isPartlyEstimated ? t.registro.estimateSuffix : ""}
+              {/* The one loud thing in the row: hours, right-aligned so the
+                  column reads down the list like a ledger. Mostly estimated
+                  until the gym has been recording for a while, so it says so
+                  rather than presenting an assumption as a count. */}
+              <span
+                className="flex shrink-0 flex-col items-end"
+                title={hours.isPartlyEstimated ? estimateNote(hours.estimated, gym, t) : undefined}
+              >
+                <span aria-hidden="true" className="font-heading text-xl font-bold leading-none tabular-nums">
+                  {wholeNumber.format(hours.total)}
+                  <span className="ml-0.5 text-xs font-medium text-foreground/55">
+                    {t.registro.hoursUnit}
                   </span>
                 </span>
-
-                <span className="text-xs text-foreground/55">
-                  {member.active_roles.length > 0
-                    ? member.active_roles.map((r) => roleLabel(r, t)).join(", ")
-                    : t.registro.noActiveRole}
-                </span>
-              </div>
+                <span className="sr-only">{formatHours(hours.total, t)}</span>
+                {hours.isPartlyEstimated ? (
+                  <span className="mt-1 text-[0.7rem] text-foreground/50">
+                    {t.registro.estimateLabel}
+                  </span>
+                ) : null}
+              </span>
 
               {/* Every action sits behind the kebab so none of them — least of
                   all revoking access — can be hit by a stray tap while

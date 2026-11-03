@@ -688,7 +688,8 @@ export const en: Dictionary = {
     noAccount: "no account",
     atCurrentBelt: (days: string) => `${days} at the current belt`,
     noActiveRole: "No active role",
-    estimateSuffix: " (estimate)",
+    estimateLabel: "estimate",
+    hoursUnit: "h",
 
     rowActions: (name: string) => `Actions for ${name}`,
     details: "Details",
