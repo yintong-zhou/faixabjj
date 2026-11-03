@@ -9,6 +9,7 @@ import {
   monthStart,
   shiftMonth,
   parseWeekdays,
+  readTime,
   weekStart,
 } from "./schedule";
 
@@ -167,5 +168,24 @@ describe("month helpers", () => {
 
   it("capitalises the month heading", () => {
     expect(formatMonthHeading("2026-09-01")).toBe("September 2026");
+  });
+});
+
+describe("readTime", () => {
+  const form = (hour: string, minute: string) => {
+    const data = new FormData();
+    data.set("start_hour", hour);
+    data.set("start_minute", minute);
+    return data;
+  };
+
+  it("pads the two selects into HH:MM", () => {
+    expect(readTime(form("9", "5"), "start")).toBe("09:05");
+  });
+
+  it("refuses an hour or minute out of range, or missing", () => {
+    expect(readTime(form("24", "00"), "start")).toBeNull();
+    expect(readTime(form("10", "60"), "start")).toBeNull();
+    expect(readTime(new FormData(), "start")).toBeNull();
   });
 });

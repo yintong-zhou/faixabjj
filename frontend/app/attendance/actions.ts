@@ -10,6 +10,9 @@ import {
 import { getDictionary } from "@/utils/i18n/server";
 import { logDbError } from "@/utils/log";
 import { checkinMessage, optionalNumber, parseCheckinOutcome } from "@/utils/checkin";
+import { formatDate, todayIn } from "@/utils/dates";
+import { requireGymSettings } from "@/utils/supabase/gym";
+import { readTime } from "@/utils/schedule";
 
 const PATH = "/attendance";
 
@@ -341,4 +344,82 @@ export async function setSessionInstructor(formData: FormData) {
     error ? { error: t.msg.instructorNotUpdated } : { ok: t.msg.instructorUpdated },
     from,
   );
+}
+
+// ---------------------------------------------------------------------------
+// Open mat
+// ---------------------------------------------------------------------------
+
+const OPEN_MAT_PAGE = "/attendance/open-mat";
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+function backToOpenMat(error: string) {
+  redirect(`${OPEN_MAT_PAGE}?${new URLSearchParams({ error }).toString()}`);
+}
+
+// A one-day course plus its one session (see 20261017000000_open_mat.sql), so
+// check-in, roll call and hours treat it as any other lesson. Validated here
+// and not only by the form, which a crafted POST skips.
+export async function addOpenMat(formData: FormData) {
+  const { t } = await getDictionary();
+  const { supabase } = await requireClassManager(OPEN_MAT_PAGE);
+  const today = todayIn((await requireGymSettings()).timezone);
+
+  // From today on: an open mat is announced or held now, never back-filled —
+  // a past one would be a way of adding hours after the fact.
+  const date = ((formData.get("date") as string | null) ?? "").trim();
+  if (!ISO_DATE.test(date) || date < today) {
+    backToOpenMat(t.msg.openMatDateInvalid);
+    return;
+  }
+
+  const startTime = readTime(formData, "start");
+  const endTime = readTime(formData, "end");
+  if (!startTime || !endTime) {
+    backToOpenMat(t.msg.timesRequired);
+    return;
+  }
+  if (endTime <= startTime) {
+    backToOpenMat(t.msg.endBeforeStart);
+    return;
+  }
+
+  const instructorId =
+    ((formData.get("instructor_id") as string | null) ?? "").trim() || null;
+
+  const { data, error } = await supabase
+    .from("course")
+    .insert({
+      name: t.presenze.openMatName,
+      is_open_mat: true,
+      start_time: startTime,
+      end_time: endTime,
+      starts_on: date,
+      ends_on: date,
+      instructor_id: instructorId,
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) logDbError("attendance", "addOpenMat:course", error);
+    backToOpenMat(t.msg.openMatNotCreated);
+    return;
+  }
+
+  const { error: syncError } = await supabase.rpc("sync_course_sessions", {
+    p_course_id: data.id,
+    p_dates: [date],
+  });
+
+  if (syncError) {
+    logDbError("attendance", "addOpenMat:session", syncError);
+    // A hidden course with no lesson would be invisible clutter: take it back.
+    await supabase.from("course").delete().eq("id", data.id);
+    backToOpenMat(t.msg.openMatNotCreated);
+    return;
+  }
+
+  revalidatePath(PATH);
+  back({ ok: t.msg.openMatCreated(formatDate(date)), da: date });
 }

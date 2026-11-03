@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   AlertCircleIcon,
+  CalendarPlusIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -200,6 +201,15 @@ export default async function PresenzePage({
         <p className="text-sm leading-relaxed text-foreground/65">
           {isStaff ? t.presenze.staffLead : t.presenze.memberLead}
         </p>
+        {isStaff ? (
+          <Link
+            href="/attendance/open-mat"
+            className="flex min-h-11 w-fit items-center gap-2 rounded-xl border border-border px-3 py-2.5 font-heading text-sm font-semibold transition-colors hover:bg-muted"
+          >
+            <CalendarPlusIcon className="h-4 w-4 shrink-0 text-accent" />
+            {t.presenze.addOpenMat}
+          </Link>
+        ) : null}
       </header>
 
       {search.ok ? (

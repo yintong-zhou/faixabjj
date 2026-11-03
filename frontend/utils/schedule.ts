@@ -202,3 +202,19 @@ export function formatWeekdays(
     .map((day) => day.short)
     .join(" ");
 }
+
+// The form posts hour and minute separately rather than using an
+// <input type="time">, whose widget follows the operating system's locale and
+// shows AM/PM on a machine that is not set to Italian. Two selects read the
+// same on every locale, and this is where they become "HH:MM".
+export function readTime(formData: FormData, prefix: string): string | null {
+  const hour = (formData.get(`${prefix}_hour`) as string | null)?.trim();
+  const minute = (formData.get(`${prefix}_minute`) as string | null)?.trim();
+
+  const h = Number.parseInt(hour ?? "", 10);
+  const m = Number.parseInt(minute ?? "", 10);
+  if (!Number.isInteger(h) || h < 0 || h > 23) return null;
+  if (!Number.isInteger(m) || m < 0 || m > 59) return null;
+
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}

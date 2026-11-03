@@ -49,6 +49,9 @@ export default async function CorsiPage({
   const { data: courseRows, error: queryError } = await supabase
     .from("course_overview")
     .select("*")
+    // An open mat is a one-day course created from /attendance; editing it here
+    // would re-sync it as a recurring rule, so it is not listed.
+    .eq("is_open_mat", false)
     .order("is_active", { ascending: false })
     .order("name");
 
