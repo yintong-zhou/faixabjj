@@ -41,6 +41,8 @@ export type Access = {
   isPlatformAdmin: boolean;
   /** The caller's gym, including when suspended; null for the superadmin. */
   gymStatus: "active" | "suspended" | null;
+  /** The lookup itself failed: the other fields are the closed default, not an answer. */
+  unavailable?: true;
 };
 
 const NO_ACCESS: Access = {
@@ -117,6 +119,12 @@ export async function requireAdmin(path: string): Promise<AdminSessionWithAccess
 
   const access = await getAccess(session.supabase);
 
+  // A failed lookup says nothing about the gym. Treating it as "no gym" sent
+  // members of an active gym to /suspended; an error page is the honest answer.
+  if (access.unavailable) {
+    throw new Error("current_access unavailable");
+  }
+
   if (access.gymStatus === "suspended") {
     redirect(SUSPENDED_PATH);
   }
@@ -156,7 +164,7 @@ export async function getAccess(supabase: SupabaseClient): Promise<Access> {
         error?.code ?? "no code"
       } ${error?.message ?? "no data returned"}`.trim(),
     );
-    return NO_ACCESS;
+    return { ...NO_ACCESS, unavailable: true };
   }
 
   return {
